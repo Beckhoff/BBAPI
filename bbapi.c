@@ -110,13 +110,11 @@ static unsigned int bbapi_call(unsigned int nIndexGroup,
 // Init function for BBAPI
 static int init_bbapi(void)
 {
+	// Try to remap IO Memory to search the BIOS API in the memory
 	void __iomem *memory_search_area = ioremap(BBIOSAPI_SIGNATURE_PHYS_START_ADDR, BBIOSAPI_SIGNATURE_SEARCH_AREA);
 	void __iomem *pos = memory_search_area;
 	const void __iomem *const end = pos + BBIOSAPI_SIGNATURE_SEARCH_AREA;
-	
-	// Try to remap IO Memory to search the BIOS API in the memory
-	if(memory_search_area == NULL)
-	{
+	if(memory_search_area == NULL) {
 		printk(KERN_ERR "Beckhoff BIOS API: Mapping Memory Search area for Beckhoff BIOS API failed\n");
 		return -1;
 	}
@@ -130,20 +128,19 @@ static int init_bbapi(void)
 		if ((low == BBIOSAPI_SEARCHBSTR_LOW) && (high == BBIOSAPI_SEARCHBSTR_HIGH)) {
 			// Set the BIOS API offset which is stored in 0x08
 			const uint32_t offset = ioread32(pos+8);
-			printk(KERN_INFO "Beckhoff BIOS API: found at: 0x%X\n", (unsigned int)(BBIOSAPI_SIGNATURE_PHYS_START_ADDR+(pos-memory_search_area)));
-			printk(KERN_INFO "Beckhoff BIOS API: Entry Point offset: 0x%X\n", (unsigned int)(offset));
+			pr_info("found at: 0x%X\n", (unsigned int)(BBIOSAPI_SIGNATURE_PHYS_START_ADDR+(pos-memory_search_area)));
+			pr_info("Entry Point offset: 0x%X\n", (unsigned int)(offset));
 				
 			// Try to allocate memory in the kernel module to copy the BIOS API
 			// Memory ha to be marked executable (PAGE_KERNEL_EXEC) otherwise you may get an exception (No Execute Bit)
 			bbapi_memory = __vmalloc(offset+4096,GFP_KERNEL, PAGE_KERNEL_EXEC);
 			if (bbapi_memory == NULL) {
-				printk(KERN_ERR "Beckhoff BIOS API: kmalloc for Beckhoff BIOS API failed\n");
-				iounmap(memory_search_area);
-				return -1;
+				pr_info("kmalloc for Beckhoff BIOS API failed\n");
+				break;
 			}
 			// BIOS API is stored in the BIOS SPI Flash which is memory mapped into the upper memory
 			// So it is necessary for proper functionality to make a local copy of the BIOS API in the driver
-			memcpy_fromio(bbapi_memory,pos, (unsigned int)(offset+4096));
+			memcpy_fromio(bbapi_memory, pos, (unsigned int)(offset+4096));
 			bbapi_entryPtr = bbapi_memory+offset;
 			iounmap(memory_search_area);
 			return 0;
