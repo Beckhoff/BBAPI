@@ -1,5 +1,5 @@
 /**
-    Network Driver for Beckhoff CCAT communication controller
+    Beckhoff BIOS API driver to access hwmon sensors for Beckhoff IPCs
     Copyright (C) 2014  Beckhoff Automation GmbH
     Author: Patrick Bruenn <p.bruenn@beckhoff.com>
 

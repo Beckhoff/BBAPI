@@ -1,8 +1,8 @@
 /*
     Character Driver for Beckhoff BIOS API
     Author: 	Heiko Wilke <h.wilke@beckhoff.com>
-    Version: 	1.0
-    Copyright (C) 2013  Beckhoff Automation GmbH
+    Author: 	Patrick Brünn <p.bruenn@beckhoff.com>
+    Copyright (C) 2013 - 2014  Beckhoff Automation GmbH
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -252,8 +252,8 @@ static struct file_operations file_ops =
 #endif
 };
 
-/* Constructor */
-static int __init bbapi_init(void) 
+
+static int __init bbapi_init_module(void)
 {
 	// Init BBAPI
 	if (init_bbapi() < 0) 
@@ -313,9 +313,10 @@ static void __exit bbapi_exit(void) /* Destructor */
     printk(KERN_INFO "Beckhoff BIOS API: BBAPI unregistered\n");
 }
  
-module_init(bbapi_init);
+module_init(bbapi_init_module);
 module_exit(bbapi_exit);
  
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Heiko Wilke");
 MODULE_DESCRIPTION("Beckhoff BIOS API Driver");
+MODULE_VERSION("1.1");
