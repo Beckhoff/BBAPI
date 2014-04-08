@@ -33,23 +33,25 @@
 #include <asm/uaccess.h>
 #include <asm/msr.h>
 
+#undef pr_fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
 /* Global Variables */
 static dev_t first; 				// First device number
 static struct cdev char_dev; 		// Character device structure
 static struct class *devclass; 		// Device class
-void *bbapi_memory;					// Pointer for BBAPI Memory area
-void *bbapi_entryPtr;				// Pointer for BBAPI entry Point
+static void *bbapi_memory;					// Pointer for BBAPI Memory area
+static void *bbapi_entryPtr;				// Pointer for BBAPI entry Point
 static unsigned int BytesReturned;  // Variable for number of returned Bytes by BBAPI function
-DEFINE_MUTEX(mut);					// Mutex for exclusive write access
+static DEFINE_MUTEX(mut);					// Mutex for exclusive write access
 
 static struct bbapi_struct
 {
 	unsigned int nIndexGroup;
 	unsigned int nIndexOffset;
-	void* pInBuffer;
+	void __user* pInBuffer;
 	unsigned int nInBufferSize;
-	void* pOutBuffer;
+	void __user* pOutBuffer;
 	unsigned int nOutBufferSize;
 } bbstruct;
 
@@ -61,9 +63,9 @@ static struct bbapi_struct
 
 // Variables for 32 Bit System
 #ifdef __i386__
-	const char BBIOSAPI_SIGNATURE[8] = {'B','B','I','O','S','A','P','I'};
-	const unsigned int BBIOSAPI_SEARCHBSTR_LOW = 0x4F494242; 	// first 4 Byte of API-String "BBIOSAPI"
-	const unsigned int BBIOSAPI_SEARCHBSTR_HIGH = 0x49504153;	// last 4 Byte of API-String "BBIOSAPI"
+static const char BBIOSAPI_SIGNATURE[8] = {'B','B','I','O','S','A','P','I'};
+static const unsigned int BBIOSAPI_SEARCHBSTR_LOW = 0x4F494242; 	// first 4 Byte of API-String "BBIOSAPI"
+static const unsigned int BBIOSAPI_SEARCHBSTR_HIGH = 0x49504153;	// last 4 Byte of API-String "BBIOSAPI"
 #endif
 
 // Variables for 64 Bit System
@@ -73,13 +75,11 @@ static struct bbapi_struct
 	const unsigned int BBIOSAPI_SEARCHBSTR_HIGH = 0x34365849;	// last 4 Byte of API-String "BBAPIX64"
 #endif
 
-
-
 // Beckhoff BIOS API call function
 // BIOS API is called as stdcall (standard windows calling convention)
 // Calling convention in Linux is cdecl so it has to be rebuild using assembler
 #ifdef __i386__
-	unsigned int bbapi_call(unsigned int nIndexGroup,
+static unsigned int bbapi_call(unsigned int nIndexGroup,
 							  unsigned int nIndexOffset,
 							  void* pInBuffer,
 							  unsigned int nInBufferSize,
@@ -167,7 +167,7 @@ static long bbapi_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 	void *pInBuffer = NULL;			// Local Kernel Pointer to InBuffer
 	void *pOutBuffer = NULL;		// Local Kernel Pointer to OutBuffer
 	unsigned int nOutBufferSize =0; // Local OutBufferSize
-	
+
 	// Check if IOCTL CMD matches BBAPI Driver Command
 	if (cmd != BBAPI_CMD)
 	{
@@ -178,7 +178,7 @@ static long bbapi_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 	// Mutex to protect critical section against concurrent access
 	mutex_lock(&mut);
 	// Copy data (BBAPI struct) from User Space to Kernel Module - if it fails, return error
-	if (copy_from_user(&bbstruct, (void*) arg, sizeof(bbstruct)))
+	if (copy_from_user(&bbstruct, (const void __user *) arg, sizeof(bbstruct)))
 	{
 			printk(KERN_ERR "Beckhoff BIOS API: copy_from_user failed\n");
 			mutex_unlock(&mut);
@@ -274,6 +274,7 @@ static int __init bbapi_init(void)
 	//Create device class
 	if ((devclass = class_create(THIS_MODULE, "chardrv")) == NULL)
 	{
+		pr_warn("class_create() failed!\n");
 		unregister_chrdev_region(first, 1);
 		return -1;
     }
@@ -281,6 +282,7 @@ static int __init bbapi_init(void)
     //Create device File
     if (device_create(devclass, NULL, first, NULL, "BBAPI") == NULL)
     {
+		pr_warn("device_create() failed!\n");
 		class_destroy(devclass);
 		unregister_chrdev_region(first, 1);
 		return -1;
@@ -290,6 +292,7 @@ static int __init bbapi_init(void)
     cdev_init(&char_dev, &file_ops);
     if (cdev_add(&char_dev, first, 1) == -1)
     {
+		pr_warn("cdev_add() failed!\n");
 		device_destroy(devclass, first);
 		class_destroy(devclass);
 		unregister_chrdev_region(first, 1);
