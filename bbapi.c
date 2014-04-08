@@ -45,20 +45,10 @@ static void *bbapi_entryPtr;				// Pointer for BBAPI entry Point
 static unsigned int BytesReturned;  // Variable for number of returned Bytes by BBAPI function
 static DEFINE_MUTEX(mut);					// Mutex for exclusive write access
 
-static struct bbapi_struct
-{
-	unsigned int nIndexGroup;
-	unsigned int nIndexOffset;
-	void __user* pInBuffer;
-	unsigned int nInBufferSize;
-	void __user* pOutBuffer;
-	unsigned int nOutBufferSize;
-} bbstruct;
-
 
 /* BBAPI specific Variables */
-#define BBIOSAPI_SIGNATURE_PHYS_START_ADDR 	0xFFE00000	// Defining the Physical start address for the search
-#define BBIOSAPI_SIGNATURE_SEARCH_AREA 		0x1FFFFF	// Defining the Memory search area size
+static const unsigned long BBIOSAPI_SIGNATURE_PHYS_START_ADDR = 0xFFE00000;	// Defining the Physical start address for the search
+static const unsigned long BBIOSAPI_SIGNATURE_SEARCH_AREA = 0x1FFFFF;	// Defining the Memory search area size
 #define BBAPI_CMD							0x5000		// BIOS API Command number for IOCTL call
 
 // Variables for 32 Bit System
@@ -111,10 +101,10 @@ static unsigned int bbapi_call(unsigned int nIndexGroup,
 static int init_bbapi(void)
 {
 	// Try to remap IO Memory to search the BIOS API in the memory
-	void __iomem *memory_search_area = ioremap(BBIOSAPI_SIGNATURE_PHYS_START_ADDR, BBIOSAPI_SIGNATURE_SEARCH_AREA);
-	void __iomem *pos = memory_search_area;
+	void __iomem *const start = ioremap(BBIOSAPI_SIGNATURE_PHYS_START_ADDR, BBIOSAPI_SIGNATURE_SEARCH_AREA);
+	void __iomem *pos = start;
 	const void __iomem *const end = pos + BBIOSAPI_SIGNATURE_SEARCH_AREA;
-	if(memory_search_area == NULL) {
+	if(start == NULL) {
 		printk(KERN_ERR "Beckhoff BIOS API: Mapping Memory Search area for Beckhoff BIOS API failed\n");
 		return -1;
 	}
@@ -127,27 +117,24 @@ static int init_bbapi(void)
 		const uint32_t high = ioread32(pos+4);
 		if ((low == BBIOSAPI_SEARCHBSTR_LOW) && (high == BBIOSAPI_SEARCHBSTR_HIGH)) {
 			// Set the BIOS API offset which is stored in 0x08
-			const uint32_t offset = ioread32(pos+8);
-			pr_info("found at: 0x%X\n", (unsigned int)(BBIOSAPI_SIGNATURE_PHYS_START_ADDR+(pos-memory_search_area)));
-			pr_info("Entry Point offset: 0x%X\n", (unsigned int)(offset));
+			const unsigned int offset = ioread32(pos+8);
 				
 			// Try to allocate memory in the kernel module to copy the BIOS API
 			// Memory ha to be marked executable (PAGE_KERNEL_EXEC) otherwise you may get an exception (No Execute Bit)
-			bbapi_memory = __vmalloc(offset+4096,GFP_KERNEL, PAGE_KERNEL_EXEC);
+			bbapi_memory = __vmalloc(offset + 4096,GFP_KERNEL, PAGE_KERNEL_EXEC);
 			if (bbapi_memory == NULL) {
-				pr_info("kmalloc for Beckhoff BIOS API failed\n");
+				pr_info("__vmalloc for Beckhoff BIOS API failed\n");
 				break;
 			}
-			// BIOS API is stored in the BIOS SPI Flash which is memory mapped into the upper memory
-			// So it is necessary for proper functionality to make a local copy of the BIOS API in the driver
-			memcpy_fromio(bbapi_memory, pos, (unsigned int)(offset+4096));
-			bbapi_entryPtr = bbapi_memory+offset;
-			iounmap(memory_search_area);
+			// copy BIOS API from SPI Flash into RAM to decrease performance impact on realtime applications
+			memcpy_fromio(bbapi_memory, pos, offset + 4096);
+			bbapi_entryPtr = bbapi_memory + offset;
+			iounmap(start);
+			pr_info("found and copied to: %p entry %p\n", bbapi_memory, bbapi_entryPtr);
 			return 0;
 		}
 	}
-	
-	iounmap(memory_search_area);
+	iounmap(start);
 	return -1;
 }
 
@@ -158,6 +145,14 @@ static int bbapi_ioctl(struct inode *i, struct file *f, unsigned int cmd, unsign
 static long bbapi_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 #endif
 {
+	struct bbapi_struct {
+		unsigned int nIndexGroup;
+		unsigned int nIndexOffset;
+		void __user* pInBuffer;
+		unsigned int nInBufferSize;
+		void __user* pOutBuffer;
+		unsigned int nOutBufferSize;
+	} bbstruct;
 	void *pInBuffer = NULL;			// Local Kernel Pointer to InBuffer
 	void *pOutBuffer = NULL;		// Local Kernel Pointer to OutBuffer
 	unsigned int nOutBufferSize =0; // Local OutBufferSize
