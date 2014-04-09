@@ -19,7 +19,6 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include <linux/cdev.h>
 #include <linux/module.h>
 #include <linux/version.h>
 #include <linux/kernel.h>
@@ -32,49 +31,11 @@
 #include <asm/uaccess.h>
 #include <asm/msr.h>
 
-#include "simple_cdev.h"
-
-#undef pr_fmt
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-
-struct bbapi_struct {
-	unsigned int nIndexGroup;
-	unsigned int nIndexOffset;
-	void __user* pInBuffer;
-	unsigned int nInBufferSize;
-	void __user* pOutBuffer;
-	unsigned int nOutBufferSize;
-};
+#include "api.h"
 
 /* Global Variables */
 static struct bbapi_object g_bbapi;
 static DEFINE_MUTEX(mut);					// Mutex for exclusive write access
-
-
-/* BBAPI specific Variables */
-static const unsigned long BBIOSAPI_SIGNATURE_PHYS_START_ADDR = 0xFFE00000;	// Defining the Physical start address for the search
-static const unsigned long BBIOSAPI_SIGNATURE_SEARCH_AREA = 0x1FFFFF;	// Defining the Memory search area size
-#define BBAPI_CMD							0x5000		// BIOS API Command number for IOCTL call
-#define BBAPI_BUFFER_SIZE 256
-
-/**
- * struct bbapi_object - manage access to Beckhoff BIOS functions
- * @memory: pointer to a BIOS copy in RAM
- * @entry: function pointer to the BIOS API function in RAM
- * @in: buffer to exchange data between user space and BIOS
- * @out: buffer to exchange data between BIOS and user space
- * @dev: meta data for the character device interface
- *
- * The size of the output buffer should be large enough to satisfy the
- * largest BIOS command. Right now this is: BIOSIOFFS_UEEPROM_READ.
- */
-struct bbapi_object {
-	void *memory;
-	void *entry;
-	char in[BBAPI_BUFFER_SIZE];
-	char out[BBAPI_BUFFER_SIZE];
-	struct simple_cdev dev;
-};
 
 // Variables for 32 Bit System
 #ifdef __i386__

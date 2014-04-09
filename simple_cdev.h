@@ -20,6 +20,10 @@
 
 #ifndef _SIMPLE_CDEV_H_
 #define _SIMPLE_CDEV_H_
+
+#include <linux/cdev.h>
+#include <linux/device.h>
+
 struct simple_cdev {
 	dev_t dev; 				// First device number
 	struct cdev cdev; 		// Character device structure
