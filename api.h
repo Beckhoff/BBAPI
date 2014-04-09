@@ -25,8 +25,8 @@
 #undef pr_fmt
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/mutex.h>
 #include "simple_cdev.h"
-
 
 /* BBAPI specific constants */
 #define BBIOSAPI_SIGNATURE_PHYS_START_ADDR 0xFFE00000	// Defining the Physical start address for the search
@@ -60,5 +60,6 @@ struct bbapi_object {
 	char in[BBAPI_BUFFER_SIZE];
 	char out[BBAPI_BUFFER_SIZE];
 	struct simple_cdev dev;
+	struct mutex mutex;
 };
 #endif /* #ifndef __API_H_ */

@@ -35,7 +35,6 @@
 
 /* Global Variables */
 static struct bbapi_object g_bbapi;
-static DEFINE_MUTEX(mut);					// Mutex for exclusive write access
 
 // Variables for 32 Bit System
 #ifdef __i386__
@@ -159,12 +158,16 @@ static int bbapi_ioctl_mutexed(struct bbapi_object *const bbapi, const struct bb
 	return 0;
 }
 
-// IOCTL function which is called from user space to access BBAPI functions
+// This function remains for compatibility only.
+// TODO test it with an old kernel!
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,35))
-static int bbapi_ioctl(struct inode *i, struct file *f, unsigned int cmd, unsigned long arg)
-#else
-static long bbapi_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
+static int bbapi_ioctl_old(struct inode *i, struct file *f, unsigned int cmd, unsigned long arg)
+{
+	bbapi_ioctl(f, cmd, arg);
+}
 #endif
+
+static long bbapi_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 {
 	struct bbapi_struct bbstruct;
 	int result = -EINVAL;
@@ -183,9 +186,9 @@ static long bbapi_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 		return -EINVAL;
 	}
 
-	mutex_lock(&mut);
+	mutex_lock(&g_bbapi.mutex);
 	result = bbapi_ioctl_mutexed(&g_bbapi, &bbstruct);
-	mutex_unlock(&mut);
+	mutex_unlock(&g_bbapi.mutex);
 	return result;
 }
 
@@ -203,6 +206,7 @@ static struct file_operations file_ops =
 
 static int __init bbapi_init_module(void)
 {
+	mutex_init(&g_bbapi.mutex);
 	if (bbapi_find_bios(&g_bbapi))  {
 		pr_info("BIOS API not available on this System\n");
 		return -1;
