@@ -162,15 +162,6 @@ static int bbapi_ioctl_mutexed(struct bbapi_object *const bbapi, const struct bb
 	return 0;
 }
 
-// This function remains for compatibility only.
-// TODO test it with an old kernel!
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,35))
-static int bbapi_ioctl_old(struct inode *i, struct file *f, unsigned int cmd, unsigned long arg)
-{
-	bbapi_ioctl(f, cmd, arg);
-}
-#endif
-
 static long bbapi_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 {
 	struct bbapi_struct bbstruct;
@@ -196,6 +187,15 @@ static long bbapi_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 	return result;
 }
 
+// This function remains for compatibility only.
+// TODO test it with an old kernel!
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,35))
+static int bbapi_ioctl_old(struct inode *i, struct file *f, unsigned int cmd, unsigned long arg)
+{
+	bbapi_ioctl(f, cmd, arg);
+}
+#endif
+
 /* Declare file operation function in struct */
 static struct file_operations file_ops =
 {
@@ -207,9 +207,9 @@ static struct file_operations file_ops =
 #endif
 };
 
-
 static int __init bbapi_init_module(void)
 {
+	memset(&g_bbapi, 0, sizeof(g_bbapi));
 	mutex_init(&g_bbapi.mutex);
 	if (bbapi_find_bios(&g_bbapi))  {
 		pr_info("BIOS API not available on this System\n");
