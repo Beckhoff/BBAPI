@@ -38,14 +38,12 @@ static struct bbapi_object g_bbapi;
 
 // Variables for 32 Bit System
 #ifdef __i386__
-static const char BBIOSAPI_SIGNATURE[8] = {'B','B','I','O','S','A','P','I'};
 static const unsigned int BBIOSAPI_SEARCHBSTR_LOW = 0x4F494242; 	// first 4 Byte of API-String "BBIOSAPI"
 static const unsigned int BBIOSAPI_SEARCHBSTR_HIGH = 0x49504153;	// last 4 Byte of API-String "BBIOSAPI"
 #endif
 
 // Variables for 64 Bit System
 #ifdef __x86_64__
-	const char BBIOSAPI_SIGNATURE[8] = {'B','B','A','P','I','X','6','4'};
 	const unsigned int BBIOSAPI_SEARCHBSTR_LOW = 0x50414242; 	// first 4 Byte of API-String "BBAPIX64"
 	const unsigned int BBIOSAPI_SEARCHBSTR_HIGH = 0x34365849;	// last 4 Byte of API-String "BBAPIX64"
 #endif
