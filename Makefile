@@ -20,7 +20,7 @@ clean:
 
 test: cxdisplay.c TcBaDevDef_gpl.h
 	gcc cxdisplay.c -o test.bin -Wall -pedantic -std=c99
-	sudo ./test.bin
+	sudo ./test.bin & sudo ./test.bin & sudo ./test.bin & sudo ./test.bin
 
 # indent the source files with the kernels Lindent script
 indent: bbapi.c

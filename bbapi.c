@@ -36,13 +36,21 @@
 #undef pr_fmt
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+struct bbapi_struct {
+	unsigned int nIndexGroup;
+	unsigned int nIndexOffset;
+	void __user* pInBuffer;
+	unsigned int nInBufferSize;
+	void __user* pOutBuffer;
+	unsigned int nOutBufferSize;
+};
+
 /* Global Variables */
 static dev_t first; 				// First device number
 static struct cdev char_dev; 		// Character device structure
 static struct class *devclass; 		// Device class
 static void *bbapi_memory;					// Pointer for BBAPI Memory area
 static void *bbapi_entryPtr;				// Pointer for BBAPI entry Point
-static unsigned int BytesReturned;  // Variable for number of returned Bytes by BBAPI function
 static DEFINE_MUTEX(mut);					// Mutex for exclusive write access
 
 
@@ -69,23 +77,20 @@ static const unsigned int BBIOSAPI_SEARCHBSTR_HIGH = 0x49504153;	// last 4 Byte 
 // BIOS API is called as stdcall (standard windows calling convention)
 // Calling convention in Linux is cdecl so it has to be rebuild using assembler
 #ifdef __i386__
-static unsigned int bbapi_call(unsigned int nIndexGroup,
-							  unsigned int nIndexOffset,
+static unsigned int bbapi_call(const struct bbapi_struct *const cmd,
 							  void* pInBuffer,
-							  unsigned int nInBufferSize,
 							  void* pOutBuffer,
-							  unsigned int nOutBufferSize,
 							  unsigned int *pBytesReturned,
 							  void* pEntry)
 	{
 		unsigned int ret;
 		__asm__("push %0" : : "r" (pBytesReturned));
-		__asm__("push %0" : : "r" (nOutBufferSize));
+		__asm__("push %0" : : "r" (cmd->nOutBufferSize));
 		__asm__("push %0" : : "r" (pOutBuffer));
-		__asm__("push %0" : : "r" (nInBufferSize));
+		__asm__("push %0" : : "r" (cmd->nInBufferSize));
 		__asm__("push %0" : : "r" (pInBuffer));
-		__asm__("push %0" : : "r" (nIndexOffset));
-		__asm__("push %0" : : "r" (nIndexGroup));
+		__asm__("push %0" : : "r" (cmd->nIndexOffset));
+		__asm__("push %0" : : "r" (cmd->nIndexGroup));
 		__asm__("call *%0" : : "r" (pEntry));
 		__asm__("mov %%eax, %0" :"=m" (ret): );
 		return ret;
@@ -145,17 +150,11 @@ static int bbapi_ioctl(struct inode *i, struct file *f, unsigned int cmd, unsign
 static long bbapi_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 #endif
 {
-	struct bbapi_struct {
-		unsigned int nIndexGroup;
-		unsigned int nIndexOffset;
-		void __user* pInBuffer;
-		unsigned int nInBufferSize;
-		void __user* pOutBuffer;
-		unsigned int nOutBufferSize;
-	} bbstruct;
+	struct bbapi_struct bbstruct;
 	void *pInBuffer = NULL;			// Local Kernel Pointer to InBuffer
 	void *pOutBuffer = NULL;		// Local Kernel Pointer to OutBuffer
 	unsigned int nOutBufferSize =0; // Local OutBufferSize
+	unsigned int BytesReturned;
 
 	// Check if IOCTL CMD matches BBAPI Driver Command
 	if (cmd != BBAPI_CMD)
@@ -164,13 +163,10 @@ static long bbapi_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 		return -EINVAL;
 	}
 	
-	// Mutex to protect critical section against concurrent access
-	mutex_lock(&mut);
 	// Copy data (BBAPI struct) from User Space to Kernel Module - if it fails, return error
 	if (copy_from_user(&bbstruct, (const void __user *) arg, sizeof(bbstruct)))
 	{
 			printk(KERN_ERR "Beckhoff BIOS API: copy_from_user failed\n");
-			mutex_unlock(&mut);
 			return -EINVAL;
 	}
 	
@@ -180,13 +176,11 @@ static long bbapi_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 		if ((pInBuffer = kmalloc(bbstruct.nInBufferSize, GFP_KERNEL)) == NULL)
 		{
 			printk(KERN_ERR "Beckhoff BIOS API: Kmalloc failed\n");
-			mutex_unlock(&mut);
 			return -EINVAL;
 		}
 		if (copy_from_user(pInBuffer, bbstruct.pInBuffer, bbstruct.nInBufferSize))
 		{
 			printk(KERN_ERR "Beckhoff BIOS API: copy_from_user failed\n");
-			mutex_unlock(&mut);
 			return -EINVAL;
 		}
 	}
@@ -197,19 +191,21 @@ static long bbapi_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 		if ((pOutBuffer = kmalloc(bbstruct.nOutBufferSize, GFP_KERNEL)) == NULL)
 		{
 			printk(KERN_ERR "Beckhoff BIOS API: Kmalloc failed\n");
-			mutex_unlock(&mut);
 			return -EINVAL;
 		}
 	}
 	
+	// Mutex to protect critical section against concurrent access
+	mutex_lock(&mut);
 	// Call the BIOS API
 	//printk(KERN_INFO "Beckhoff BIOS API: Call API with IndexGroup: %X  IndexOffset: %X\n", bbstruct.nIndexGroup, bbstruct.nIndexOffset);
-	if (bbapi_call(bbstruct.nIndexGroup, bbstruct.nIndexOffset, pInBuffer, bbstruct.nInBufferSize, pOutBuffer, bbstruct.nOutBufferSize, &BytesReturned, bbapi_entryPtr)!=0)
+	if (bbapi_call(&bbstruct, pInBuffer, pOutBuffer, &BytesReturned, bbapi_entryPtr)!=0)
 	{
 		printk(KERN_ERR "Beckhoff BIOS API: ERROR\n");
 		mutex_unlock(&mut);
 		return -EINVAL;
 	}
+	mutex_unlock(&mut);
 	
 	// Copy OutBuffer to User Space
 	if ((nOutBufferSize==BytesReturned) > 0)
@@ -217,7 +213,6 @@ static long bbapi_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 		if (copy_to_user(bbstruct.pOutBuffer, pOutBuffer, nOutBufferSize))
 		{
 			printk(KERN_ERR "Beckhoff BIOS API: copy to user failed\n");
-			mutex_unlock(&mut);
 			return -EINVAL;		
 		}
 	}
@@ -225,8 +220,6 @@ static long bbapi_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 	// Free Allocated Kernel Memory
 	if (pOutBuffer != NULL) kfree(pOutBuffer);
 	if (pInBuffer != NULL) kfree(pInBuffer); 
-	// Release Mutex
-	mutex_unlock(&mut);
 	return 0;
 }
 
