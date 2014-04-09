@@ -144,10 +144,10 @@ static const unsigned int BBIOSAPI_SEARCHBSTR_HIGH = 0x49504153;	// last 4 Byte 
 #ifdef __i386__
 static unsigned int bbapi_call(struct bbapi_object *const bbapi,
 							  const struct bbapi_struct *const cmd,
-							  unsigned int *pBytesReturned)
+							  unsigned int *bytes_written)
 	{
 		unsigned int ret;
-		__asm__("push %0" : : "r" (pBytesReturned));
+		__asm__("push %0" : : "r" (bytes_written));
 		__asm__("push %0" : : "r" (cmd->nOutBufferSize));
 		__asm__("push %0" : : "r" (bbapi->out));
 		__asm__("push %0" : : "r" (cmd->nInBufferSize));
@@ -217,7 +217,7 @@ static int bbapi_find_bios(struct bbapi_object *bbapi)
  */
 static int bbapi_ioctl_mutexed(struct bbapi_object *const bbapi, const struct bbapi_struct *const cmd)
 {
-	unsigned int BytesReturned;
+	unsigned int bytes_written;
 	if (cmd->nInBufferSize > sizeof(bbapi->in)) {
 		return -EINVAL;
 	}
@@ -232,13 +232,13 @@ static int bbapi_ioctl_mutexed(struct bbapi_object *const bbapi, const struct bb
 	}
 
 	// Call the BIOS API
-	if (bbapi_call(bbapi, cmd, &BytesReturned)) {
+	if (bbapi_call(bbapi, cmd, &bytes_written)) {
 		printk(KERN_ERR "Beckhoff BIOS API: ERROR\n");
 		return -EIO;
 	}
 
-	// Copy OutBuffer to User Space
-	if (copy_to_user(cmd->pOutBuffer, bbapi->out, BytesReturned))
+	// Copy the BIOS output to the output buffer in user space
+	if (copy_to_user(cmd->pOutBuffer, bbapi->out, bytes_written))
 	{
 		printk(KERN_ERR "Beckhoff BIOS API: copy to user failed\n");
 		return -EFAULT;
