@@ -45,12 +45,63 @@ struct bbapi_struct {
 	unsigned int nOutBufferSize;
 };
 
+struct simple_cdev {
+	dev_t dev; 				// First device number
+	struct cdev cdev; 		// Character device structure
+	struct class *class; 		// Device class
+};
+
+static int simple_cdev_init(struct simple_cdev *dev, const char *name, struct file_operations *file_ops)
+{
+	if (alloc_chrdev_region(&dev->dev, 0, 1, name) < 0) {
+		return -1;
+	}
+	pr_debug("Character Device region allocated <Major, Minor> <%d, %d>\n", MAJOR(dev->dev), MINOR(dev->dev));
+	if ((dev->class = class_create(THIS_MODULE, "chardrv")) == NULL)
+	{
+		pr_warn("class_create() failed!\n");
+		unregister_chrdev_region(dev->dev, 1);
+		return -1;
+    }
+
+    //Create device File
+    if (device_create(dev->class, NULL, dev->dev, NULL, "BBAPI") == NULL)
+    {
+		pr_warn("device_create() failed!\n");
+		class_destroy(dev->class);
+		unregister_chrdev_region(dev->dev, 1);
+		return -1;
+    }
+
+    //Init Device File
+    cdev_init(&dev->cdev, file_ops);
+    if (cdev_add(&dev->cdev, dev->dev, 1) == -1)
+    {
+		pr_warn("cdev_add() failed!\n");
+		device_destroy(dev->class, dev->dev);
+		class_destroy(dev->class);
+		unregister_chrdev_region(dev->dev, 1);
+		return -1;
+	}
+	return 0;
+}
+
+static void simple_cdev_remove(struct simple_cdev *dev)
+{
+	cdev_del(&dev->cdev);
+	device_destroy(dev->class, dev->dev);
+	class_destroy(dev->class);
+	unregister_chrdev_region(dev->dev, 1);
+}
+
+struct bbapi_object {
+	void *memory;
+	void *entry;
+	struct simple_cdev dev;
+};
+
 /* Global Variables */
-static dev_t first; 				// First device number
-static struct cdev char_dev; 		// Character device structure
-static struct class *devclass; 		// Device class
-static void *bbapi_memory;					// Pointer for BBAPI Memory area
-static void *bbapi_entryPtr;				// Pointer for BBAPI entry Point
+static struct bbapi_object g_bbapi;
 static DEFINE_MUTEX(mut);					// Mutex for exclusive write access
 
 
@@ -126,16 +177,16 @@ static int init_bbapi(void)
 				
 			// Try to allocate memory in the kernel module to copy the BIOS API
 			// Memory ha to be marked executable (PAGE_KERNEL_EXEC) otherwise you may get an exception (No Execute Bit)
-			bbapi_memory = __vmalloc(offset + 4096,GFP_KERNEL, PAGE_KERNEL_EXEC);
-			if (bbapi_memory == NULL) {
+			g_bbapi.memory = __vmalloc(offset + 4096,GFP_KERNEL, PAGE_KERNEL_EXEC);
+			if (g_bbapi.memory == NULL) {
 				pr_info("__vmalloc for Beckhoff BIOS API failed\n");
 				break;
 			}
 			// copy BIOS API from SPI Flash into RAM to decrease performance impact on realtime applications
-			memcpy_fromio(bbapi_memory, pos, offset + 4096);
-			bbapi_entryPtr = bbapi_memory + offset;
+			memcpy_fromio(g_bbapi.memory, pos, offset + 4096);
+			g_bbapi.entry = g_bbapi.memory + offset;
 			iounmap(start);
-			pr_info("found and copied to: %p entry %p\n", bbapi_memory, bbapi_entryPtr);
+			pr_info("found and copied to: %p entry %p\n", g_bbapi.memory, g_bbapi.entry);
 			return 0;
 		}
 	}
@@ -155,6 +206,7 @@ static long bbapi_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 	void *pOutBuffer = NULL;		// Local Kernel Pointer to OutBuffer
 	unsigned int nOutBufferSize =0; // Local OutBufferSize
 	unsigned int BytesReturned;
+	int result = -EINVAL;
 
 	// Check if IOCTL CMD matches BBAPI Driver Command
 	if (cmd != BBAPI_CMD)
@@ -176,12 +228,12 @@ static long bbapi_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 		if ((pInBuffer = kmalloc(bbstruct.nInBufferSize, GFP_KERNEL)) == NULL)
 		{
 			printk(KERN_ERR "Beckhoff BIOS API: Kmalloc failed\n");
-			return -EINVAL;
+			goto exit;
 		}
 		if (copy_from_user(pInBuffer, bbstruct.pInBuffer, bbstruct.nInBufferSize))
 		{
 			printk(KERN_ERR "Beckhoff BIOS API: copy_from_user failed\n");
-			return -EINVAL;
+			goto exit;
 		}
 	}
 	// Allocate memory for OutBuffer
@@ -191,7 +243,7 @@ static long bbapi_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 		if ((pOutBuffer = kmalloc(bbstruct.nOutBufferSize, GFP_KERNEL)) == NULL)
 		{
 			printk(KERN_ERR "Beckhoff BIOS API: Kmalloc failed\n");
-			return -EINVAL;
+			goto exit;
 		}
 	}
 	
@@ -199,11 +251,11 @@ static long bbapi_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 	mutex_lock(&mut);
 	// Call the BIOS API
 	//printk(KERN_INFO "Beckhoff BIOS API: Call API with IndexGroup: %X  IndexOffset: %X\n", bbstruct.nIndexGroup, bbstruct.nIndexOffset);
-	if (bbapi_call(&bbstruct, pInBuffer, pOutBuffer, &BytesReturned, bbapi_entryPtr)!=0)
+	if (bbapi_call(&bbstruct, pInBuffer, pOutBuffer, &BytesReturned, g_bbapi.entry)!=0)
 	{
 		printk(KERN_ERR "Beckhoff BIOS API: ERROR\n");
 		mutex_unlock(&mut);
-		return -EINVAL;
+		goto exit;
 	}
 	mutex_unlock(&mut);
 	
@@ -213,14 +265,16 @@ static long bbapi_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 		if (copy_to_user(bbstruct.pOutBuffer, pOutBuffer, nOutBufferSize))
 		{
 			printk(KERN_ERR "Beckhoff BIOS API: copy to user failed\n");
-			return -EINVAL;		
+			goto exit;
 		}
 	}
-	
+	result = 0;
+
+exit:
 	// Free Allocated Kernel Memory
 	if (pOutBuffer != NULL) kfree(pOutBuffer);
 	if (pInBuffer != NULL) kfree(pInBuffer); 
-	return 0;
+	return result;
 }
 
 /* Declare file operation function in struct */
@@ -247,51 +301,13 @@ static int __init bbapi_init_module(void)
 	// ToDo: Implement OS Function Pointer for different Functions (e.g. Read MSR)
 	
 	//Allocation of character driver numbers
-	if (alloc_chrdev_region(&first, 0, 1, "BBAPI")<0)
-	{
-		return -1;
-	}
-	printk(KERN_INFO "Beckhoff BIOS API: Character Device allocated <Major, Minor> <%d, %d>\n", MAJOR(first), MINOR(first));
-	
-	//Create device class
-	if ((devclass = class_create(THIS_MODULE, "chardrv")) == NULL)
-	{
-		pr_warn("class_create() failed!\n");
-		unregister_chrdev_region(first, 1);
-		return -1;
-    }
-    
-    //Create device File
-    if (device_create(devclass, NULL, first, NULL, "BBAPI") == NULL)
-    {
-		pr_warn("device_create() failed!\n");
-		class_destroy(devclass);
-		unregister_chrdev_region(first, 1);
-		return -1;
-    }
-    
-    //Init Device File
-    cdev_init(&char_dev, &file_ops);
-    if (cdev_add(&char_dev, first, 1) == -1)
-    {
-		pr_warn("cdev_add() failed!\n");
-		device_destroy(devclass, first);
-		class_destroy(devclass);
-		unregister_chrdev_region(first, 1);
-		return -1;
-	}
-
-    return 0;
+	return simple_cdev_init(&g_bbapi.dev, "BBAPI", &file_ops);
 }
  
 static void __exit bbapi_exit(void) /* Destructor */
 {
-	if (bbapi_memory != NULL) vfree(bbapi_memory);
-	cdev_del(&char_dev);
-	device_destroy(devclass, first);
-	class_destroy(devclass);
-	unregister_chrdev_region(first, 1);
-
+	if (g_bbapi.memory != NULL) vfree(g_bbapi.memory);
+	simple_cdev_remove(&g_bbapi.dev);
     printk(KERN_INFO "Beckhoff BIOS API: BBAPI unregistered\n");
 }
  
