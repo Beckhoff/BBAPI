@@ -38,8 +38,7 @@ static struct bbapi_object g_bbapi;
 
 // Variables for 32 Bit System
 #ifdef __i386__
-static const unsigned int BBIOSAPI_SEARCHBSTR_LOW = 0x4F494242; 	// first 4 Byte of API-String "BBIOSAPI"
-static const unsigned int BBIOSAPI_SEARCHBSTR_HIGH = 0x49504153;	// last 4 Byte of API-String "BBIOSAPI"
+static const uint64_t BBIOSAPI_SIGNATURE = 0x495041534F494242LL; // API-String "BBIOSAPI"
 #endif
 
 // Variables for 64 Bit System
@@ -96,11 +95,11 @@ static int bbapi_find_bios(struct bbapi_object *bbapi)
 	// Search through the remapped memory and look for the BIOS API String
 	for (;pos<end; pos+=0x10)	//Aligned Search 0x10
 	{
-		// Read 4 Bytes of memory using ioread and compare it with the low bytes of the BIOS API String
 		const uint32_t low = ioread32(pos);
 		const uint32_t high = ioread32(pos+4);
-		if ((low == BBIOSAPI_SEARCHBSTR_LOW) && (high == BBIOSAPI_SEARCHBSTR_HIGH)) {
-			// Set the BIOS API offset which is stored in 0x08
+		const uint64_t lword = ((uint64_t)high << 32 | low);
+		if (BBIOSAPI_SIGNATURE == lword) {
+			// read the BIOS API function offset
 			const unsigned int offset = ioread32(pos+8);
 
 			// Try to allocate memory in the kernel module to copy the BIOS API
