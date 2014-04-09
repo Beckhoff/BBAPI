@@ -1,4 +1,4 @@
-/*
+/**
     Character Driver for Beckhoff BIOS API
     Author: 	Heiko Wilke <h.wilke@beckhoff.com>
     Author: 	Patrick Brünn <p.bruenn@beckhoff.com>
@@ -19,19 +19,20 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#include <linux/cdev.h>
 #include <linux/module.h>
 #include <linux/version.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
-#include <linux/kdev_t.h>
 #include <linux/fs.h>
-#include <linux/device.h>
-#include <linux/cdev.h>
+#include <linux/kdev_t.h>
 #include <linux/slab.h>
 #include <linux/vmalloc.h>
 #include <asm/io.h>
 #include <asm/uaccess.h>
 #include <asm/msr.h>
+
+#include "simple_cdev.h"
 
 #undef pr_fmt
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
@@ -44,55 +45,6 @@ struct bbapi_struct {
 	void __user* pOutBuffer;
 	unsigned int nOutBufferSize;
 };
-
-struct simple_cdev {
-	dev_t dev; 				// First device number
-	struct cdev cdev; 		// Character device structure
-	struct class *class; 		// Device class
-};
-
-static int simple_cdev_init(struct simple_cdev *dev, const char *classname, const char *devicename, struct file_operations *file_ops)
-{
-	if (alloc_chrdev_region(&dev->dev, 0, 1, KBUILD_MODNAME) < 0) {
-		return -1;
-	}
-	pr_debug("Character Device region allocated <Major, Minor> <%d, %d>\n", MAJOR(dev->dev), MINOR(dev->dev));
-	if ((dev->class = class_create(THIS_MODULE, classname)) == NULL)
-	{
-		pr_warn("class_create() failed!\n");
-		unregister_chrdev_region(dev->dev, 1);
-		return -1;
-    }
-
-    //Create device File
-    if (device_create(dev->class, NULL, dev->dev, NULL, devicename) == NULL)
-    {
-		pr_warn("device_create() failed!\n");
-		class_destroy(dev->class);
-		unregister_chrdev_region(dev->dev, 1);
-		return -1;
-    }
-
-    //Init Device File
-    cdev_init(&dev->cdev, file_ops);
-    if (cdev_add(&dev->cdev, dev->dev, 1) == -1)
-    {
-		pr_warn("cdev_add() failed!\n");
-		device_destroy(dev->class, dev->dev);
-		class_destroy(dev->class);
-		unregister_chrdev_region(dev->dev, 1);
-		return -1;
-	}
-	return 0;
-}
-
-static void simple_cdev_remove(struct simple_cdev *dev)
-{
-	cdev_del(&dev->cdev);
-	device_destroy(dev->class, dev->dev);
-	class_destroy(dev->class);
-	unregister_chrdev_region(dev->dev, 1);
-}
 
 /* Global Variables */
 static struct bbapi_object g_bbapi;
@@ -182,8 +134,8 @@ static int bbapi_find_bios(struct bbapi_object *bbapi)
 		printk(KERN_ERR "Beckhoff BIOS API: Mapping Memory Search area for Beckhoff BIOS API failed\n");
 		return -1;
 	}
-	
-	// Search through the remapped memory and look for the BIOS API String	
+
+	// Search through the remapped memory and look for the BIOS API String
 	for (;pos<end; pos+=0x10)	//Aligned Search 0x10
 	{
 		// Read 4 Bytes of memory using ioread and compare it with the low bytes of the BIOS API String
@@ -192,7 +144,7 @@ static int bbapi_find_bios(struct bbapi_object *bbapi)
 		if ((low == BBIOSAPI_SEARCHBSTR_LOW) && (high == BBIOSAPI_SEARCHBSTR_HIGH)) {
 			// Set the BIOS API offset which is stored in 0x08
 			const unsigned int offset = ioread32(pos+8);
-				
+
 			// Try to allocate memory in the kernel module to copy the BIOS API
 			// Memory ha to be marked executable (PAGE_KERNEL_EXEC) otherwise you may get an exception (No Execute Bit)
 			bbapi->memory = __vmalloc(offset + 4096,GFP_KERNEL, PAGE_KERNEL_EXEC);
@@ -262,14 +214,14 @@ static long bbapi_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 		printk(KERN_ERR "Beckhoff BIOS API: Wrong Command\n");
 		return -EINVAL;
 	}
-	
+
 	// Copy data (BBAPI struct) from User Space to Kernel Module - if it fails, return error
 	if (copy_from_user(&bbstruct, (const void __user *) arg, sizeof(bbstruct)))
 	{
 		printk(KERN_ERR "Beckhoff BIOS API: copy_from_user failed\n");
 		return -EINVAL;
 	}
-	
+
 	mutex_lock(&mut);
 	result = bbapi_ioctl_mutexed(&g_bbapi, &bbstruct);
 	mutex_unlock(&mut);
@@ -277,7 +229,7 @@ static long bbapi_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 }
 
 /* Declare file operation function in struct */
-static struct file_operations file_ops = 
+static struct file_operations file_ops =
 {
 	.owner = THIS_MODULE,
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,35))
@@ -294,23 +246,23 @@ static int __init bbapi_init_module(void)
 		pr_info("BIOS API not available on this System\n");
 		return -1;
 	}
-	
+
 	// ToDo: Implement OS Function Pointer for different Functions (e.g. Read MSR)
-	
+
 	//Allocation of character driver numbers
 	return simple_cdev_init(&g_bbapi.dev, "chardev", "BBAPI", &file_ops);
 }
- 
+
 static void __exit bbapi_exit(void) /* Destructor */
 {
 	if (g_bbapi.memory != NULL) vfree(g_bbapi.memory);
 	simple_cdev_remove(&g_bbapi.dev);
     printk(KERN_INFO "Beckhoff BIOS API: BBAPI unregistered\n");
 }
- 
+
 module_init(bbapi_init_module);
 module_exit(bbapi_exit);
- 
+
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Heiko Wilke");
 MODULE_DESCRIPTION("Beckhoff BIOS API Driver");

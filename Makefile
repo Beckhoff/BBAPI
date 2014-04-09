@@ -1,7 +1,7 @@
 TARGET = bbapi
 EXTRA_DIR = /lib/modules/$(shell uname -r)/extra/
 obj-m += $(TARGET).o
-#$(TARGET)-objs := module.o netdev.o print.o update.o
+$(TARGET)-objs := api.o simple_cdev.o
 #ccflags-y := -DDEBUG
 
 all:
@@ -23,5 +23,5 @@ test: cxdisplay.c TcBaDevDef_gpl.h
 	sudo ./test.bin & sudo ./test.bin & sudo ./test.bin & sudo ./test.bin
 
 # indent the source files with the kernels Lindent script
-indent: bbapi.c
+indent: api.c simple_cdev.c simple_cdev.h
 	./Lindent $?
