@@ -43,8 +43,7 @@ static const uint64_t BBIOSAPI_SIGNATURE = 0x495041534F494242LL;	// API-String "
 
 // Variables for 64 Bit System
 #ifdef __x86_64__
-const unsigned int BBIOSAPI_SEARCHBSTR_LOW = 0x50414242;	// first 4 Byte of API-String "BBAPIX64"
-const unsigned int BBIOSAPI_SEARCHBSTR_HIGH = 0x34365849;	// last 4 Byte of API-String "BBAPIX64"
+static const uint64_t BBIOSAPI_SIGNATURE = 0x3436584950414242LL;	// API-String "BBAPIX64"
 #endif
 
 // Beckhoff BIOS API call function
@@ -70,7 +69,22 @@ __asm__("mov %%eax, %0": "=m"(ret):);
 #endif
 
 #ifdef __x86_64__
-// Currently not yet implemented
+static unsigned int bbapi_call(struct bbapi_object *const bbapi,
+			       const struct bbapi_struct *const cmd,
+			       unsigned int *bytes_written)
+{
+	unsigned int ret = 0;
+__asm__("movq %0, 0x30(%%rsp)\n\t": :"r"(bytes_written));
+__asm__("movl %0, 0x28(%%rsp)": :"r"(cmd->nOutBufferSize));
+__asm__("movq %0, 0x20(%%rsp)": :"r"(bbapi->out));
+__asm__("movq %0, %%r9": :"r"((uint64_t)cmd->nInBufferSize));
+__asm__("movq %0, %%r8": :"r"(bbapi->in));
+__asm__("movq %0, %%rdx": :"r"((uint64_t)cmd->nIndexOffset));
+__asm__("movq %0, %%rcx": :"r"((uint64_t)cmd->nIndexGroup));
+__asm__("call *%0": :"r"(bbapi->entry));
+__asm__("mov %%rax, %0": "=m"(ret):);
+	return ret;
+}
 #endif
 
 /**
@@ -132,6 +146,7 @@ static int bbapi_find_bios(struct bbapi_object *bbapi)
 		const uint64_t lword = ((uint64_t) high << 32 | low);
 		if (BBIOSAPI_SIGNATURE == lword) {
 			result = bbapi_copy_bios(bbapi, pos);
+			pr_info("BIOS found and copied.\n");
 			break;
 		}
 	}
@@ -145,26 +160,28 @@ static int bbapi_find_bios(struct bbapi_object *bbapi)
 static int bbapi_ioctl_mutexed(struct bbapi_object *const bbapi,
 			       const struct bbapi_struct *const cmd)
 {
-	unsigned int bytes_written;
+	unsigned int bytes_written = 0;
 	if (cmd->nInBufferSize > sizeof(bbapi->in)) {
+		pr_err("%s(): nInBufferSize invalid\n", __FUNCTION__);
 		return -EINVAL;
 	}
 	if (cmd->nOutBufferSize > sizeof(bbapi->out)) {
+		pr_err("%s(): nOutBufferSize: %d invalid\n", __FUNCTION__, cmd->nOutBufferSize);
 		return -EINVAL;
 	}
 	// BIOS can operate on kernel space buffers only -> make a temporary copy
 	if (copy_from_user(bbapi->in, cmd->pInBuffer, cmd->nInBufferSize)) {
-		printk(KERN_ERR "Beckhoff BIOS API: copy_from_user failed\n");
+		pr_err("%s(): copy_from_user() failed\n", __FUNCTION__);
 		return -EFAULT;
 	}
 	// Call the BIOS API
 	if (bbapi_call(bbapi, cmd, &bytes_written)) {
-		printk(KERN_ERR "Beckhoff BIOS API: ERROR\n");
+		pr_err("%s(): call to BIOS failed\n", __FUNCTION__);
 		return -EIO;
 	}
 	// Copy the BIOS output to the output buffer in user space
 	if (copy_to_user(cmd->pOutBuffer, bbapi->out, bytes_written)) {
-		printk(KERN_ERR "Beckhoff BIOS API: copy to user failed\n");
+		pr_err("%s(): copy_to_user() failed\n", __FUNCTION__);
 		return -EFAULT;
 	}
 	return 0;
@@ -174,16 +191,20 @@ static long bbapi_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 {
 	struct bbapi_struct bbstruct;
 	int result = -EINVAL;
+	if (!g_bbapi.entry) {
+		pr_warn("%s(): not initialized.\n", __FUNCTION__);
+		return -EINVAL;
+	}
 
 	// Check if IOCTL CMD matches BBAPI Driver Command
 	if (cmd != BBAPI_CMD) {
-		printk(KERN_ERR "Beckhoff BIOS API: Wrong Command\n");
+		pr_info("Wrong Command\n");
 		return -EINVAL;
 	}
 	// Copy data (BBAPI struct) from User Space to Kernel Module - if it fails, return error
 	if (copy_from_user
 	    (&bbstruct, (const void __user *)arg, sizeof(bbstruct))) {
-		printk(KERN_ERR "Beckhoff BIOS API: copy_from_user failed\n");
+		pr_err("copy_from_user failed\n");
 		return -EINVAL;
 	}
 

@@ -1,6 +1,5 @@
 /**
     Character Driver for Beckhoff BIOS API
-    Author: 	Heiko Wilke <h.wilke@beckhoff.com>
     Author: 	Patrick Brünn <p.bruenn@beckhoff.com>
     Copyright (C) 2013 - 2014  Beckhoff Automation GmbH
 
@@ -26,22 +25,8 @@
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
 #include <linux/mutex.h>
+#include "bbapi.h"
 #include "simple_cdev.h"
-
-/* BBAPI specific constants */
-#define BBIOSAPI_SIGNATURE_PHYS_START_ADDR 0xFFE00000	// Defining the Physical start address for the search
-#define BBIOSAPI_SIGNATURE_SEARCH_AREA 0x1FFFFF	// Defining the Memory search area size
-#define BBAPI_CMD							0x5000	// BIOS API Command number for IOCTL call
-#define BBAPI_BUFFER_SIZE 256
-
-struct bbapi_struct {
-	unsigned int nIndexGroup;
-	unsigned int nIndexOffset;
-	void __user *pInBuffer;
-	unsigned int nInBufferSize;
-	void __user *pOutBuffer;
-	unsigned int nOutBufferSize;
-};
 
 /**
  * struct bbapi_object - manage access to Beckhoff BIOS functions

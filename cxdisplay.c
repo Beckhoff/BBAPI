@@ -26,7 +26,9 @@
 #include <sys/types.h>
 #include <string.h>
 #include <fcntl.h>
+#include <stdint.h>
 
+#include "bbapi.h"
 #include "TcBaDevDef_gpl.h"
 
 #define FILE_PATH	"/dev/BBAPI" 	// Path to character Device
@@ -43,16 +45,6 @@
 #define CXPWRSUPP_BUTTON_STATE_UP			0x08
 #define CXPWRSUPP_BUTTON_STATE_SELECT		0x10
 
-// BBAPI struct which will be passed to IOCTL by reference
-struct bbapi_struct
-{
-	unsigned long nIndexGroup;
-	unsigned long nIndexOffset;
-	void* pInBuffer;
-	unsigned long nInBufferSize;
-	void* pOutBuffer;
-	unsigned long nOutBufferSize;
-}bbstruct;
 
 int ioctl_read(int file, unsigned long group, unsigned long offset, void* out, unsigned long size)
 {
@@ -305,10 +297,12 @@ int main(int argc, char *argv[])
 {
 	unsigned char button;
 	// Init BBAPI struct with values
-	bbstruct.nIndexGroup = 0x9000;			// IndexGroup see BBAPI documentation
-	bbstruct.nInBufferSize = STRING_SIZE;	
-	bbstruct.nOutBufferSize = 0;
-	bbstruct.pOutBuffer = NULL;
+	struct bbapi_struct bbstruct = {
+		.nIndexGroup = 0x9000,			// IndexGroup see BBAPI documentation
+		.nInBufferSize = STRING_SIZE,
+		.nOutBufferSize = 0,
+		.pOutBuffer = NULL,
+	};
 	int file = 0;							// file handle
 	
 	// Check number of arguments
