@@ -31,15 +31,15 @@
 /* BBAPI specific constants */
 #define BBIOSAPI_SIGNATURE_PHYS_START_ADDR 0xFFE00000	// Defining the Physical start address for the search
 #define BBIOSAPI_SIGNATURE_SEARCH_AREA 0x1FFFFF	// Defining the Memory search area size
-#define BBAPI_CMD							0x5000		// BIOS API Command number for IOCTL call
+#define BBAPI_CMD							0x5000	// BIOS API Command number for IOCTL call
 #define BBAPI_BUFFER_SIZE 256
 
 struct bbapi_struct {
 	unsigned int nIndexGroup;
 	unsigned int nIndexOffset;
-	void __user* pInBuffer;
+	void __user *pInBuffer;
 	unsigned int nInBufferSize;
-	void __user* pOutBuffer;
+	void __user *pOutBuffer;
 	unsigned int nOutBufferSize;
 };
 

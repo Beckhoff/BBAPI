@@ -23,5 +23,5 @@ test: cxdisplay.c TcBaDevDef_gpl.h
 	sudo ./test.bin & sudo ./test.bin & sudo ./test.bin & sudo ./test.bin
 
 # indent the source files with the kernels Lindent script
-indent: api.c simple_cdev.c simple_cdev.h
+indent: api.c api.h simple_cdev.c simple_cdev.h
 	./Lindent $?
