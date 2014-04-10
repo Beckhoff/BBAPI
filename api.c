@@ -77,10 +77,10 @@ static unsigned int bbapi_call(struct bbapi_object *const bbapi,
 __asm__("movq %0, 0x30(%%rsp)\n\t": :"r"(bytes_written));
 __asm__("movl %0, 0x28(%%rsp)": :"r"(cmd->nOutBufferSize));
 __asm__("movq %0, 0x20(%%rsp)": :"r"(bbapi->out));
-__asm__("movq %0, %%r9": :"r"((uint64_t)cmd->nInBufferSize));
+__asm__("movq %0, %%r9": :"r"((uint64_t) cmd->nInBufferSize));
 __asm__("movq %0, %%r8": :"r"(bbapi->in));
-__asm__("movq %0, %%rdx": :"r"((uint64_t)cmd->nIndexOffset));
-__asm__("movq %0, %%rcx": :"r"((uint64_t)cmd->nIndexGroup));
+__asm__("movq %0, %%rdx": :"r"((uint64_t) cmd->nIndexOffset));
+__asm__("movq %0, %%rcx": :"r"((uint64_t) cmd->nIndexGroup));
 __asm__("call *%0": :"r"(bbapi->entry));
 __asm__("mov %%rax, %0": "=m"(ret):);
 	return ret;
@@ -166,7 +166,8 @@ static int bbapi_ioctl_mutexed(struct bbapi_object *const bbapi,
 		return -EINVAL;
 	}
 	if (cmd->nOutBufferSize > sizeof(bbapi->out)) {
-		pr_err("%s(): nOutBufferSize: %d invalid\n", __FUNCTION__, cmd->nOutBufferSize);
+		pr_err("%s(): nOutBufferSize: %d invalid\n", __FUNCTION__,
+		       cmd->nOutBufferSize);
 		return -EINVAL;
 	}
 	// BIOS can operate on kernel space buffers only -> make a temporary copy
@@ -195,7 +196,6 @@ static long bbapi_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 		pr_warn("%s(): not initialized.\n", __FUNCTION__);
 		return -EINVAL;
 	}
-
 	// Check if IOCTL CMD matches BBAPI Driver Command
 	if (cmd != BBAPI_CMD) {
 		pr_info("Wrong Command\n");
