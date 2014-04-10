@@ -36,20 +36,12 @@
 /* Global Variables */
 static struct bbapi_object g_bbapi;
 
-// Variables for 32 Bit System
-#ifdef __i386__
+
+// BIOS API is called as with standard windows calling convention
+// for Linux we have to rebuild it using assembler
+#if defined(__i386__)
 static const uint64_t BBIOSAPI_SIGNATURE = 0x495041534F494242LL;	// API-String "BBIOSAPI"
-#endif
 
-// Variables for 64 Bit System
-#ifdef __x86_64__
-static const uint64_t BBIOSAPI_SIGNATURE = 0x3436584950414242LL;	// API-String "BBAPIX64"
-#endif
-
-// Beckhoff BIOS API call function
-// BIOS API is called as stdcall (standard windows calling convention)
-// Calling convention in Linux is cdecl so it has to be rebuild using assembler
-#ifdef __i386__
 static unsigned int bbapi_call(struct bbapi_object *const bbapi,
 			       const struct bbapi_struct *const cmd,
 			       unsigned int *bytes_written)
@@ -66,9 +58,9 @@ __asm__("call *%0": :"r"(bbapi->entry));
 __asm__("mov %%eax, %0": "=m"(ret):);
 	return ret;
 }
-#endif
+#elif defined(__x86_64__)
+static const uint64_t BBIOSAPI_SIGNATURE = 0x3436584950414242LL;	// API-String "BBAPIX64"
 
-#ifdef __x86_64__
 static unsigned int bbapi_call(struct bbapi_object *const bbapi,
 			       const struct bbapi_struct *const cmd,
 			       unsigned int *bytes_written)
