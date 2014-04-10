@@ -73,7 +73,39 @@ __asm__("mov %%eax, %0": "=m"(ret):);
 // Currently not yet implemented
 #endif
 
-/** bbapi_find_bios() - Find BIOS and copy it into RAM
+/**
+ * bbapi_copy_bios() - Copy BIOS from SPI flash into RAM
+ * @bbapi: pointer to a not initialized bbapi_object
+ * @pos: pointer to the BIOS identifier string in flash
+ *
+ * Directly behind the identifier string, the 32-Bit BIOS API
+ * function offset follows. This offset is the location of
+ * the BIOS API entry function and is located at most 4096
+ * bytes in front of the BIOS memory end. So we calculate
+ * the size of the BIOS and copy it from SPI Flash into RAM.
+ * Accessing the BIOS directly would cause bad realtime
+ * behaviour.
+ * Note: PAGE_KERNEL_EXEC omits the "no execute bit" exception
+ *
+ * Return: 0 for success, -ENOMEM if the allocation of kernel memory fails
+ */
+static int bbapi_copy_bios(struct bbapi_object *bbapi, void __iomem * pos)
+{
+	const uint32_t offset = ioread32(pos + 8);
+	const size_t size = offset + 4096;
+	bbapi->memory = __vmalloc(size, GFP_KERNEL, PAGE_KERNEL_EXEC);
+	if (bbapi->memory == NULL) {
+		pr_info("__vmalloc for Beckhoff BIOS API failed\n");
+		return -ENOMEM;
+	}
+	// copy BIOS API from SPI Flash into RAM to decrease performance impact on realtime applications
+	memcpy_fromio(bbapi->memory, pos, size);
+	bbapi->entry = bbapi->memory + offset;
+	return 0;
+}
+
+/**
+ * bbapi_find_bios() - Find BIOS in SPI flash and copy it into RAM
  * @bbapi: pointer to a not initialized bbapi_object
  *
  * If successful bbapi->memory and bbapi->entry point to the bios in RAM
@@ -82,6 +114,7 @@ __asm__("mov %%eax, %0": "=m"(ret):);
  */
 static int bbapi_find_bios(struct bbapi_object *bbapi)
 {
+	int result = -EFAULT;
 	// Try to remap IO Memory to search the BIOS API in the memory
 	void __iomem *const start = ioremap(BBIOSAPI_SIGNATURE_PHYS_START_ADDR,
 					    BBIOSAPI_SIGNATURE_SEARCH_AREA);
@@ -98,36 +131,12 @@ static int bbapi_find_bios(struct bbapi_object *bbapi)
 		const uint32_t high = ioread32(pos + 4);
 		const uint64_t lword = ((uint64_t) high << 32 | low);
 		if (BBIOSAPI_SIGNATURE == lword) {
-			/**
-			 * Directly behind the identifier string, the 32-Bit BIOS API
-			 * function offset follows. This offset is the location of
-			 * the BIOS API entry function and is located at most 4096
-			 * bytes in front of the BIOS memory end. So we calculate
-			 * the size of the BIOS and copy it from SPI Flash into RAM.
-			 * Accessing the BIOS directly would cause bad realtime
-			 * behaviour.
-			 * Note: PAGE_KERNEL_EXEC omits the "no execute bit" exception
-			 */
-			const uint32_t offset = ioread32(pos + 8);
-			const size_t size = offset + 4096;
-			bbapi->memory =
-			    __vmalloc(size, GFP_KERNEL, PAGE_KERNEL_EXEC);
-			if (bbapi->memory == NULL) {
-				pr_info
-				    ("__vmalloc for Beckhoff BIOS API failed\n");
-				break;
-			}
-			// copy BIOS API from SPI Flash into RAM to decrease performance impact on realtime applications
-			memcpy_fromio(bbapi->memory, pos, size);
-			bbapi->entry = bbapi->memory + offset;
-			iounmap(start);
-			pr_info("found and copied to: %p entry %p\n",
-				bbapi->memory, bbapi->entry);
-			return 0;
+			result = bbapi_copy_bios(bbapi, pos);
+			break;
 		}
 	}
 	iounmap(start);
-	return -1;
+	return result;
 }
 
 /**
