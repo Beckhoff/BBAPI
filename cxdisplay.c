@@ -326,7 +326,7 @@ int main(int argc, char *argv[])
 	cx_ups_show(file);
 	set_led(file, BIOSIOFFS_LED_SET_TC, 1);
 	set_led(file, BIOSIOFFS_LED_SET_USER, 1);
-	//bbapi_callbacks_install(file);
+	bbapi_callbacks_install(file);
 
 	if(file != -1) close(file);
 	return 0;
