@@ -293,92 +293,65 @@ void set_led(int file, unsigned long offset, uint8_t color)
 	ioctl_write(file, BIOSIGRP_LED, offset, &color, sizeof(color));
 }
 
+struct bbapi_callback {
+	uint8_t name[8];
+	uint64_t func;
+};
+
+#if 0
+extern uint64_t __asm_test(uint64_t reg, uint32_t *pHi, uint32_t *pLo);
+#define test __asm_test
+#else
+static uint64_t test(uint64_t reg, uint32_t *pHi, uint32_t *pLo)
+{
+	uint64_t code = 169;
+	uint64_t magic_1 = 0xfee1dead;
+	uint64_t magic_2 = 672274793;
+	uint64_t cmd = 0x1234567;
+__asm__("movq %0, %%rax": :"r"(code));
+__asm__("movq %0, %%rdi": :"r"(magic_1));
+__asm__("movq %0, %%rsi": :"r"(magic_2));
+__asm__("movq %0, %%rdx": :"r"(cmd));
+__asm__("syscall": :);
+	return 0;
+}
+#endif
+
+static struct bbapi_callback CALLBACKS[] = {
+	{{"READMSR\0"}, (uint64_t)&test},
+	{{"GETBUSDT"}, (uint64_t)&test},
+	{{"MAPMEM\0\0"}, (uint64_t)&test},
+	{{"UNMAPMEM"}, (uint64_t)&test},
+	{{"WRITEMSR"}, (uint64_t)&test},
+	{{"SETBUSDT"}, (uint64_t)&test},
+	{{"\0\0\0\0\0\0\0\0"}, 0},
+};
+
+void bbapi_callbacks_install(int file)
+{
+	ioctl_write(file, 0x00000000, 0x000000FE, &CALLBACKS, 5*sizeof(struct bbapi_callback));
+	pr_info("HUHU\n");
+}
+
 int main(int argc, char *argv[])
 {
-	unsigned char button;
-	// Init BBAPI struct with values
-	struct bbapi_struct bbstruct = {
-		.nIndexGroup = 0x9000,			// IndexGroup see BBAPI documentation
-		.nInBufferSize = STRING_SIZE,
-		.nOutBufferSize = 0,
-		.pOutBuffer = NULL,
-	};
-	int file = 0;							// file handle
-	
-	// Check number of arguments
-	if ((argc != 3) && (argc !=1))
-	{
-		printf("Wrong number of Arguments \nUsage: %s -lx 'String'\nx = 1 or 2 for corresponding Display Line\nNo Argument will only show serial number of CX1100\n", argv[0]);
+	int file = open(FILE_PATH, O_RDWR);
+	if ( -1 == file) {
+		pr_info("Open '%s' failed\n", FILE_PATH);
 		return -1;
 	}
-	
-	// Open BBAPI File
-	if ((file = open(FILE_PATH, O_RDWR)) == -1)
-	{
-		printf("Error open file\n");
-		return -1;
-	}
-	
-// Write Text to Display
 
-	if(argc ==3) {
-		if(strcmp(argv[1],"-l1")==0)
-		{
-			bbstruct.nIndexOffset = 0x61;
-		}
-		
-		if(strcmp(argv[1],"-l2")==0)
-		{
-			bbstruct.nIndexOffset = 0x62;
-		}
-		// Check if string length matches for display
-		if (strlen(argv[2]) > STRING_SIZE)
-		{
-			printf("String too large for Display, max. 17 characters \n");
-			return -1;
-		}
-		// Set pointer for string to input argument
-		bbstruct.pInBuffer = argv[2];
-		
-		// IOCTL Call
-		if (ioctl(file, BBAPI_CMD, &bbstruct) == -1)
-		{
-			printf("IOCTL ERROR\n");
-			if (file != 0) close(file);
-			return -1;
-		}
-	}
-
-// Read Button State from Power Supply
-	bbstruct.nIndexGroup = 0x9000;
-	bbstruct.nIndexOffset = 0x63;
-	bbstruct.pInBuffer = NULL;
-	bbstruct.nInBufferSize = 0;
-	bbstruct.pOutBuffer = &button;
-	bbstruct.nOutBufferSize = sizeof(button);
-	
-// Do not call the functions for CX2100 too frequently because commands are send over SMBus to the Power Supply
-// And the SMBus has only a limited bandwidth
-// Recommendation: 50ms cycle time for periodic updated of input buttons.
-	// IOCTL call
-	if (ioctl(file, BBAPI_CMD, &bbstruct) == -1)
-	{
-		printf("IOCTL ERROR\n");
-		if (file != 0) close(file);
-		return -1;
-	}
-	printf("CX1100 Button State: 0x%x\n", button);
-
+	//bbapi_callbacks_install(file);
 	bios_show(file);
 	sensors_show(file);
 	cx_pwrctrl_show(file);
 	cx_sups_show(file);
 	cx_power_supply_show(file);
 	cx_ups_show(file);
-
 	set_led(file, BIOSIOFFS_LED_SET_TC, 1);
 	set_led(file, BIOSIOFFS_LED_SET_USER, 1);
+	bbapi_callbacks_install(file);
 
-	if (file != 0) close(file);
+	if(file != -1) close(file);
 	return 0;
 }

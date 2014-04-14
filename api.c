@@ -146,6 +146,46 @@ static int bbapi_find_bios(struct bbapi_object *bbapi)
 	return result;
 }
 
+struct bbapi_callback {
+	uint8_t name[8];
+	uint64_t func;
+};
+
+uint32_t _fake_readmsr(uint32_t a, uint32_t* b, uint32_t* c);
+uint32_t _fake_setbusdata(uint32_t type, uint32_t bus, uint32_t dev, uint32_t func, uint32_t reg, void* dest, uint32_t size);
+
+static struct bbapi_callback CALLBACKS[] = {
+	{{"READMSR\0"}, (uint64_t)_fake_readmsr},
+	{{"GETBUSDT"}, (uint64_t)_fake_readmsr},
+	{{"MAPMEM\0\0"}, (uint64_t)_fake_readmsr},
+	{{"UNMAPMEM"}, (uint64_t)_fake_readmsr},
+	{{"WRITEMSR"}, (uint64_t)_fake_readmsr},
+	{{"SETBUSDT"}, (uint64_t)_fake_readmsr},
+	{{"\0\0\0\0\0\0\0\0"}, 0},
+};
+
+static void bbapi_init_callbacks(struct bbapi_object *const bbapi)
+{
+	unsigned int bytes_written = 0;
+	struct bbapi_struct cmd = {
+		.nIndexGroup = 0x00000000, //BIOSIOFFS_GENERAL,
+		.nIndexOffset = 0x000000FE, //BIOSIOFFS_GENERAL_LOADRESOURCEDATA
+		.pInBuffer = NULL,
+		.nInBufferSize = 5*sizeof(struct bbapi_callback),
+		.pOutBuffer = NULL,
+		.nOutBufferSize = 0,
+	};
+	BUILD_BUG_ON(sizeof(CALLBACKS) > sizeof(bbapi->in));
+	mutex_lock(&bbapi->mutex);
+	memcpy(bbapi->in, CALLBACKS, sizeof(CALLBACKS));
+
+	if (bbapi_call(bbapi, &cmd, &bytes_written)) {
+		pr_err("%s(): call to BIOS failed\n", __FUNCTION__);
+	}
+
+	mutex_unlock(&bbapi->mutex);
+}
+
 /**
  * You have to hold the lock on bbapi->mutex when calling this function!!!
  */
@@ -235,6 +275,7 @@ static int __init bbapi_init_module(void)
 		return -1;
 	}
 	// ToDo: Implement OS Function Pointer for different Functions (e.g. Read MSR)
+	//bbapi_init_callbacks(&g_bbapi);
 
 	//Allocation of character driver numbers
 	return simple_cdev_init(&g_bbapi.dev, "chardev", "BBAPI", &file_ops);
