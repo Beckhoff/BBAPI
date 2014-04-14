@@ -158,6 +158,7 @@ static struct bbapi_callback CALLBACKS[] = {
 
 static void bbapi_init_callbacks(struct bbapi_object *const bbapi)
 {
+	static int initialized = 0;
 	unsigned int bytes_written = 0;
 	struct bbapi_struct cmd = {
 		.nIndexGroup = 0x00000000, //BIOSIOFFS_GENERAL,
@@ -168,14 +169,19 @@ static void bbapi_init_callbacks(struct bbapi_object *const bbapi)
 		.nOutBufferSize = 0,
 	};
 	BUILD_BUG_ON(sizeof(CALLBACKS) > sizeof(bbapi->in));
+	BUILD_BUG_ON(5*sizeof(struct bbapi_callback) > sizeof(bbapi->in));
+	if (initialized)
+		return;
+
 	mutex_lock(&bbapi->mutex);
-	memcpy(bbapi->in, CALLBACKS, sizeof(CALLBACKS));
+	memcpy(bbapi->in, &CALLBACKS, 5*sizeof(struct bbapi_callback));//sizeof(CALLBACKS));
 
 	if (bbapi_call(bbapi, &cmd, &bytes_written)) {
 		pr_err("%s(): call to BIOS failed\n", __FUNCTION__);
 	}
-
 	mutex_unlock(&bbapi->mutex);
+	initialized = 1;
+	pr_info("%s(): done.\n", __FUNCTION__);
 }
 
 /**
@@ -225,6 +231,10 @@ static long bbapi_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 		pr_info("Wrong Command\n");
 		return -EINVAL;
 	}
+
+	// Init callbacks in bbapi_init_module() would crash the kernel so we do it here
+	bbapi_init_callbacks(&g_bbapi);
+
 	// Copy data (BBAPI struct) from User Space to Kernel Module - if it fails, return error
 	if (copy_from_user
 	    (&bbstruct, (const void __user *)arg, sizeof(bbstruct))) {
@@ -266,8 +276,6 @@ static int __init bbapi_init_module(void)
 		pr_info("BIOS API not available on this System\n");
 		return -1;
 	}
-	// ToDo: Implement OS Function Pointer for different Functions (e.g. Read MSR)
-	//bbapi_init_callbacks(&g_bbapi);
 
 	//Allocation of character driver numbers
 	return simple_cdev_init(&g_bbapi.dev, "chardev", "BBAPI", &file_ops);
