@@ -41,4 +41,11 @@ struct bbapi_struct {
 	void __user *pOutBuffer;
 	uint32_t nOutBufferSize;
 };
+
+struct bbapi_callback {
+	uint8_t name[8];
+	uint64_t func;
+};
+
+extern uint32_t __do_nop(uint32_t reg, uint32_t *hi, uint32_t *lo);
 #endif /* #ifndef __BBAPI_H_ */

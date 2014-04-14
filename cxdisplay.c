@@ -293,37 +293,13 @@ void set_led(int file, unsigned long offset, uint8_t color)
 	ioctl_write(file, BIOSIGRP_LED, offset, &color, sizeof(color));
 }
 
-struct bbapi_callback {
-	uint8_t name[8];
-	uint64_t func;
-};
-
-#if 0
-extern uint64_t __asm_test(uint64_t reg, uint32_t *pHi, uint32_t *pLo);
-#define test __asm_test
-#else
-static uint64_t test(uint64_t reg, uint32_t *pHi, uint32_t *pLo)
-{
-	uint64_t code = 169;
-	uint64_t magic_1 = 0xfee1dead;
-	uint64_t magic_2 = 672274793;
-	uint64_t cmd = 0x1234567;
-__asm__("movq %0, %%rax": :"r"(code));
-__asm__("movq %0, %%rdi": :"r"(magic_1));
-__asm__("movq %0, %%rsi": :"r"(magic_2));
-__asm__("movq %0, %%rdx": :"r"(cmd));
-__asm__("syscall": :);
-	return 0;
-}
-#endif
-
 static struct bbapi_callback CALLBACKS[] = {
-	{{"READMSR\0"}, (uint64_t)&test},
-	{{"GETBUSDT"}, (uint64_t)&test},
-	{{"MAPMEM\0\0"}, (uint64_t)&test},
-	{{"UNMAPMEM"}, (uint64_t)&test},
-	{{"WRITEMSR"}, (uint64_t)&test},
-	{{"SETBUSDT"}, (uint64_t)&test},
+	{{"READMSR\0"}, (uint64_t)&__do_nop},
+	{{"GETBUSDT"}, (uint64_t)&__do_nop},
+	{{"MAPMEM\0\0"}, (uint64_t)&__do_nop},
+	{{"UNMAPMEM"}, (uint64_t)&__do_nop},
+	{{"WRITEMSR"}, (uint64_t)&__do_nop},
+	{{"SETBUSDT"}, (uint64_t)&__do_nop},
 	{{"\0\0\0\0\0\0\0\0"}, 0},
 };
 
@@ -350,7 +326,7 @@ int main(int argc, char *argv[])
 	cx_ups_show(file);
 	set_led(file, BIOSIOFFS_LED_SET_TC, 1);
 	set_led(file, BIOSIOFFS_LED_SET_USER, 1);
-	bbapi_callbacks_install(file);
+	//bbapi_callbacks_install(file);
 
 	if(file != -1) close(file);
 	return 0;

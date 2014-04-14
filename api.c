@@ -146,21 +146,13 @@ static int bbapi_find_bios(struct bbapi_object *bbapi)
 	return result;
 }
 
-struct bbapi_callback {
-	uint8_t name[8];
-	uint64_t func;
-};
-
-uint32_t _fake_readmsr(uint32_t a, uint32_t* b, uint32_t* c);
-uint32_t _fake_setbusdata(uint32_t type, uint32_t bus, uint32_t dev, uint32_t func, uint32_t reg, void* dest, uint32_t size);
-
 static struct bbapi_callback CALLBACKS[] = {
-	{{"READMSR\0"}, (uint64_t)_fake_readmsr},
-	{{"GETBUSDT"}, (uint64_t)_fake_readmsr},
-	{{"MAPMEM\0\0"}, (uint64_t)_fake_readmsr},
-	{{"UNMAPMEM"}, (uint64_t)_fake_readmsr},
-	{{"WRITEMSR"}, (uint64_t)_fake_readmsr},
-	{{"SETBUSDT"}, (uint64_t)_fake_readmsr},
+	{{"READMSR\0"}, (uint64_t)&__do_nop},
+	{{"GETBUSDT"}, (uint64_t)&__do_nop},
+	{{"MAPMEM\0\0"}, (uint64_t)&__do_nop},
+	{{"UNMAPMEM"}, (uint64_t)&__do_nop},
+	{{"WRITEMSR"}, (uint64_t)&__do_nop},
+	{{"SETBUSDT"}, (uint64_t)&__do_nop},
 	{{"\0\0\0\0\0\0\0\0"}, 0},
 };
 
