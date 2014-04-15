@@ -80,9 +80,9 @@ T bbapi_read(int file, unsigned long group, unsigned long offset)
 
 using namespace fructose;
 
-struct TestBios
+struct BiosApi
 {
-	TestBios(unsigned long group)
+	BiosApi(unsigned long group)
 		: m_File(open(FILE_PATH, O_RDWR)),
 		m_Group(group)
 	{
@@ -90,7 +90,7 @@ struct TestBios
 			throw new std::runtime_error("Open device file failed!");
 	}
 
-	~TestBios()
+	~BiosApi()
 	{
 		close(m_File);
 	};
@@ -124,9 +124,9 @@ void print_mem(const unsigned char *p, size_t lines)
 	}
 }
 
-struct TestGeneral : public TestBios, fructose::test_base<TestGeneral>
+struct TestGeneral : public BiosApi, fructose::test_base<TestGeneral>
 {
-	TestGeneral() : TestBios(BIOSIGRP_GENERAL) {};
+	TestGeneral() : BiosApi(BIOSIGRP_GENERAL) {};
 
 	void test_boardinfo(const std::string& test_name)
 	{
@@ -170,9 +170,9 @@ const uint8_t TestGeneral::EXPECTED_BOARDNAME[16] = CONFIG_EXPECTED_BBAPI_BOARDN
 const uint8_t TestGeneral::EXPECTED_PLATFORM = CONFIG_EXPECTED_BBAPI_PLATFORM;
 const BADEVICE_VERSION TestGeneral::EXPECTED_VERSION {CONFIG_EXPECTED_BBAPI_VERSION};
 
-struct TestSensors : public TestBios, fructose::test_base<TestSensors>
+struct TestSensors : public BiosApi, fructose::test_base<TestSensors>
 {
-	TestSensors() : TestBios(BIOSIGRP_SYSTEM) {};
+	TestSensors() : BiosApi(BIOSIGRP_SYSTEM) {};
 
 	void test_sensors(const std::string& test_name)
 	{
@@ -187,15 +187,13 @@ private:
 	void show_sensor(uint32_t sensor)
 	{
 		SENSORINFO info;
-		if (-1 == ioctl_read(sensor, &info, sizeof(info))) {
-			fructose_fail("Read sensor value");
-		}
-		fructose_loop_assert(sensor, INFOVALUE_STATUS_OK == info.nomVal.status);
+		fructose_assert_ne(-1, ioctl_read(sensor, &info, sizeof(info)));
+		fructose_loop_assert(sensor, INFOVALUE_STATUS_UNUSED != info.readVal.status);
 
-		pr_info("%02u: %12s %s %s %u (%u/%u)\n",
+		pr_info("%02u: %12s %s %s val:%u min:%u max:%u nom:%u)\n",
 			sensor, info.desc,
 			LOCATIONCAPS[info.eType].name, PROBECAPS[info.eType].name,
-			info.nomVal.value, info.minVal.value, info.maxVal.value);
+			info.readVal.value, info.minVal.value, info.maxVal.value, info.nomVal.value);
 	}
 };
 
