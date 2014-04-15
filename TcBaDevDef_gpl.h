@@ -23,6 +23,7 @@
 #ifndef WINDOWS
 typedef char TCHAR;
 #define _T(x) x
+#pragma GCC diagnostic ignored "-Wwrite-strings"
 #endif
 
 ////////////////////////////////////////////////////////////////
@@ -273,4 +274,8 @@ typedef struct TSensorInfo
 	#define BIOSIOFFS_CXUPS_SETLASTBATTCHANGEDATE		0x00000098	// Sets last battery change date W:4, R:0
 	#define BIOSIOFFS_CXUPS_GETBATTRATEDCAPACITY			0x00000099	// Get rated capacity W:0, R:4 [mAh]
 	#define BIOSIOFFS_CXUPS_GETSMBUSADDRESS				0x000000F0	// Get SMBus address W:0, R:2 (hHost, address)
+
+#ifndef WINDOWS
+#pragma GCC diagnostic warning "-Wwrite-strings"
+#endif
 #endif /* #ifndef _TCBADEVDEF_GPL_H_ */

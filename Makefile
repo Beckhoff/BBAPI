@@ -22,6 +22,9 @@ clean:
 test: cxdisplay.c lowlevel.S TcBaDevDef_gpl.h
 	gcc cxdisplay.c lowlevel.S -o test.bin -Wall -pedantic -std=c99
 
+unittest: unittest.cpp TcBaDevDef_gpl.h
+	g++ unittest.cpp -o unittest.bin -Wall -pedantic -std=c++0x -I../
+
 new_test: test.c lowlevel.S
 	gcc lowlevel.S test.c -o test.bin -Wall -pedantic -std=c99
 

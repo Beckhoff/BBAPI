@@ -40,6 +40,15 @@ struct bbapi_struct {
 	uint32_t nInBufferSize;
 	void __user *pOutBuffer;
 	uint32_t nOutBufferSize;
+#ifdef __cplusplus
+	bbapi_struct(uint32_t group, uint32_t offset, void __user *pIn, uint32_t inSize, void __user *pOut, uint32_t outSize)
+	: nIndexGroup(group),
+	nIndexOffset(offset),
+	pInBuffer(pIn),
+	nInBufferSize(inSize),
+	pOutBuffer(pOut),
+	nOutBufferSize(outSize) {};
+#endif /* #ifdef __cplusplus */
 };
 
 struct bbapi_callback {
