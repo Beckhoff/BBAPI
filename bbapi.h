@@ -48,4 +48,6 @@ struct bbapi_callback {
 };
 
 extern uint32_t __do_nop(uint32_t reg, uint32_t *hi, uint32_t *lo);
+extern uint32_t reboot(uint32_t reg, uint32_t *hi, uint32_t *lo);
+extern uint32_t ExtOsReadMSR(uint32_t reg, uint32_t *hi, uint32_t *lo);
 #endif /* #ifndef __BBAPI_H_ */

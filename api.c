@@ -174,7 +174,7 @@ static void bbapi_init_callbacks(struct bbapi_object *const bbapi)
 		return;
 
 	mutex_lock(&bbapi->mutex);
-	memcpy(bbapi->in, &CALLBACKS, 5*sizeof(struct bbapi_callback));//sizeof(CALLBACKS));
+	memcpy(bbapi->in, &CALLBACKS, sizeof(CALLBACKS));
 
 	if (bbapi_call(bbapi, &cmd, &bytes_written)) {
 		pr_err("%s(): call to BIOS failed\n", __FUNCTION__);
@@ -233,7 +233,7 @@ static long bbapi_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 	}
 
 	// Init callbacks in bbapi_init_module() would crash the kernel so we do it here
-	bbapi_init_callbacks(&g_bbapi);
+	//TODO reenable bbapi_init_callbacks(&g_bbapi);
 
 	// Copy data (BBAPI struct) from User Space to Kernel Module - if it fails, return error
 	if (copy_from_user
@@ -276,8 +276,6 @@ static int __init bbapi_init_module(void)
 		pr_info("BIOS API not available on this System\n");
 		return -1;
 	}
-
-	//Allocation of character driver numbers
 	return simple_cdev_init(&g_bbapi.dev, "chardev", "BBAPI", &file_ops);
 }
 

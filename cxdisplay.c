@@ -294,7 +294,7 @@ void set_led(int file, unsigned long offset, uint8_t color)
 }
 
 static struct bbapi_callback CALLBACKS[] = {
-	{{"READMSR\0"}, (uint64_t)&__do_nop},
+	{{"READMSR\0"}, (uint64_t)&ExtOsReadMSR},
 	{{"GETBUSDT"}, (uint64_t)&__do_nop},
 	{{"MAPMEM\0\0"}, (uint64_t)&__do_nop},
 	{{"UNMAPMEM"}, (uint64_t)&__do_nop},
@@ -306,7 +306,7 @@ static struct bbapi_callback CALLBACKS[] = {
 void bbapi_callbacks_install(int file)
 {
 	ioctl_write(file, 0x00000000, 0x000000FE, &CALLBACKS, 5*sizeof(struct bbapi_callback));
-	pr_info("HUHU\n");
+	pr_info("%s done.\n", __FUNCTION__);
 }
 
 int main(int argc, char *argv[])
@@ -317,8 +317,9 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	//bbapi_callbacks_install(file);
+	bbapi_callbacks_install(file);
 	bios_show(file);
+#if 1
 	sensors_show(file);
 	cx_pwrctrl_show(file);
 	cx_sups_show(file);
@@ -327,6 +328,7 @@ int main(int argc, char *argv[])
 	set_led(file, BIOSIOFFS_LED_SET_TC, 1);
 	set_led(file, BIOSIOFFS_LED_SET_USER, 1);
 	//bbapi_callbacks_install(file);
+#endif
 
 	if(file != -1) close(file);
 	return 0;

@@ -20,7 +20,8 @@
 
 .section .text
 .globl reboot
-reboot:	movq $169, %rax                 #sys_reboot
+reboot:
+		movq $169, %rax                 #sys_reboot
         movq $0xfee1dead, %rdi          #magic_1
         movq $672274793, %rsi           #magic_2
         movq $0x1234567, %rdx           #cmd
@@ -31,14 +32,17 @@ __do_nop:
 		ret
 
 .globl ExtOsReadMSR
+# extern uint32_t ExtOsReadMSR(uint32_t reg, uint32_t *hi, uint32_t *lo);
+# RCX:reg, RDX:&hi, R8:&lo
 ExtOsReadMSR:
-	movq $1, %rax                   #sys_write
-	movq $2, %rdi                   #STDOUT
-	movq $MSG_ExtOsReadMSR, %rsi    #buffer
-	movq $15, %rdx                  #length
-	syscall
-	xor %rax, %rax
-	ret
+					rdmsr
+					movl %eax, (%r8)
+					xor %rax, %rax
+					cmp %rax, %rdx				# check %rdx for NULL
+					je ExtOsReadMSR_exit
+					movl %eax, (%rdx)
+ExtOsReadMSR_exit:
+					ret
 
 .globl ExtOsWriteMSR
 ExtOsWriteMSR:
