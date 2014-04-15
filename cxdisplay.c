@@ -293,7 +293,8 @@ void set_led(int file, unsigned long offset, uint8_t color)
 	ioctl_write(file, BIOSIGRP_LED, offset, &color, sizeof(color));
 }
 
-static struct bbapi_callback CALLBACKS[] = {
+#if defined(__x86_64__)
+static const struct bbapi_callback CALLBACKS[] = {
 	{{"READMSR\0"}, (uint64_t)&ExtOsReadMSR},
 	{{"GETBUSDT"}, (uint64_t)&__do_nop},
 	{{"MAPMEM\0\0"}, (uint64_t)&__do_nop},
@@ -308,6 +309,7 @@ void bbapi_callbacks_install(int file)
 	ioctl_write(file, 0x00000000, 0x000000FE, &CALLBACKS, 5*sizeof(struct bbapi_callback));
 	pr_info("%s done.\n", __FUNCTION__);
 }
+#endif
 
 int main(int argc, char *argv[])
 {
@@ -317,7 +319,7 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	bbapi_callbacks_install(file);
+	//bbapi_callbacks_install(file);
 	bios_show(file);
 #if 1
 	sensors_show(file);

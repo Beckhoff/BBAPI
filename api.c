@@ -146,7 +146,8 @@ static int bbapi_find_bios(struct bbapi_object *bbapi)
 	return result;
 }
 
-static struct bbapi_callback CALLBACKS[] = {
+#if defined(__x86_64__)
+static const struct bbapi_callback CALLBACKS[] = {
 	{{"READMSR\0"}, (uint64_t)&__do_nop},
 	{{"GETBUSDT"}, (uint64_t)&__do_nop},
 	{{"MAPMEM\0\0"}, (uint64_t)&__do_nop},
@@ -183,6 +184,7 @@ static void bbapi_init_callbacks(struct bbapi_object *const bbapi)
 	initialized = 1;
 	pr_info("%s(): done.\n", __FUNCTION__);
 }
+#endif
 
 /**
  * You have to hold the lock on bbapi->mutex when calling this function!!!

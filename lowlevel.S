@@ -19,6 +19,8 @@
 
 
 .section .text
+
+#if defined(__x86_64__)
 .globl reboot
 reboot:
 		movq $169, %rax                 #sys_reboot
@@ -26,6 +28,7 @@ reboot:
         movq $672274793, %rsi           #magic_2
         movq $0x1234567, %rdx           #cmd
         syscall
+#endif
 
 .globl __do_nop
 __do_nop:
@@ -36,28 +39,14 @@ __do_nop:
 # RCX:reg, RDX:&hi, R8:&lo
 ExtOsReadMSR:
 					rdmsr
+#if defined(__i386__)
+					xor %eax, %eax
+#else
 					movl %eax, (%r8)
 					xor %rax, %rax
 					cmp %rax, %rdx				# check %rdx for NULL
 					je ExtOsReadMSR_exit
 					movl %eax, (%rdx)
+#endif
 ExtOsReadMSR_exit:
 					ret
-
-.globl ExtOsWriteMSR
-ExtOsWriteMSR:
-	movq $1, %rax                   #sys_write
-	movq $2, %rdi                   #STDOUT
-	movq $MSG_ExtOsWriteMSR, %rsi   #buffer
-	movq $17, %rdx                  #length
-	syscall
-	xor %rax, %rax
-	ret
-
-	movq $60, %rax          #sys_exit
-	xor %rdi, %rdi
-	syscall
-
-.section .data
-	MSG_ExtOsReadMSR: .ascii "ExtOsReadMSR()\n"
-	MSG_ExtOsWriteMSR: .ascii "ExtOsWriteMSR()\n"
