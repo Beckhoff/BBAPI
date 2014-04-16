@@ -37,7 +37,12 @@
 
 #define FILE_PATH	"/dev/BBAPI" 	// Path to character Device
 
+#define DEBUG 1
+#if DEBUG
 #define pr_info printf
+#else
+#define pr_info(...)
+#endif
 
 #define STRING_SIZE 17				// Size of String for Display
 #define BBAPI_CMD 0x5000			// BIOS API Command number for IOCTL call
@@ -110,7 +115,7 @@ protected:
 	const int m_File;
 	const unsigned long m_Group;
 };
-void print_mem(const unsigned char *p, size_t lines)
+static void print_mem(const unsigned char *p, size_t lines)
 {
 	pr_info("mem at: %p\n", p);
 	pr_info(" 0  1  2  3  4  5  6  7   8  9  A  B  C  D  E  F\n");
@@ -132,31 +137,31 @@ struct TestGeneral : public BiosApi, fructose::test_base<TestGeneral>
 	{
 		BADEVICE_MBINFO info;
 		ioctl_read(BIOSIOFFS_GENERAL_GETBOARDINFO, &info, sizeof(info));
-		pr_info("%s hw: %d v%d.%d\n", info.MBName, info.MBRevision, info.biosMajVersion, info.biosMinVersion);
 		fructose_assert_same_data(&TestGeneral::EXPECTED_BOARDINFO, &info, sizeof(info));
+		pr_info("%s hw: %d v%d.%d\n", info.MBName, info.MBRevision, info.biosMajVersion, info.biosMinVersion);
 	}
 
 	void test_boardname(const std::string& test_name)
 	{
 		char boardname[16] = {0};
 		ioctl_read(BIOSIOFFS_GENERAL_GETBOARDNAME, &boardname, sizeof(boardname));
-		pr_info("Board: %s\n", boardname);
 		fructose_assert_same_data(&TestGeneral::EXPECTED_BOARDNAME, &boardname, sizeof(boardname));
+		pr_info("Board: %s\n", boardname);
 	}
 
 	void test_platform(const std::string& test_name)
 	{
 		uint8_t platform = read<uint8_t>(BIOSIOFFS_GENERAL_GETPLATFORMINFO);
-		pr_info("platform is %s bit\n", platform ? "64" : "32");
 		fructose_assert_eq(EXPECTED_PLATFORM, platform);
+		pr_info("platform is %s bit\n", platform ? "64" : "32");
 	}
 
 	void test_version(const std::string& test_name)
 	{
 		BADEVICE_VERSION version;
 		ioctl_read(BIOSIOFFS_GENERAL_VERSION, &version, sizeof(version));
-		pr_info("BIOS API ver.: %d rev.: %d build: %d\n", version.version, version.revision, version.build);
 		fructose_assert_same_data(&TestGeneral::EXPECTED_VERSION, &version, sizeof(version));
+		pr_info("BIOS API ver.: %d rev.: %d build: %d\n", version.version, version.revision, version.build);
 	}
 
 private:
@@ -165,10 +170,10 @@ private:
 	static const uint8_t EXPECTED_PLATFORM;
 	static const BADEVICE_VERSION EXPECTED_VERSION;
 };
-const BADEVICE_MBINFO TestGeneral::EXPECTED_BOARDINFO {CONFIG_EXPECTED_BBAPI_BOARDINFO};
+const BADEVICE_MBINFO TestGeneral::EXPECTED_BOARDINFO = CONFIG_EXPECTED_BBAPI_BOARDINFO;
 const uint8_t TestGeneral::EXPECTED_BOARDNAME[16] = CONFIG_EXPECTED_BBAPI_BOARDNAME;
 const uint8_t TestGeneral::EXPECTED_PLATFORM = CONFIG_EXPECTED_BBAPI_PLATFORM;
-const BADEVICE_VERSION TestGeneral::EXPECTED_VERSION {CONFIG_EXPECTED_BBAPI_VERSION};
+const BADEVICE_VERSION TestGeneral::EXPECTED_VERSION = CONFIG_EXPECTED_BBAPI_VERSION;
 
 struct TestSensors : public BiosApi, fructose::test_base<TestSensors>
 {
@@ -197,6 +202,70 @@ private:
 	}
 };
 
+
+#define DO_TEST(INDEX_OFFSET, EXPECTATION) \
+	test_generic<sizeof(EXPECTATION)>(#INDEX_OFFSET, INDEX_OFFSET, &(EXPECTATION))
+
+struct TestPwrCtrl : public BiosApi, fructose::test_base<TestPwrCtrl>
+{
+	TestPwrCtrl() : BiosApi(BIOSIGRP_PWRCTRL) {};
+
+	void test_bl_revision(const std::string& test_name)
+	{
+		test_revision(test_name, BIOSIOFFS_PWRCTRL_BOOTLDR_REV, &TestPwrCtrl::EXPECTED_BL_REVISION);
+	}
+
+	void test_fw_revision(const std::string& test_name)
+	{
+		test_revision(test_name, BIOSIOFFS_PWRCTRL_FIRMWARE_REV, &TestPwrCtrl::EXPECTED_FW_REVISION);
+	}
+
+	void test_dual_values(const std::string& test_name)
+	{
+		DO_TEST(BIOSIOFFS_PWRCTRL_BOARD_POSITION, TestPwrCtrl::EXPECTED_POSITION);
+		DO_TEST(BIOSIOFFS_PWRCTRL_DEVICE_ID, TestPwrCtrl::EXPECTED_DEVICE_ID);
+#if 0
+	ioctl_read(file, BIOSIGRP_PWRCTRL, BIOSIOFFS_PWRCTRL_BOOTLDR_REV, &bl_rev, sizeof(bl_rev));
+	ioctl_read(file, BIOSIGRP_PWRCTRL, BIOSIOFFS_PWRCTRL_FIRMWARE_REV, &fw_rev, sizeof(fw_rev));
+	ioctl_read(file, BIOSIGRP_PWRCTRL, BIOSIOFFS_PWRCTRL_BOARD_TEMP, &temperature, sizeof(temperature));
+	ioctl_read(file, BIOSIGRP_PWRCTRL, BIOSIOFFS_PWRCTRL_INPUT_VOLTAGE, &voltage, sizeof(voltage));
+	ioctl_read(file, BIOSIGRP_PWRCTRL, BIOSIOFFS_PWRCTRL_SERIAL_NUMBER, &serial, sizeof(serial));
+	ioctl_read(file, BIOSIGRP_PWRCTRL, BIOSIOFFS_PWRCTRL_PRODUCTION_DATE, &manufactured, sizeof(manufactured));
+	ioctl_read(file, BIOSIGRP_PWRCTRL, BIOSIOFFS_PWRCTRL_SHUTDOWN_REASON, &shutdown, sizeof(shutdown));
+	ioctl_read(file, BIOSIGRP_PWRCTRL, BIOSIOFFS_PWRCTRL_TEST_NUMBER, &test, sizeof(test));
+#endif
+		fructose_fail("TODO complete testcase implementation");
+	}
+
+private:
+	static const uint8_t EXPECTED_BL_REVISION[3];
+	static const uint8_t EXPECTED_FW_REVISION[3];
+	static const uint8_t EXPECTED_DEVICE_ID;
+
+	static const uint8_t EXPECTED_POSITION;
+
+	template<size_t N>
+	void test_generic(const std::string& nIndexOffset, const unsigned long offset, const void *const expectedValue)
+	{
+		uint8_t readValue[N];
+		memset(readValue, 0, sizeof(readValue));
+		fructose_assert_ne(-1, ioctl_read(offset, &readValue, sizeof(readValue)));
+		fructose_loop_assert(nIndexOffset, 0 == memcmp(expectedValue, &readValue, sizeof(readValue)));
+	}
+
+	void test_revision(const std::string& test_name, unsigned long indexOffset, const uint8_t (*const expectedValue)[3])
+	{
+		uint8_t rev[3];
+		fructose_assert_ne(-1, ioctl_read(indexOffset, &rev, sizeof(rev)));
+		fructose_assert_same_data(expectedValue, &rev, sizeof(rev));
+		pr_info("%s:      %u.%u-%u\n", test_name.c_str(), rev[0], rev[1], rev[2]);
+	}
+};
+const uint8_t TestPwrCtrl::EXPECTED_BL_REVISION[3] = CONFIG_EXPECTED_BBAPI_BL_REVISION;
+const uint8_t TestPwrCtrl::EXPECTED_FW_REVISION[3] = CONFIG_EXPECTED_BBAPI_FW_REVISION;
+const uint8_t TestPwrCtrl::EXPECTED_DEVICE_ID = CONFIG_EXPECTED_BBAPI_PWRCTRL_DEVICE_ID;
+const uint8_t TestPwrCtrl::EXPECTED_POSITION = CONFIG_EXPECTED_BBAPI_PWRCTRL_POSITION;
+
 void cx_pwrctrl_show(int file)
 {
 	char serial[16];
@@ -207,6 +276,8 @@ void cx_pwrctrl_show(int file)
 	uint8_t voltage[2];
 	uint8_t manufactured[2];
 	char test[6];
+	memset(test, 0, sizeof(test));
+	memset(serial, 0, sizeof(serial));
 	uint8_t location = bbapi_read<uint8_t>(file, BIOSIGRP_PWRCTRL, BIOSIOFFS_PWRCTRL_BOARD_POSITION);
 	ioctl_read(file, BIOSIGRP_PWRCTRL, BIOSIOFFS_PWRCTRL_BOOTLDR_REV, &bl_rev, sizeof(bl_rev));
 	ioctl_read(file, BIOSIGRP_PWRCTRL, BIOSIOFFS_PWRCTRL_FIRMWARE_REV, &fw_rev, sizeof(fw_rev));
@@ -229,19 +300,6 @@ void cx_pwrctrl_show(int file)
 	pr_info("Last shutdown: 0x%02x%02x%02x\n", shutdown[0], shutdown[1], shutdown[2]);
 	pr_info("Test count:    %u\n", bbapi_read<uint8_t>(file, BIOSIGRP_PWRCTRL, BIOSIOFFS_PWRCTRL_TEST_COUNTER));
 	pr_info("Test number:   %s\n", test);
-
-#if 0
-	#define 				0x00000003	// Operating time counter (Betriebsstundenzähler), W:0, R:4 (minutes)
-	#define 					0x00000004	// Board temperature: min, max, W:0, R:2
-	#define 				0x00000005	// Input voltage: min, max, W:0, R:2
-	#define 				0x00000006	// Serial number, W:0, R:16
-	#define 					0x00000007	// Boot counter, W:0, R:2
-	#define 				0x00000008	// Manufacturing date, W:0, R:2, ([KW].[JJ])
-	#define 				0x00000009	// Board position, W:0, R:1
-	#define 				0x0000000A	// Last Shutdown reason, W:0, R:1
-	#define 					0x0000000B	// Test counter, W:0, R:1
-	#define 					0x0000000C	// Test number, W:0, R:6
-#endif
 }
 
 void cx_sups_show(int file)
@@ -253,9 +311,6 @@ void cx_sups_show(int file)
 
 #if 0
 	#define BIOSIOFFS_SUPS_ENABLE								0x00000000	// Enable/disable SUPS, W:1, R:0
-	#define 								0x00000001	// SUPS status, W:0, R:1
-	#define 							0x00000002	// SUPS revision, W:0, R:2
-	#define 					0x00000003	// Power fail counter, W:0, R:2
 	#define BIOSIOFFS_SUPS_PWRFAIL_TIMES					0x00000004	// Get latest power fail time stamps, W:0, R:12
 	#define BIOSIOFFS_SUPS_SET_SHUTDOWN_TYPE				0x00000005	// Set the Shutdown behavior, W:1, R:0
 	#define BIOSIOFFS_SUPS_GET_SHUTDOWN_TYPE				0x00000006	// Get the Shutdown behavior and reset, W:0, R:1
@@ -362,11 +417,18 @@ int main(int argc, char *argv[])
 	test.add_test("test_boardname", &TestGeneral::test_boardname);
 	test.add_test("test_platform", &TestGeneral::test_platform);
 	test.add_test("test_version", &TestGeneral::test_version);
-	test.run (argc, argv);
+	test.run(argc, argv);
 
 	TestSensors sensorTest;
 	sensorTest.add_test("test_sensors", &TestSensors::test_sensors);
-	sensorTest.run (argc, argv);
+	sensorTest.run(argc, argv);
+
+	TestPwrCtrl pwrCtrlTest;
+	pwrCtrlTest.add_test("test_bl_revision", &TestPwrCtrl::test_bl_revision);
+	pwrCtrlTest.add_test("test_fw_revision", &TestPwrCtrl::test_fw_revision);
+	pwrCtrlTest.add_test("test_dual_values", &TestPwrCtrl::test_dual_values);
+	pwrCtrlTest.run(argc, argv);
+
 #if 0
 	cx_pwrctrl_show(file);
 	cx_sups_show(file);
