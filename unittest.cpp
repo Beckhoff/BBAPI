@@ -115,19 +115,6 @@ protected:
 	const int m_File;
 	const unsigned long m_Group;
 };
-static void print_mem(const unsigned char *p, size_t lines)
-{
-	pr_info("mem at: %p\n", p);
-	pr_info(" 0  1  2  3  4  5  6  7   8  9  A  B  C  D  E  F\n");
-	while (lines > 0) {
-		pr_info
-		    ("%02x %02x %02x %02x %02x %02x %02x %02x  %02x %02x %02x %02x %02x %02x %02x %02x\n",
-		     p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9],
-		     p[10], p[11], p[12], p[13], p[14], p[15]);
-		p += 16;
-		--lines;
-	}
-}
 
 struct TestGeneral : public BiosApi, fructose::test_base<TestGeneral>
 {
@@ -202,38 +189,55 @@ private:
 	}
 };
 
+#define TESTING_ENABLED 0
+void print_mem(const unsigned char *p, size_t lines)
+{
+#if TESTING_ENABLED
+	pr_info("mem at: %p\n", p);
+	pr_info(" 0  1  2  3  4  5  6  7   8  9  A  B  C  D  E  F\n");
+	while (lines > 0) {
+		pr_info
+		    ("%02x %02x %02x %02x %02x %02x %02x %02x  %02x %02x %02x %02x %02x %02x %02x %02x\n",
+		     p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9],
+		     p[10], p[11], p[12], p[13], p[14], p[15]);
+		p += 16;
+		--lines;
+	}
+#endif /* #if TESTING_ENABLED */
+}
 
-#define DO_TEST(INDEX_OFFSET, EXPECTATION) \
+
+#define CHECK_VALUE(INDEX_OFFSET, EXPECTATION) \
 	test_generic<sizeof(EXPECTATION)>(#INDEX_OFFSET, INDEX_OFFSET, &(EXPECTATION))
+#define CHECK_RANGE(INDEX_OFFSET, RANGE, TYPE) \
+	test_range<TYPE>(#INDEX_OFFSET, INDEX_OFFSET, RANGE)
 
 struct TestPwrCtrl : public BiosApi, fructose::test_base<TestPwrCtrl>
 {
 	TestPwrCtrl() : BiosApi(BIOSIGRP_PWRCTRL) {};
 
-	void test_bl_revision(const std::string& test_name)
-	{
-		test_revision(test_name, BIOSIOFFS_PWRCTRL_BOOTLDR_REV, &TestPwrCtrl::EXPECTED_BL_REVISION);
-	}
-
-	void test_fw_revision(const std::string& test_name)
-	{
-		test_revision(test_name, BIOSIOFFS_PWRCTRL_FIRMWARE_REV, &TestPwrCtrl::EXPECTED_FW_REVISION);
-	}
-
 	void test_dual_values(const std::string& test_name)
 	{
-		DO_TEST(BIOSIOFFS_PWRCTRL_BOARD_POSITION, TestPwrCtrl::EXPECTED_POSITION);
-		DO_TEST(BIOSIOFFS_PWRCTRL_DEVICE_ID, TestPwrCtrl::EXPECTED_DEVICE_ID);
+		CHECK_VALUE(BIOSIOFFS_PWRCTRL_BOOTLDR_REV, TestPwrCtrl::EXPECTED_BL_REVISION);
+		CHECK_VALUE(BIOSIOFFS_PWRCTRL_FIRMWARE_REV, TestPwrCtrl::EXPECTED_FW_REVISION);
+		CHECK_VALUE(BIOSIOFFS_PWRCTRL_DEVICE_ID, TestPwrCtrl::EXPECTED_DEVICE_ID);
+		CHECK_RANGE(BIOSIOFFS_PWRCTRL_OPERATING_TIME, CONFIG_EXPECTED_PWRCTRL_OPERATION_TIME_RANGE, uint32_t);
 #if 0
-	ioctl_read(file, BIOSIGRP_PWRCTRL, BIOSIOFFS_PWRCTRL_BOOTLDR_REV, &bl_rev, sizeof(bl_rev));
-	ioctl_read(file, BIOSIGRP_PWRCTRL, BIOSIOFFS_PWRCTRL_FIRMWARE_REV, &fw_rev, sizeof(fw_rev));
-	ioctl_read(file, BIOSIGRP_PWRCTRL, BIOSIOFFS_PWRCTRL_BOARD_TEMP, &temperature, sizeof(temperature));
-	ioctl_read(file, BIOSIGRP_PWRCTRL, BIOSIOFFS_PWRCTRL_INPUT_VOLTAGE, &voltage, sizeof(voltage));
-	ioctl_read(file, BIOSIGRP_PWRCTRL, BIOSIOFFS_PWRCTRL_SERIAL_NUMBER, &serial, sizeof(serial));
-	ioctl_read(file, BIOSIGRP_PWRCTRL, BIOSIOFFS_PWRCTRL_PRODUCTION_DATE, &manufactured, sizeof(manufactured));
-	ioctl_read(file, BIOSIGRP_PWRCTRL, BIOSIOFFS_PWRCTRL_SHUTDOWN_REASON, &shutdown, sizeof(shutdown));
-	ioctl_read(file, BIOSIGRP_PWRCTRL, BIOSIOFFS_PWRCTRL_TEST_NUMBER, &test, sizeof(test));
+		CHECK_RANGE(, CONFIG_EXPECTED_PWRCTRL_MIN_TEMP_RANGE 10, 20
+		CHECK_RANGE(, CONFIG_EXPECTED_PWRCTRL_MAX_TEMP_RANGE 70, 112
+		CHECK_RANGE(, CONFIG_EXPECTED_PWRCTRL_MIN_VOLT_RANGE 49, 50
+		CHECK_RANGE(, CONFIG_EXPECTED_PWRCTRL_MAX_VOLT_RANGE 49, 50
 #endif
+		CHECK_VALUE(BIOSIOFFS_PWRCTRL_SERIAL_NUMBER, TestPwrCtrl::EXPECTED_SERIAL);
+		CHECK_RANGE(BIOSIOFFS_PWRCTRL_BOOT_COUNTER, CONFIG_EXPECTED_PWRCTRL_BOOT_COUNTER_RANGE, uint16_t);
+		CHECK_VALUE(BIOSIOFFS_PWRCTRL_PRODUCTION_DATE, TestPwrCtrl::EXPECTED_PRODUCTION_DATE);
+		CHECK_VALUE(BIOSIOFFS_PWRCTRL_BOARD_POSITION, TestPwrCtrl::EXPECTED_POSITION);
+		CHECK_VALUE(BIOSIOFFS_PWRCTRL_SHUTDOWN_REASON, TestPwrCtrl::EXPECTED_LAST_SHUTDOWN);
+		CHECK_VALUE(BIOSIOFFS_PWRCTRL_TEST_COUNTER, TestPwrCtrl::EXPECTED_TEST_COUNT);
+		CHECK_VALUE(BIOSIOFFS_PWRCTRL_TEST_NUMBER, TestPwrCtrl::EXPECTED_TEST_NUMBER);
+
+
+
 		fructose_fail("TODO complete testcase implementation");
 	}
 
@@ -241,8 +245,12 @@ private:
 	static const uint8_t EXPECTED_BL_REVISION[3];
 	static const uint8_t EXPECTED_FW_REVISION[3];
 	static const uint8_t EXPECTED_DEVICE_ID;
-
+	static const char EXPECTED_SERIAL[16+1];
+	static const uint8_t EXPECTED_PRODUCTION_DATE[2];
 	static const uint8_t EXPECTED_POSITION;
+	static const uint8_t EXPECTED_LAST_SHUTDOWN[3];
+	static const uint8_t EXPECTED_TEST_COUNT;
+	static const char EXPECTED_TEST_NUMBER[6+1];
 
 	template<size_t N>
 	void test_generic(const std::string& nIndexOffset, const unsigned long offset, const void *const expectedValue)
@@ -251,20 +259,27 @@ private:
 		memset(readValue, 0, sizeof(readValue));
 		fructose_assert_ne(-1, ioctl_read(offset, &readValue, sizeof(readValue)));
 		fructose_loop_assert(nIndexOffset, 0 == memcmp(expectedValue, &readValue, sizeof(readValue)));
+		print_mem(readValue, 1);
 	}
 
-	void test_revision(const std::string& test_name, unsigned long indexOffset, const uint8_t (*const expectedValue)[3])
+	template<typename T>
+	void test_range(const std::string& nIndexOffset, const unsigned long offset, const T lower, const T upper)
 	{
-		uint8_t rev[3];
-		fructose_assert_ne(-1, ioctl_read(indexOffset, &rev, sizeof(rev)));
-		fructose_assert_same_data(expectedValue, &rev, sizeof(rev));
-		pr_info("%s:      %u.%u-%u\n", test_name.c_str(), rev[0], rev[1], rev[2]);
+		T value = 0;
+		fructose_assert_ne(-1, ioctl_read(offset, &value, sizeof(value)));
+		fructose_loop_assert(nIndexOffset, lower <= value);
+		fructose_loop_assert(nIndexOffset, upper >= value);
 	}
 };
-const uint8_t TestPwrCtrl::EXPECTED_BL_REVISION[3] = CONFIG_EXPECTED_BBAPI_BL_REVISION;
-const uint8_t TestPwrCtrl::EXPECTED_FW_REVISION[3] = CONFIG_EXPECTED_BBAPI_FW_REVISION;
-const uint8_t TestPwrCtrl::EXPECTED_DEVICE_ID = CONFIG_EXPECTED_BBAPI_PWRCTRL_DEVICE_ID;
-const uint8_t TestPwrCtrl::EXPECTED_POSITION = CONFIG_EXPECTED_BBAPI_PWRCTRL_POSITION;
+const uint8_t TestPwrCtrl::EXPECTED_BL_REVISION[3] = CONFIG_EXPECTED_PWRCTRL_BL_REVISION;
+const uint8_t TestPwrCtrl::EXPECTED_FW_REVISION[3] = CONFIG_EXPECTED_PWRCTRL_FW_REVISION;
+const uint8_t TestPwrCtrl::EXPECTED_DEVICE_ID = CONFIG_EXPECTED_PWRCTRL_DEVICE_ID;
+const char TestPwrCtrl::EXPECTED_SERIAL[16+1] = CONFIG_EXPECTED_PWRCTRL_SERIAL;
+const uint8_t TestPwrCtrl::EXPECTED_PRODUCTION_DATE[2] = CONFIG_EXPECTED_PWRCTRL_PRODUCTION_DATE;
+const uint8_t TestPwrCtrl::EXPECTED_POSITION = CONFIG_EXPECTED_PWRCTRL_POSITION;
+const uint8_t TestPwrCtrl::EXPECTED_LAST_SHUTDOWN[3] = CONFIG_EXPECTED_PWRCTRL_LAST_SHUTDOWN;
+const uint8_t TestPwrCtrl::EXPECTED_TEST_COUNT = CONFIG_EXPECTED_PWRCTRL_TEST_COUNT;
+const char TestPwrCtrl::EXPECTED_TEST_NUMBER[6+1] = CONFIG_EXPECTED_PWRCTRL_TEST_NUMBER;
 
 void cx_pwrctrl_show(int file)
 {
@@ -424,8 +439,6 @@ int main(int argc, char *argv[])
 	sensorTest.run(argc, argv);
 
 	TestPwrCtrl pwrCtrlTest;
-	pwrCtrlTest.add_test("test_bl_revision", &TestPwrCtrl::test_bl_revision);
-	pwrCtrlTest.add_test("test_fw_revision", &TestPwrCtrl::test_fw_revision);
 	pwrCtrlTest.add_test("test_dual_values", &TestPwrCtrl::test_dual_values);
 	pwrCtrlTest.run(argc, argv);
 
