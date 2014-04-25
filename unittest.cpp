@@ -33,7 +33,22 @@
 #pragma GCC diagnostic ignored "-Wsign-compare"
 #include <fructose/fructose.h>
 #pragma GCC diagnostic warning "-Wsign-compare"
+
+
+/**
+ * Unittest configuration
+ */
 #include "test_config.h"
+static const uint8_t EXPECTED_PWRCTRL_BL_REVISION[3] = CONFIG_EXPECTED_PWRCTRL_BL_REVISION;
+static const uint8_t EXPECTED_PWRCTRL_FW_REVISION[3] = CONFIG_EXPECTED_PWRCTRL_FW_REVISION;
+static const uint8_t EXPECTED_PWRCTRL_DEVICE_ID = CONFIG_EXPECTED_PWRCTRL_DEVICE_ID;
+static const char EXPECTED_PWRCTRL_SERIAL[16+1] = CONFIG_EXPECTED_PWRCTRL_SERIAL;
+static const uint8_t EXPECTED_PWRCTRL_PRODUCTION_DATE[2] = CONFIG_EXPECTED_PWRCTRL_PRODUCTION_DATE;
+static const uint8_t EXPECTED_PWRCTRL_POSITION = CONFIG_EXPECTED_PWRCTRL_POSITION;
+static const uint8_t EXPECTED_PWRCTRL_LAST_SHUTDOWN[3] = CONFIG_EXPECTED_PWRCTRL_LAST_SHUTDOWN;
+static const uint8_t EXPECTED_PWRCTRL_TEST_COUNT = CONFIG_EXPECTED_PWRCTRL_TEST_COUNT;
+static const char EXPECTED_PWRCTRL_TEST_NUMBER[6+1] = CONFIG_EXPECTED_PWRCTRL_TEST_NUMBER;
+
 
 #define FILE_PATH	"/dev/BBAPI" 	// Path to character Device
 
@@ -208,50 +223,39 @@ void print_mem(const unsigned char *p, size_t lines)
 }
 
 #define CHECK(INDEX_OFFSET, DATATYPE) \
-	test_generic<sizeof(DATATYPE)>(#INDEX_OFFSET, INDEX_OFFSET, NULL)
+	test_generic<sizeof(DATATYPE)>(bbapi, #INDEX_OFFSET, INDEX_OFFSET, NULL)
 #define CHECK_VALUE(INDEX_OFFSET, EXPECTATION) \
-	test_generic<sizeof(EXPECTATION)>(#INDEX_OFFSET, INDEX_OFFSET, &(EXPECTATION))
+	test_generic<sizeof(EXPECTATION)>(bbapi, #INDEX_OFFSET, INDEX_OFFSET, &(EXPECTATION))
 #define CHECK_RANGE(INDEX_OFFSET, RANGE, TYPE) \
-	test_range<TYPE>(#INDEX_OFFSET, INDEX_OFFSET, RANGE)
+	test_range<TYPE>(bbapi, #INDEX_OFFSET, INDEX_OFFSET, RANGE)
 
-struct TestPwrCtrl : public BiosApi, fructose::test_base<TestPwrCtrl>
+struct TestPwrCtrl : fructose::test_base<TestPwrCtrl>
 {
-	TestPwrCtrl() : BiosApi(BIOSIGRP_PWRCTRL) {};
-
-	void test_dual_values(const std::string& test_name)
+	void test_PwrCtrl(const std::string& test_name)
 	{
-		CHECK_VALUE(BIOSIOFFS_PWRCTRL_BOOTLDR_REV, TestPwrCtrl::EXPECTED_BL_REVISION);
-		CHECK_VALUE(BIOSIOFFS_PWRCTRL_FIRMWARE_REV, TestPwrCtrl::EXPECTED_FW_REVISION);
-		CHECK_VALUE(BIOSIOFFS_PWRCTRL_DEVICE_ID, TestPwrCtrl::EXPECTED_DEVICE_ID);
+		BiosApi bbapi {BIOSIGRP_PWRCTRL};
+		CHECK_VALUE(BIOSIOFFS_PWRCTRL_BOOTLDR_REV, EXPECTED_PWRCTRL_BL_REVISION);
+		CHECK_VALUE(BIOSIOFFS_PWRCTRL_FIRMWARE_REV, EXPECTED_PWRCTRL_FW_REVISION);
+		CHECK_VALUE(BIOSIOFFS_PWRCTRL_DEVICE_ID, EXPECTED_PWRCTRL_DEVICE_ID);
 		CHECK_RANGE(BIOSIOFFS_PWRCTRL_OPERATING_TIME, CONFIG_EXPECTED_PWRCTRL_OPERATION_TIME_RANGE, uint32_t);
 		CHECK(BIOSIOFFS_PWRCTRL_BOARD_TEMP, uint8_t[2]);
 		CHECK(BIOSIOFFS_PWRCTRL_INPUT_VOLTAGE, uint8_t[2]);
-		CHECK_VALUE(BIOSIOFFS_PWRCTRL_SERIAL_NUMBER, TestPwrCtrl::EXPECTED_SERIAL);
+		CHECK_VALUE(BIOSIOFFS_PWRCTRL_SERIAL_NUMBER, EXPECTED_PWRCTRL_SERIAL);
 		CHECK_RANGE(BIOSIOFFS_PWRCTRL_BOOT_COUNTER, CONFIG_EXPECTED_PWRCTRL_BOOT_COUNTER_RANGE, uint16_t);
-		CHECK_VALUE(BIOSIOFFS_PWRCTRL_PRODUCTION_DATE, TestPwrCtrl::EXPECTED_PRODUCTION_DATE);
-		CHECK_VALUE(BIOSIOFFS_PWRCTRL_BOARD_POSITION, TestPwrCtrl::EXPECTED_POSITION);
-		CHECK_VALUE(BIOSIOFFS_PWRCTRL_SHUTDOWN_REASON, TestPwrCtrl::EXPECTED_LAST_SHUTDOWN);
-		CHECK_VALUE(BIOSIOFFS_PWRCTRL_TEST_COUNTER, TestPwrCtrl::EXPECTED_TEST_COUNT);
-		CHECK_VALUE(BIOSIOFFS_PWRCTRL_TEST_NUMBER, TestPwrCtrl::EXPECTED_TEST_NUMBER);
+		CHECK_VALUE(BIOSIOFFS_PWRCTRL_PRODUCTION_DATE, EXPECTED_PWRCTRL_PRODUCTION_DATE);
+		CHECK_VALUE(BIOSIOFFS_PWRCTRL_BOARD_POSITION, EXPECTED_PWRCTRL_POSITION);
+		CHECK_VALUE(BIOSIOFFS_PWRCTRL_SHUTDOWN_REASON, EXPECTED_PWRCTRL_LAST_SHUTDOWN);
+		CHECK_VALUE(BIOSIOFFS_PWRCTRL_TEST_COUNTER, EXPECTED_PWRCTRL_TEST_COUNT);
+		CHECK_VALUE(BIOSIOFFS_PWRCTRL_TEST_NUMBER, EXPECTED_PWRCTRL_TEST_NUMBER);
 	}
 
 private:
-	static const uint8_t EXPECTED_BL_REVISION[3];
-	static const uint8_t EXPECTED_FW_REVISION[3];
-	static const uint8_t EXPECTED_DEVICE_ID;
-	static const char EXPECTED_SERIAL[16+1];
-	static const uint8_t EXPECTED_PRODUCTION_DATE[2];
-	static const uint8_t EXPECTED_POSITION;
-	static const uint8_t EXPECTED_LAST_SHUTDOWN[3];
-	static const uint8_t EXPECTED_TEST_COUNT;
-	static const char EXPECTED_TEST_NUMBER[6+1];
-
 	template<size_t N>
-	void test_generic(const std::string& nIndexOffset, const unsigned long offset, const void *const expectedValue)
+	void test_generic(const BiosApi& bbapi, const std::string& nIndexOffset, const unsigned long offset, const void *const expectedValue)
 	{
 		uint8_t value[N];
 		memset(value, 0, sizeof(value));
-		fructose_loop_assert(nIndexOffset, -1 != ioctl_read(offset, &value, sizeof(value)));
+		fructose_loop_assert(nIndexOffset, -1 != bbapi.ioctl_read(offset, &value, sizeof(value)));
 		if(expectedValue) {
 			fructose_loop_assert(nIndexOffset, 0 == memcmp(expectedValue, &value, sizeof(value)));
 			print_mem(value, 1);
@@ -259,23 +263,14 @@ private:
 	}
 
 	template<typename T>
-	void test_range(const std::string& nIndexOffset, const unsigned long offset, const T lower, const T upper)
+	void test_range(const BiosApi& bbapi, const std::string& nIndexOffset, const unsigned long offset, const T lower, const T upper)
 	{
 		T value = 0;
-		fructose_loop_assert(nIndexOffset, -1 != ioctl_read(offset, &value, sizeof(value)));
+		fructose_loop_assert(nIndexOffset, -1 != bbapi.ioctl_read(offset, &value, sizeof(value)));
 		fructose_loop2_assert(nIndexOffset, lower, value, lower <= value);
 		fructose_loop2_assert(nIndexOffset, upper, value, upper >= value);
 	}
 };
-const uint8_t TestPwrCtrl::EXPECTED_BL_REVISION[3] = CONFIG_EXPECTED_PWRCTRL_BL_REVISION;
-const uint8_t TestPwrCtrl::EXPECTED_FW_REVISION[3] = CONFIG_EXPECTED_PWRCTRL_FW_REVISION;
-const uint8_t TestPwrCtrl::EXPECTED_DEVICE_ID = CONFIG_EXPECTED_PWRCTRL_DEVICE_ID;
-const char TestPwrCtrl::EXPECTED_SERIAL[16+1] = CONFIG_EXPECTED_PWRCTRL_SERIAL;
-const uint8_t TestPwrCtrl::EXPECTED_PRODUCTION_DATE[2] = CONFIG_EXPECTED_PWRCTRL_PRODUCTION_DATE;
-const uint8_t TestPwrCtrl::EXPECTED_POSITION = CONFIG_EXPECTED_PWRCTRL_POSITION;
-const uint8_t TestPwrCtrl::EXPECTED_LAST_SHUTDOWN[3] = CONFIG_EXPECTED_PWRCTRL_LAST_SHUTDOWN;
-const uint8_t TestPwrCtrl::EXPECTED_TEST_COUNT = CONFIG_EXPECTED_PWRCTRL_TEST_COUNT;
-const char TestPwrCtrl::EXPECTED_TEST_NUMBER[6+1] = CONFIG_EXPECTED_PWRCTRL_TEST_NUMBER;
 
 void cx_pwrctrl_show(int file)
 {
@@ -435,7 +430,7 @@ int main(int argc, char *argv[])
 	sensorTest.run(argc, argv);
 
 	TestPwrCtrl pwrCtrlTest;
-	pwrCtrlTest.add_test("test_dual_values", &TestPwrCtrl::test_dual_values);
+	pwrCtrlTest.add_test("test_PwrCtrl", &TestPwrCtrl::test_PwrCtrl);
 	pwrCtrlTest.run(argc, argv);
 
 #if 0
