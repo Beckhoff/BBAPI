@@ -2,7 +2,7 @@ TARGET = bbapi
 EXTRA_DIR = /lib/modules/$(shell uname -r)/extra/
 obj-m += $(TARGET).o
 $(TARGET)-objs := api.o simple_cdev.o lowlevel.o
-#ccflags-y := -DDEBUG
+ccflags-y := -DDEBUG
 
 all:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
@@ -17,13 +17,14 @@ install:
 
 clean:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
-	rm -f *.c~ *.h~ *.bin
+	rm -f *.c~ *.h~ *.bin unittest
 
 test: cxdisplay.c lowlevel.S TcBaDevDef_gpl.h
 	gcc cxdisplay.c lowlevel.S -o test.bin -Wall -pedantic -std=c99
 
-unittest: unittest.cpp TcBaDevDef_gpl.h
-	g++ unittest.cpp -o unittest.bin -Wall -pedantic -std=c++0x -I../
+unittest: clean test_config.h unittest.cpp TcBaDevDef_gpl.h
+	g++ unittest.cpp -o $@ -Wall -pedantic -std=c++0x -I../
+	./$@
 
 new_test: test.c lowlevel.S
 	gcc lowlevel.S test.c -o test.bin -Wall -pedantic -std=c99

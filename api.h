@@ -21,6 +21,9 @@
 #ifndef __API_H_
 #define __API_H_
 
+#define DRV_VERSION      "1.1"
+#define DRV_DESCRIPTION  "Beckhoff CCAT Ethernet/EtherCAT Network Driver"
+
 #undef pr_fmt
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 

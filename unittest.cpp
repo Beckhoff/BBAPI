@@ -55,21 +55,21 @@
 #define CXPWRSUPP_BUTTON_STATE_SELECT		0x10
 
 
-int ioctl_read(int file, unsigned long group, unsigned long offset, void* out, unsigned long size)
+int ioctl_read(int file, uint32_t group, uint32_t offset, void* out, uint32_t size)
 {
 	struct bbapi_struct data {group, offset, NULL, 0, out, size};
 	if (-1 == ioctl(file, BBAPI_CMD, &data)) {
-		pr_info("%s(): failed for group: 0x%lx offset: 0x%lx\n", __FUNCTION__, group, offset);
+		pr_info("%s(): failed for group: 0x%x offset: 0x%x\n", __FUNCTION__, group, offset);
 		return -1;
 	}
 	return 0;
 }
 
-int ioctl_write(int file, unsigned long group, unsigned long offset, void* in, unsigned long size)
+int ioctl_write(int file, uint32_t group, uint32_t offset, void* in, uint32_t size)
 {
 	struct bbapi_struct data {group, offset, in, size, NULL, 0};
 	if (-1 == ioctl(file, BBAPI_CMD, &data)) {
-		pr_info("%s(): failed for group: 0x%lx offset: 0x%lx\n", __FUNCTION__, group, offset);
+		pr_info("%s(): failed for group: 0x%x offset: 0x%x\n", __FUNCTION__, group, offset);
 		return -1;
 	}
 	return 0;
@@ -179,6 +179,7 @@ private:
 	void show_sensor(uint32_t sensor)
 	{
 		SENSORINFO info;
+		memset(&info, 0, sizeof(info));
 		fructose_assert_ne(-1, ioctl_read(sensor, &info, sizeof(info)));
 		fructose_loop_assert(sensor, INFOVALUE_STATUS_UNUSED != info.readVal.status);
 
@@ -206,7 +207,8 @@ void print_mem(const unsigned char *p, size_t lines)
 #endif /* #if TESTING_ENABLED */
 }
 
-
+#define CHECK(INDEX_OFFSET, DATATYPE) \
+	test_generic<sizeof(DATATYPE)>(#INDEX_OFFSET, INDEX_OFFSET, NULL)
 #define CHECK_VALUE(INDEX_OFFSET, EXPECTATION) \
 	test_generic<sizeof(EXPECTATION)>(#INDEX_OFFSET, INDEX_OFFSET, &(EXPECTATION))
 #define CHECK_RANGE(INDEX_OFFSET, RANGE, TYPE) \
@@ -222,12 +224,8 @@ struct TestPwrCtrl : public BiosApi, fructose::test_base<TestPwrCtrl>
 		CHECK_VALUE(BIOSIOFFS_PWRCTRL_FIRMWARE_REV, TestPwrCtrl::EXPECTED_FW_REVISION);
 		CHECK_VALUE(BIOSIOFFS_PWRCTRL_DEVICE_ID, TestPwrCtrl::EXPECTED_DEVICE_ID);
 		CHECK_RANGE(BIOSIOFFS_PWRCTRL_OPERATING_TIME, CONFIG_EXPECTED_PWRCTRL_OPERATION_TIME_RANGE, uint32_t);
-#if 0
-		CHECK_RANGE(, CONFIG_EXPECTED_PWRCTRL_MIN_TEMP_RANGE 10, 20
-		CHECK_RANGE(, CONFIG_EXPECTED_PWRCTRL_MAX_TEMP_RANGE 70, 112
-		CHECK_RANGE(, CONFIG_EXPECTED_PWRCTRL_MIN_VOLT_RANGE 49, 50
-		CHECK_RANGE(, CONFIG_EXPECTED_PWRCTRL_MAX_VOLT_RANGE 49, 50
-#endif
+		CHECK(BIOSIOFFS_PWRCTRL_BOARD_TEMP, uint8_t[2]);
+		CHECK(BIOSIOFFS_PWRCTRL_INPUT_VOLTAGE, uint8_t[2]);
 		CHECK_VALUE(BIOSIOFFS_PWRCTRL_SERIAL_NUMBER, TestPwrCtrl::EXPECTED_SERIAL);
 		CHECK_RANGE(BIOSIOFFS_PWRCTRL_BOOT_COUNTER, CONFIG_EXPECTED_PWRCTRL_BOOT_COUNTER_RANGE, uint16_t);
 		CHECK_VALUE(BIOSIOFFS_PWRCTRL_PRODUCTION_DATE, TestPwrCtrl::EXPECTED_PRODUCTION_DATE);
@@ -235,10 +233,6 @@ struct TestPwrCtrl : public BiosApi, fructose::test_base<TestPwrCtrl>
 		CHECK_VALUE(BIOSIOFFS_PWRCTRL_SHUTDOWN_REASON, TestPwrCtrl::EXPECTED_LAST_SHUTDOWN);
 		CHECK_VALUE(BIOSIOFFS_PWRCTRL_TEST_COUNTER, TestPwrCtrl::EXPECTED_TEST_COUNT);
 		CHECK_VALUE(BIOSIOFFS_PWRCTRL_TEST_NUMBER, TestPwrCtrl::EXPECTED_TEST_NUMBER);
-
-
-
-		fructose_fail("TODO complete testcase implementation");
 	}
 
 private:
@@ -255,20 +249,22 @@ private:
 	template<size_t N>
 	void test_generic(const std::string& nIndexOffset, const unsigned long offset, const void *const expectedValue)
 	{
-		uint8_t readValue[N];
-		memset(readValue, 0, sizeof(readValue));
-		fructose_assert_ne(-1, ioctl_read(offset, &readValue, sizeof(readValue)));
-		fructose_loop_assert(nIndexOffset, 0 == memcmp(expectedValue, &readValue, sizeof(readValue)));
-		print_mem(readValue, 1);
+		uint8_t value[N];
+		memset(value, 0, sizeof(value));
+		fructose_loop_assert(nIndexOffset, -1 != ioctl_read(offset, &value, sizeof(value)));
+		if(expectedValue) {
+			fructose_loop_assert(nIndexOffset, 0 == memcmp(expectedValue, &value, sizeof(value)));
+			print_mem(value, 1);
+		}
 	}
 
 	template<typename T>
 	void test_range(const std::string& nIndexOffset, const unsigned long offset, const T lower, const T upper)
 	{
 		T value = 0;
-		fructose_assert_ne(-1, ioctl_read(offset, &value, sizeof(value)));
-		fructose_loop_assert(nIndexOffset, lower <= value);
-		fructose_loop_assert(nIndexOffset, upper >= value);
+		fructose_loop_assert(nIndexOffset, -1 != ioctl_read(offset, &value, sizeof(value)));
+		fructose_loop2_assert(nIndexOffset, lower, value, lower <= value);
+		fructose_loop2_assert(nIndexOffset, upper, value, upper >= value);
 	}
 };
 const uint8_t TestPwrCtrl::EXPECTED_BL_REVISION[3] = CONFIG_EXPECTED_PWRCTRL_BL_REVISION;

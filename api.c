@@ -272,6 +272,7 @@ static struct file_operations file_ops = {
 
 static int __init bbapi_init_module(void)
 {
+	pr_info("%s, %s\n", DRV_DESCRIPTION, DRV_VERSION);
 	memset(&g_bbapi, 0, sizeof(g_bbapi));
 	mutex_init(&g_bbapi.mutex);
 	if (bbapi_find_bios(&g_bbapi)) {
@@ -291,7 +292,7 @@ static void __exit bbapi_exit(void)
 module_init(bbapi_init_module);
 module_exit(bbapi_exit);
 
+MODULE_DESCRIPTION(DRV_DESCRIPTION);
+MODULE_AUTHOR("Patrick Bruenn <p.bruenn@beckhoff.com>");
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Heiko Wilke");
-MODULE_DESCRIPTION("Beckhoff BIOS API Driver");
-MODULE_VERSION("1.1");
+MODULE_VERSION(DRV_VERSION);
