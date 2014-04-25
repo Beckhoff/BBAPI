@@ -39,6 +39,11 @@
  * Unittest configuration
  */
 #include "test_config.h"
+static const BADEVICE_MBINFO EXPECTED_GENERAL_BOARDINFO = CONFIG_EXPECTED_GENERAL_BBAPI_BOARDINFO;
+static const uint8_t EXPECTED_GENERAL_BOARDNAME[16] = CONFIG_EXPECTED_GENERAL_BBAPI_BOARDNAME;
+static const uint8_t EXPECTED_GENERAL_PLATFORM = CONFIG_EXPECTED_GENERAL_BBAPI_PLATFORM;
+static const BADEVICE_VERSION EXPECTED_GENERAL_VERSION = CONFIG_EXPECTED_GENERAL_BBAPI_VERSION;
+
 static const uint8_t EXPECTED_PWRCTRL_BL_REVISION[3] = CONFIG_EXPECTED_PWRCTRL_BL_REVISION;
 static const uint8_t EXPECTED_PWRCTRL_FW_REVISION[3] = CONFIG_EXPECTED_PWRCTRL_FW_REVISION;
 static const uint8_t EXPECTED_PWRCTRL_DEVICE_ID = CONFIG_EXPECTED_PWRCTRL_DEVICE_ID;
@@ -102,7 +107,7 @@ using namespace fructose;
 
 struct BiosApi
 {
-	BiosApi(unsigned long group)
+	BiosApi(unsigned long group = 0)
 		: m_File(open(FILE_PATH, O_RDWR)),
 		m_Group(group)
 	{
@@ -114,6 +119,11 @@ struct BiosApi
 	{
 		close(m_File);
 	};
+
+	void setGroupOffset(unsigned long group)
+	{
+		m_Group = group;
+	}
 
 	template<typename T>
 	T read(unsigned long offset) const
@@ -128,54 +138,8 @@ struct BiosApi
 
 protected:
 	const int m_File;
-	const unsigned long m_Group;
+	unsigned long m_Group;
 };
-
-struct TestGeneral : public BiosApi, fructose::test_base<TestGeneral>
-{
-	TestGeneral() : BiosApi(BIOSIGRP_GENERAL) {};
-
-	void test_boardinfo(const std::string& test_name)
-	{
-		BADEVICE_MBINFO info;
-		ioctl_read(BIOSIOFFS_GENERAL_GETBOARDINFO, &info, sizeof(info));
-		fructose_assert_same_data(&TestGeneral::EXPECTED_BOARDINFO, &info, sizeof(info));
-		pr_info("%s hw: %d v%d.%d\n", info.MBName, info.MBRevision, info.biosMajVersion, info.biosMinVersion);
-	}
-
-	void test_boardname(const std::string& test_name)
-	{
-		char boardname[16] = {0};
-		ioctl_read(BIOSIOFFS_GENERAL_GETBOARDNAME, &boardname, sizeof(boardname));
-		fructose_assert_same_data(&TestGeneral::EXPECTED_BOARDNAME, &boardname, sizeof(boardname));
-		pr_info("Board: %s\n", boardname);
-	}
-
-	void test_platform(const std::string& test_name)
-	{
-		uint8_t platform = read<uint8_t>(BIOSIOFFS_GENERAL_GETPLATFORMINFO);
-		fructose_assert_eq(EXPECTED_PLATFORM, platform);
-		pr_info("platform is %s bit\n", platform ? "64" : "32");
-	}
-
-	void test_version(const std::string& test_name)
-	{
-		BADEVICE_VERSION version;
-		ioctl_read(BIOSIOFFS_GENERAL_VERSION, &version, sizeof(version));
-		fructose_assert_same_data(&TestGeneral::EXPECTED_VERSION, &version, sizeof(version));
-		pr_info("BIOS API ver.: %d rev.: %d build: %d\n", version.version, version.revision, version.build);
-	}
-
-private:
-	static const BADEVICE_MBINFO EXPECTED_BOARDINFO;
-	static const uint8_t EXPECTED_BOARDNAME[16];
-	static const uint8_t EXPECTED_PLATFORM;
-	static const BADEVICE_VERSION EXPECTED_VERSION;
-};
-const BADEVICE_MBINFO TestGeneral::EXPECTED_BOARDINFO = CONFIG_EXPECTED_BBAPI_BOARDINFO;
-const uint8_t TestGeneral::EXPECTED_BOARDNAME[16] = CONFIG_EXPECTED_BBAPI_BOARDNAME;
-const uint8_t TestGeneral::EXPECTED_PLATFORM = CONFIG_EXPECTED_BBAPI_PLATFORM;
-const BADEVICE_VERSION TestGeneral::EXPECTED_VERSION = CONFIG_EXPECTED_BBAPI_VERSION;
 
 struct TestSensors : public BiosApi, fructose::test_base<TestSensors>
 {
@@ -222,6 +186,8 @@ void print_mem(const unsigned char *p, size_t lines)
 #endif /* #if TESTING_ENABLED */
 }
 
+struct TestBBAPI : fructose::test_base<TestBBAPI>
+{
 #define CHECK(INDEX_OFFSET, DATATYPE) \
 	test_generic<sizeof(DATATYPE)>(bbapi, #INDEX_OFFSET, INDEX_OFFSET, NULL)
 #define CHECK_VALUE(INDEX_OFFSET, EXPECTATION) \
@@ -229,11 +195,29 @@ void print_mem(const unsigned char *p, size_t lines)
 #define CHECK_RANGE(INDEX_OFFSET, RANGE, TYPE) \
 	test_range<TYPE>(bbapi, #INDEX_OFFSET, INDEX_OFFSET, RANGE)
 
-struct TestPwrCtrl : fructose::test_base<TestPwrCtrl>
-{
+	void test_General(const std::string& test_name)
+	{
+		bbapi.setGroupOffset(BIOSIGRP_GENERAL);
+		BADEVICE_MBINFO info;
+		bbapi.ioctl_read(BIOSIOFFS_GENERAL_GETBOARDINFO, &info, sizeof(info));
+		fructose_assert_same_data(&EXPECTED_GENERAL_BOARDINFO, &info, sizeof(info));
+		pr_info("%s hw: %d v%d.%d\n", info.MBName, info.MBRevision, info.biosMajVersion, info.biosMinVersion);
+		char boardname[16] = {0};
+		bbapi.ioctl_read(BIOSIOFFS_GENERAL_GETBOARDNAME, &boardname, sizeof(boardname));
+		fructose_assert_same_data(&EXPECTED_GENERAL_BOARDNAME, &boardname, sizeof(boardname));
+		pr_info("Board: %s\n", boardname);
+		uint8_t platform = bbapi.read<uint8_t>(BIOSIOFFS_GENERAL_GETPLATFORMINFO);
+		fructose_assert_eq(EXPECTED_GENERAL_PLATFORM, platform);
+		pr_info("platform is %s bit\n", platform ? "64" : "32");
+		BADEVICE_VERSION version;
+		bbapi.ioctl_read(BIOSIOFFS_GENERAL_VERSION, &version, sizeof(version));
+		fructose_assert_same_data(&EXPECTED_GENERAL_VERSION, &version, sizeof(version));
+		pr_info("BIOS API ver.: %d rev.: %d build: %d\n", version.version, version.revision, version.build);
+	}
+
 	void test_PwrCtrl(const std::string& test_name)
 	{
-		BiosApi bbapi {BIOSIGRP_PWRCTRL};
+		bbapi.setGroupOffset(BIOSIGRP_PWRCTRL);
 		CHECK_VALUE(BIOSIOFFS_PWRCTRL_BOOTLDR_REV, EXPECTED_PWRCTRL_BL_REVISION);
 		CHECK_VALUE(BIOSIOFFS_PWRCTRL_FIRMWARE_REV, EXPECTED_PWRCTRL_FW_REVISION);
 		CHECK_VALUE(BIOSIOFFS_PWRCTRL_DEVICE_ID, EXPECTED_PWRCTRL_DEVICE_ID);
@@ -250,6 +234,7 @@ struct TestPwrCtrl : fructose::test_base<TestPwrCtrl>
 	}
 
 private:
+	BiosApi bbapi;
 	template<size_t N>
 	void test_generic(const BiosApi& bbapi, const std::string& nIndexOffset, const unsigned long offset, const void *const expectedValue)
 	{
@@ -418,20 +403,14 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	TestGeneral test;
-	test.add_test("test_boardinfo", &TestGeneral::test_boardinfo);
-	test.add_test("test_boardname", &TestGeneral::test_boardname);
-	test.add_test("test_platform", &TestGeneral::test_platform);
-	test.add_test("test_version", &TestGeneral::test_version);
-	test.run(argc, argv);
-
 	TestSensors sensorTest;
 	sensorTest.add_test("test_sensors", &TestSensors::test_sensors);
 	sensorTest.run(argc, argv);
 
-	TestPwrCtrl pwrCtrlTest;
-	pwrCtrlTest.add_test("test_PwrCtrl", &TestPwrCtrl::test_PwrCtrl);
-	pwrCtrlTest.run(argc, argv);
+	TestBBAPI bbapiTest;
+	bbapiTest.add_test("test_General", &TestBBAPI::test_General);
+	bbapiTest.add_test("test_PwrCtrl", &TestBBAPI::test_PwrCtrl);
+	bbapiTest.run(argc, argv);
 
 #if 0
 	cx_pwrctrl_show(file);
