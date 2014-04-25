@@ -39,20 +39,20 @@
  * Unittest configuration
  */
 #include "test_config.h"
-static const BADEVICE_MBINFO EXPECTED_GENERAL_BOARDINFO = CONFIG_EXPECTED_GENERAL_BBAPI_BOARDINFO;
-static const uint8_t EXPECTED_GENERAL_BOARDNAME[16] = CONFIG_EXPECTED_GENERAL_BBAPI_BOARDNAME;
-static const uint8_t EXPECTED_GENERAL_PLATFORM = CONFIG_EXPECTED_GENERAL_BBAPI_PLATFORM;
-static const BADEVICE_VERSION EXPECTED_GENERAL_VERSION = CONFIG_EXPECTED_GENERAL_BBAPI_VERSION;
+static const BADEVICE_MBINFO EXPECTED_GENERAL_BOARDINFO = CONFIG_GENERAL_BBAPI_BOARDINFO;
+static const uint8_t EXPECTED_GENERAL_BOARDNAME[16] = CONFIG_GENERAL_BBAPI_BOARDNAME;
+static const uint8_t EXPECTED_GENERAL_PLATFORM = CONFIG_GENERAL_BBAPI_PLATFORM;
+static const BADEVICE_VERSION EXPECTED_GENERAL_VERSION = CONFIG_GENERAL_BBAPI_VERSION;
 
-static const uint8_t EXPECTED_PWRCTRL_BL_REVISION[3] = CONFIG_EXPECTED_PWRCTRL_BL_REVISION;
-static const uint8_t EXPECTED_PWRCTRL_FW_REVISION[3] = CONFIG_EXPECTED_PWRCTRL_FW_REVISION;
-static const uint8_t EXPECTED_PWRCTRL_DEVICE_ID = CONFIG_EXPECTED_PWRCTRL_DEVICE_ID;
-static const char EXPECTED_PWRCTRL_SERIAL[16+1] = CONFIG_EXPECTED_PWRCTRL_SERIAL;
-static const uint8_t EXPECTED_PWRCTRL_PRODUCTION_DATE[2] = CONFIG_EXPECTED_PWRCTRL_PRODUCTION_DATE;
-static const uint8_t EXPECTED_PWRCTRL_POSITION = CONFIG_EXPECTED_PWRCTRL_POSITION;
-static const uint8_t EXPECTED_PWRCTRL_LAST_SHUTDOWN[3] = CONFIG_EXPECTED_PWRCTRL_LAST_SHUTDOWN;
-static const uint8_t EXPECTED_PWRCTRL_TEST_COUNT = CONFIG_EXPECTED_PWRCTRL_TEST_COUNT;
-static const char EXPECTED_PWRCTRL_TEST_NUMBER[6+1] = CONFIG_EXPECTED_PWRCTRL_TEST_NUMBER;
+static const uint8_t EXPECTED_PWRCTRL_BL_REVISION[3] = CONFIG_PWRCTRL_BL_REVISION;
+static const uint8_t EXPECTED_PWRCTRL_FW_REVISION[3] = CONFIG_PWRCTRL_FW_REVISION;
+static const uint8_t EXPECTED_PWRCTRL_DEVICE_ID = CONFIG_PWRCTRL_DEVICE_ID;
+static const char EXPECTED_PWRCTRL_SERIAL[16+1] = CONFIG_PWRCTRL_SERIAL;
+static const uint8_t EXPECTED_PWRCTRL_PRODUCTION_DATE[2] = CONFIG_PWRCTRL_PRODUCTION_DATE;
+static const uint8_t EXPECTED_PWRCTRL_POSITION = CONFIG_PWRCTRL_POSITION;
+static const uint8_t EXPECTED_PWRCTRL_LAST_SHUTDOWN[3] = CONFIG_PWRCTRL_LAST_SHUTDOWN;
+static const uint8_t EXPECTED_PWRCTRL_TEST_COUNT = CONFIG_PWRCTRL_TEST_COUNT;
+static const char EXPECTED_PWRCTRL_TEST_NUMBER[6+1] = CONFIG_PWRCTRL_TEST_NUMBER;
 
 
 #define FILE_PATH	"/dev/BBAPI" 	// Path to character Device
@@ -221,16 +221,40 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 		CHECK_VALUE(BIOSIOFFS_PWRCTRL_BOOTLDR_REV, EXPECTED_PWRCTRL_BL_REVISION);
 		CHECK_VALUE(BIOSIOFFS_PWRCTRL_FIRMWARE_REV, EXPECTED_PWRCTRL_FW_REVISION);
 		CHECK_VALUE(BIOSIOFFS_PWRCTRL_DEVICE_ID, EXPECTED_PWRCTRL_DEVICE_ID);
-		CHECK_RANGE(BIOSIOFFS_PWRCTRL_OPERATING_TIME, CONFIG_EXPECTED_PWRCTRL_OPERATION_TIME_RANGE, uint32_t);
+		CHECK_RANGE(BIOSIOFFS_PWRCTRL_OPERATING_TIME, CONFIG_PWRCTRL_OPERATION_TIME_RANGE, uint32_t);
 		CHECK(BIOSIOFFS_PWRCTRL_BOARD_TEMP, uint8_t[2]);
 		CHECK(BIOSIOFFS_PWRCTRL_INPUT_VOLTAGE, uint8_t[2]);
 		CHECK_VALUE(BIOSIOFFS_PWRCTRL_SERIAL_NUMBER, EXPECTED_PWRCTRL_SERIAL);
-		CHECK_RANGE(BIOSIOFFS_PWRCTRL_BOOT_COUNTER, CONFIG_EXPECTED_PWRCTRL_BOOT_COUNTER_RANGE, uint16_t);
+		CHECK_RANGE(BIOSIOFFS_PWRCTRL_BOOT_COUNTER, CONFIG_PWRCTRL_BOOT_COUNTER_RANGE, uint16_t);
 		CHECK_VALUE(BIOSIOFFS_PWRCTRL_PRODUCTION_DATE, EXPECTED_PWRCTRL_PRODUCTION_DATE);
 		CHECK_VALUE(BIOSIOFFS_PWRCTRL_BOARD_POSITION, EXPECTED_PWRCTRL_POSITION);
 		CHECK_VALUE(BIOSIOFFS_PWRCTRL_SHUTDOWN_REASON, EXPECTED_PWRCTRL_LAST_SHUTDOWN);
 		CHECK_VALUE(BIOSIOFFS_PWRCTRL_TEST_COUNTER, EXPECTED_PWRCTRL_TEST_COUNT);
 		CHECK_VALUE(BIOSIOFFS_PWRCTRL_TEST_NUMBER, EXPECTED_PWRCTRL_TEST_NUMBER);
+	}
+
+	void test_SUPS(const std::string& test_name)
+	{
+		if(CONFIG_SUPS_DISABLED) {
+			pr_info("S-UPS test case disabled\n");
+			return;
+		}
+		bbapi.setGroupOffset(BIOSIGRP_SUPS);
+		uint16_t revision = bbapi.read<uint16_t>(BIOSIOFFS_SUPS_REVISION);
+		pr_info("S-UPS status:    0x%02x\n", bbapi.read<uint8_t>(BIOSIOFFS_SUPS_STATUS));
+		pr_info("S-UPS revision:  %d.%d\n", revision >> 8, 0xff & revision);
+		pr_info("# Power fails:  %d\n", bbapi.read<uint16_t>(BIOSIOFFS_SUPS_PWRFAIL_COUNTER));
+#if 0
+		#define BIOSIOFFS_SUPS_ENABLE								0x00000000	// Enable/disable SUPS, W:1, R:0
+		#define BIOSIOFFS_SUPS_PWRFAIL_TIMES					0x00000004	// Get latest power fail time stamps, W:0, R:12
+		#define BIOSIOFFS_SUPS_SET_SHUTDOWN_TYPE				0x00000005	// Set the Shutdown behavior, W:1, R:0
+		#define BIOSIOFFS_SUPS_GET_SHUTDOWN_TYPE				0x00000006	// Get the Shutdown behavior and reset, W:0, R:1
+		#define BIOSIOFFS_SUPS_ACTIVE_COUNT						0x00000007	// Get the SUSV Active Count and reset, W:0, R:1
+		#define BIOSIOFFS_SUPS_INTERNAL_PWRF_STATUS			0x00000008	// Get the number of Pwr-Fail in the SUSV, W:0, R:1
+		#define BIOSIOFFS_SUPS_CAPACITY_TEST					0x00000009	// Capacitator test, W:0, R:0
+		#define BIOSIOFFS_SUPS_TEST_RESULT						0x0000000a	// Get SUPS test result, W:0, R:1
+		#define BIOSIOFFS_SUPS_GPIO_PIN							0x000000a0	// Get the Address and the GPIO-Pin from PWR-Fail PIN, W:0, R:4
+#endif
 	}
 
 private:
@@ -256,62 +280,6 @@ private:
 		fructose_loop2_assert(nIndexOffset, upper, value, upper >= value);
 	}
 };
-
-void cx_pwrctrl_show(int file)
-{
-	char serial[16];
-	uint8_t bl_rev[3];
-	uint8_t fw_rev[3];
-	uint8_t shutdown[3];
-	uint8_t temperature[2];
-	uint8_t voltage[2];
-	uint8_t manufactured[2];
-	char test[6];
-	memset(test, 0, sizeof(test));
-	memset(serial, 0, sizeof(serial));
-	uint8_t location = bbapi_read<uint8_t>(file, BIOSIGRP_PWRCTRL, BIOSIOFFS_PWRCTRL_BOARD_POSITION);
-	ioctl_read(file, BIOSIGRP_PWRCTRL, BIOSIOFFS_PWRCTRL_BOOTLDR_REV, &bl_rev, sizeof(bl_rev));
-	ioctl_read(file, BIOSIGRP_PWRCTRL, BIOSIOFFS_PWRCTRL_FIRMWARE_REV, &fw_rev, sizeof(fw_rev));
-	ioctl_read(file, BIOSIGRP_PWRCTRL, BIOSIOFFS_PWRCTRL_BOARD_TEMP, &temperature, sizeof(temperature));
-	ioctl_read(file, BIOSIGRP_PWRCTRL, BIOSIOFFS_PWRCTRL_INPUT_VOLTAGE, &voltage, sizeof(voltage));
-	ioctl_read(file, BIOSIGRP_PWRCTRL, BIOSIOFFS_PWRCTRL_SERIAL_NUMBER, &serial, sizeof(serial));
-	ioctl_read(file, BIOSIGRP_PWRCTRL, BIOSIOFFS_PWRCTRL_PRODUCTION_DATE, &manufactured, sizeof(manufactured));
-	ioctl_read(file, BIOSIGRP_PWRCTRL, BIOSIOFFS_PWRCTRL_SHUTDOWN_REASON, &shutdown, sizeof(shutdown));
-	ioctl_read(file, BIOSIGRP_PWRCTRL, BIOSIOFFS_PWRCTRL_TEST_NUMBER, &test, sizeof(test));
-	pr_info("Bootloader:      %u.%u-%u\n", bl_rev[0], bl_rev[1], bl_rev[2]);
-	pr_info("Firmware:        %u.%u-%u\n", fw_rev[0], fw_rev[1], fw_rev[2]);
-	pr_info("Device ID:       0x%02x\n", bbapi_read<uint8_t>(file, BIOSIGRP_PWRCTRL, BIOSIOFFS_PWRCTRL_DEVICE_ID));
-	pr_info("Operating time:  %u minutes since production\n", bbapi_read<uint32_t>(file, BIOSIGRP_PWRCTRL, BIOSIOFFS_PWRCTRL_OPERATING_TIME));
-	pr_info("Temperature [min, max]: [%d°C, %d°C]\n", temperature[0], temperature[1]);
-	pr_info("Voltage [min, max]: [%dmV, %dmV]\n", voltage[0]*100, voltage[1]*100);
-	pr_info("Serial: %s\n", serial);
-	pr_info("Boot counter:     %u\n", bbapi_read<uint16_t>(file, BIOSIGRP_PWRCTRL, BIOSIOFFS_PWRCTRL_BOOT_COUNTER));
-	pr_info("Manufactured in week %u of 20%02u\n", manufactured[0], manufactured[1]);
-	pr_info("PwCtrl is running in %s\n", (location == 0xff) ? "bootloader" : (location == 0) ? "firmware" : "unkown");
-	pr_info("Last shutdown: 0x%02x%02x%02x\n", shutdown[0], shutdown[1], shutdown[2]);
-	pr_info("Test count:    %u\n", bbapi_read<uint8_t>(file, BIOSIGRP_PWRCTRL, BIOSIOFFS_PWRCTRL_TEST_COUNTER));
-	pr_info("Test number:   %s\n", test);
-}
-
-void cx_sups_show(int file)
-{
-	uint16_t revision = bbapi_read<uint16_t>(file, BIOSIGRP_SUPS, BIOSIOFFS_SUPS_REVISION);
-	pr_info("S-UPS status:    0x%02x\n", bbapi_read<uint8_t>(file, BIOSIGRP_SUPS, BIOSIOFFS_SUPS_STATUS));
-	pr_info("S-UPS revision:  %d.%d\n", revision >> 8, 0xff & revision);
-	pr_info("# Power fails:  %d\n", bbapi_read<uint16_t>(file, BIOSIGRP_SUPS, BIOSIOFFS_SUPS_PWRFAIL_COUNTER));
-
-#if 0
-	#define BIOSIOFFS_SUPS_ENABLE								0x00000000	// Enable/disable SUPS, W:1, R:0
-	#define BIOSIOFFS_SUPS_PWRFAIL_TIMES					0x00000004	// Get latest power fail time stamps, W:0, R:12
-	#define BIOSIOFFS_SUPS_SET_SHUTDOWN_TYPE				0x00000005	// Set the Shutdown behavior, W:1, R:0
-	#define BIOSIOFFS_SUPS_GET_SHUTDOWN_TYPE				0x00000006	// Get the Shutdown behavior and reset, W:0, R:1
-	#define BIOSIOFFS_SUPS_ACTIVE_COUNT						0x00000007	// Get the SUSV Active Count and reset, W:0, R:1
-	#define BIOSIOFFS_SUPS_INTERNAL_PWRF_STATUS			0x00000008	// Get the number of Pwr-Fail in the SUSV, W:0, R:1
-	#define BIOSIOFFS_SUPS_CAPACITY_TEST					0x00000009	// Capacitator test, W:0, R:0
-	#define BIOSIOFFS_SUPS_TEST_RESULT						0x0000000a	// Get SUPS test result, W:0, R:1
-	#define BIOSIOFFS_SUPS_GPIO_PIN							0x000000a0	// Get the Address and the GPIO-Pin from PWR-Fail PIN, W:0, R:4
-#endif
-}
 
 void cx_power_supply_show(int file)
 {
@@ -410,11 +378,11 @@ int main(int argc, char *argv[])
 	TestBBAPI bbapiTest;
 	bbapiTest.add_test("test_General", &TestBBAPI::test_General);
 	bbapiTest.add_test("test_PwrCtrl", &TestBBAPI::test_PwrCtrl);
+	bbapiTest.add_test("test_SUPS", &TestBBAPI::test_SUPS);
 	bbapiTest.run(argc, argv);
 
 #if 0
 	cx_pwrctrl_show(file);
-	cx_sups_show(file);
 	cx_power_supply_show(file);
 	cx_ups_show(file);
 	set_led(file, BIOSIOFFS_LED_SET_TC, 1);
