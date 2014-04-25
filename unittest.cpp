@@ -195,6 +195,38 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 #define CHECK_RANGE(INDEX_OFFSET, RANGE, TYPE) \
 	test_range<TYPE>(bbapi, #INDEX_OFFSET, INDEX_OFFSET, RANGE)
 
+	void test_CXPowerSupply(const std::string& test_name)
+	{
+		bbapi.setGroupOffset(BIOSIGRP_CXPWRSUPP);
+		uint16_t fw_version;
+		pr_info("Type:         %04d\n", bbapi.read<uint32_t>(BIOSIOFFS_CXPWRSUPP_GETTYPE));
+		pr_info("Serial:       %04d\n", bbapi.read<uint32_t>(BIOSIOFFS_CXPWRSUPP_GETSERIALNO));
+		fw_version = bbapi.read<uint16_t>(BIOSIOFFS_CXPWRSUPP_GETFWVERSION);
+		pr_info("Fw ver.:      %02d.%02d\n", fw_version >> 8, fw_version & 0xff);
+		pr_info("Boot #:       %04d\n", bbapi.read<uint32_t>(BIOSIOFFS_CXPWRSUPP_GETBOOTCOUNTER));
+		pr_info("Optime:       %04d minutes since production\n", bbapi.read<uint32_t>(BIOSIOFFS_CXPWRSUPP_GETOPERATIONTIME));
+		pr_info("act. 5V:      %5d mV\n", bbapi.read<uint16_t>(BIOSIOFFS_CXPWRSUPP_GET5VOLT));
+		pr_info("max. 5V:      %5d mV\n", bbapi.read<uint16_t>(BIOSIOFFS_CXPWRSUPP_GETMAX5VOLT));
+		pr_info("act. 12V:     %5d mV\n", bbapi.read<uint16_t>(BIOSIOFFS_CXPWRSUPP_GET12VOLT));
+		pr_info("max. 12V:     %5d mV\n", bbapi.read<uint16_t>(BIOSIOFFS_CXPWRSUPP_GETMAX12VOLT));
+		pr_info("act 24V:      %5d mV\n", bbapi.read<uint16_t>(BIOSIOFFS_CXPWRSUPP_GET24VOLT));
+		pr_info("max. 24V:     %5d mV\n", bbapi.read<uint16_t>(BIOSIOFFS_CXPWRSUPP_GETMAX24VOLT));
+		pr_info("act. temp.:   %5d C°\n", bbapi.read<uint16_t>(BIOSIOFFS_CXPWRSUPP_GETTEMP));
+		pr_info("min. temp.:   %5d C°\n", bbapi.read<uint16_t>(BIOSIOFFS_CXPWRSUPP_GETMINTEMP));
+		pr_info("max. temp.:   %5d C°\n", bbapi.read<uint16_t>(BIOSIOFFS_CXPWRSUPP_GETMAXTEMP));
+		pr_info("act. current: %5d mA\n", bbapi.read<uint16_t>(BIOSIOFFS_CXPWRSUPP_GETCURRENT));
+		pr_info("max. current: %5d mA\n", bbapi.read<uint16_t>(BIOSIOFFS_CXPWRSUPP_GETMAXCURRENT));
+		pr_info("act power:  %7d mW\n", bbapi.read<uint32_t>(BIOSIOFFS_CXPWRSUPP_GETPOWER));
+		pr_info("max. power: %7d mW\n", bbapi.read<uint32_t>(BIOSIOFFS_CXPWRSUPP_GETMAXPOWER));
+		pr_info("button state:     0x%02x\n", bbapi.read<uint8_t>(BIOSIOFFS_CXPWRSUPP_GETBUTTONSTATE));
+
+#if 0
+		#define BIOSIOFFS_CXPWRSUPP_ENABLEBACKLIGHT			0x00000060	// Set display backlight, W:1 (0x00 := OFF, 0xFF := ON), R:0
+		#define BIOSIOFFS_CXPWRSUPP_DISPLAYLINE1				0x00000061	// Set display line 1, W:17(BYTE[17]), R:0
+		#define BIOSIOFFS_CXPWRSUPP_DISPLAYLINE2				0x00000062	// Set display line 2, W:17(BYTE[17]), R:0
+#endif
+	}
+
 	void test_General(const std::string& test_name)
 	{
 		bbapi.setGroupOffset(BIOSIGRP_GENERAL);
@@ -281,37 +313,6 @@ private:
 	}
 };
 
-void cx_power_supply_show(int file)
-{
-	uint16_t fw_version;
-	pr_info("Type:         %04d\n", bbapi_read<uint32_t>(file, BIOSIGRP_CXPWRSUPP, BIOSIOFFS_CXPWRSUPP_GETTYPE));
-	pr_info("Serial:       %04d\n", bbapi_read<uint32_t>(file, BIOSIGRP_CXPWRSUPP, BIOSIOFFS_CXPWRSUPP_GETSERIALNO));
-	fw_version = bbapi_read<uint16_t>(file, BIOSIGRP_CXPWRSUPP, BIOSIOFFS_CXPWRSUPP_GETFWVERSION);
-	pr_info("Fw ver.:      %02d.%02d\n", fw_version >> 8, fw_version & 0xff);
-	pr_info("Boot #:       %04d\n", bbapi_read<uint32_t>(file, BIOSIGRP_CXPWRSUPP, BIOSIOFFS_CXPWRSUPP_GETBOOTCOUNTER));
-	pr_info("Optime:       %04d minutes since production\n", bbapi_read<uint32_t>(file, BIOSIGRP_CXPWRSUPP, BIOSIOFFS_CXPWRSUPP_GETOPERATIONTIME));
-	pr_info("act. 5V:      %5d mV\n", bbapi_read<uint16_t>(file, BIOSIGRP_CXPWRSUPP, BIOSIOFFS_CXPWRSUPP_GET5VOLT));
-	pr_info("max. 5V:      %5d mV\n", bbapi_read<uint16_t>(file, BIOSIGRP_CXPWRSUPP, BIOSIOFFS_CXPWRSUPP_GETMAX5VOLT));
-	pr_info("act. 12V:     %5d mV\n", bbapi_read<uint16_t>(file, BIOSIGRP_CXPWRSUPP, BIOSIOFFS_CXPWRSUPP_GET12VOLT));
-	pr_info("max. 12V:     %5d mV\n", bbapi_read<uint16_t>(file, BIOSIGRP_CXPWRSUPP, BIOSIOFFS_CXPWRSUPP_GETMAX12VOLT));
-	pr_info("act 24V:      %5d mV\n", bbapi_read<uint16_t>(file, BIOSIGRP_CXPWRSUPP, BIOSIOFFS_CXPWRSUPP_GET24VOLT));
-	pr_info("max. 24V:     %5d mV\n", bbapi_read<uint16_t>(file, BIOSIGRP_CXPWRSUPP, BIOSIOFFS_CXPWRSUPP_GETMAX24VOLT));
-	pr_info("act. temp.:   %5d C°\n", bbapi_read<uint16_t>(file, BIOSIGRP_CXPWRSUPP, BIOSIOFFS_CXPWRSUPP_GETTEMP));
-	pr_info("min. temp.:   %5d C°\n", bbapi_read<uint16_t>(file, BIOSIGRP_CXPWRSUPP, BIOSIOFFS_CXPWRSUPP_GETMINTEMP));
-	pr_info("max. temp.:   %5d C°\n", bbapi_read<uint16_t>(file, BIOSIGRP_CXPWRSUPP, BIOSIOFFS_CXPWRSUPP_GETMAXTEMP));
-	pr_info("act. current: %5d mA\n", bbapi_read<uint16_t>(file, BIOSIGRP_CXPWRSUPP, BIOSIOFFS_CXPWRSUPP_GETCURRENT));
-	pr_info("max. current: %5d mA\n", bbapi_read<uint16_t>(file, BIOSIGRP_CXPWRSUPP, BIOSIOFFS_CXPWRSUPP_GETMAXCURRENT));
-	pr_info("act power:  %7d mW\n", bbapi_read<uint32_t>(file, BIOSIGRP_CXPWRSUPP, BIOSIOFFS_CXPWRSUPP_GETPOWER));
-	pr_info("max. power: %7d mW\n", bbapi_read<uint32_t>(file, BIOSIGRP_CXPWRSUPP, BIOSIOFFS_CXPWRSUPP_GETMAXPOWER));
-	pr_info("button state:     0x%02x\n", bbapi_read<uint8_t>(file, BIOSIGRP_CXPWRSUPP, BIOSIOFFS_CXPWRSUPP_GETBUTTONSTATE));
-
-#if 0
-	#define BIOSIOFFS_CXPWRSUPP_ENABLEBACKLIGHT			0x00000060	// Set display backlight, W:1 (0x00 := OFF, 0xFF := ON), R:0
-	#define BIOSIOFFS_CXPWRSUPP_DISPLAYLINE1				0x00000061	// Set display line 1, W:17(BYTE[17]), R:0
-	#define BIOSIOFFS_CXPWRSUPP_DISPLAYLINE2				0x00000062	// Set display line 2, W:17(BYTE[17]), R:0
-#endif
-}
-
 void cx_ups_show(int file)
 {
 	const uint8_t enabled = bbapi_read<uint32_t>(file, BIOSIGRP_CXUPS, BIOSIOFFS_CXUPS_GETENABLED);
@@ -379,11 +380,10 @@ int main(int argc, char *argv[])
 	bbapiTest.add_test("test_General", &TestBBAPI::test_General);
 	bbapiTest.add_test("test_PwrCtrl", &TestBBAPI::test_PwrCtrl);
 	bbapiTest.add_test("test_SUPS", &TestBBAPI::test_SUPS);
+	bbapiTest.add_test("test_CXPowerSupply", &TestBBAPI::test_CXPowerSupply);
 	bbapiTest.run(argc, argv);
 
 #if 0
-	cx_pwrctrl_show(file);
-	cx_power_supply_show(file);
 	cx_ups_show(file);
 	set_led(file, BIOSIOFFS_LED_SET_TC, 1);
 	set_led(file, BIOSIOFFS_LED_SET_USER, 1);

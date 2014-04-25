@@ -51,4 +51,7 @@
 /** S-UPS configuration */
 #define CONFIG_SUPS_DISABLED 1
 
+/** CX Power Supply configuration */
+#define CONFIG_CXPWRSUPP_DISABLED 1
+
 #endif /* #ifndef _TEST_CONFIG_H_ */
