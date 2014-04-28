@@ -190,7 +190,7 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 		CHECK_RANGE("max. current: %5d mA\n",   BIOSIOFFS_CXPWRSUPP_GETMAXCURRENT,    CONFIG_CXPWRSUPP_CURRENT_RANGE, uint16_t);
 		CHECK_RANGE("act. power:   %5d mW\n",   BIOSIOFFS_CXPWRSUPP_GETPOWER,         CONFIG_CXPWRSUPP_POWER_RANGE,   uint32_t);
 		CHECK_RANGE("max. power:   %5d mW\n",   BIOSIOFFS_CXPWRSUPP_GETMAXPOWER,      CONFIG_CXPWRSUPP_POWER_RANGE,   uint32_t);
-		CHECK_VALUE("button state:     0x%02x\n", BIOSIOFFS_CXPWRSUPP_GETBUTTONSTATE, EXPECTED_CXPWRSUPP_BUTTON_STATE, uint8_t);
+		CHECK_VALUE("button state: 0x%02x\n",   BIOSIOFFS_CXPWRSUPP_GETBUTTONSTATE, EXPECTED_CXPWRSUPP_BUTTON_STATE, uint8_t);
 
 #if 0
 		#define BIOSIOFFS_CXPWRSUPP_ENABLEBACKLIGHT			0x00000060	// Set display backlight, W:1 (0x00 := OFF, 0xFF := ON), R:0
@@ -258,29 +258,18 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 
 	void test_System(const std::string& test_name)
 	{
+		SENSORINFO info;
 		bbapi.setGroupOffset(BIOSIGRP_SYSTEM);
 		uint32_t num_sensors = bbapi.read<uint32_t>(BIOSIOFFS_SYSTEM_COUNT_SENSORS);
 		while (num_sensors > 0) {
-			show_sensor(num_sensors);
+			pr_info("%02d:", num_sensors);
+			CHECK_OBJECT("%s\n", num_sensors, info, SENSORINFO);
 			--num_sensors;
 		}
 	}
 
 private:
 	BiosApi bbapi;
-
-	void show_sensor(uint32_t sensor)
-	{
-		SENSORINFO info;
-		memset(&info, 0, sizeof(info));
-		fructose_assert_ne(-1, bbapi.ioctl_read(sensor, &info, sizeof(info)));
-		fructose_loop_assert(sensor, INFOVALUE_STATUS_UNUSED != info.readVal.status);
-
-		pr_info("%02u: %12s %s %s val:%u min:%u max:%u nom:%u)\n",
-			sensor, info.desc,
-			LOCATIONCAPS[info.eType].name, PROBECAPS[info.eType].name,
-			info.readVal.value, info.minVal.value, info.maxVal.value, info.nomVal.value);
-	}
 
 	template<size_t N>
 	void test_generic(const BiosApi& bbapi, const std::string& nIndexOffset, const unsigned long offset, const void *const expectedValue, const std::string& msg)
@@ -302,10 +291,12 @@ private:
 	template<typename T>
 	void test_object(const BiosApi& bbapi, const std::string& nIndexOffset, const unsigned long offset, const T expectedValue, const std::string& msg)
 	{
+		char text[256];
 		T value {0};
 		fructose_loop_assert(nIndexOffset, -1 != bbapi.ioctl_read(offset, &value, sizeof(value)));
-		fructose_loop_assert(nIndexOffset, expectedValue == value);
-		pr_info(msg.c_str(), value.ToString());
+		fructose_loop_assert(nIndexOffset, value == expectedValue);
+		value.snprintf(text, sizeof(text));
+		pr_info(msg.c_str(), text);
 	}
 
 	template<typename T>

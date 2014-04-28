@@ -51,12 +51,9 @@ typedef struct  TBaDevice_Version
 		return 0 == memcmp(&version, &ref, sizeof(version) + sizeof(revision) + sizeof(build));
 	}
 
-	const char* ToString() {
-		snprintf(text, sizeof(text), "ver.: %d rev.: %d build: %d", version, revision, build);
-		return text;
+	int snprintf(char* buffer, size_t len) {
+		return ::snprintf(buffer, len, "ver.: %d rev.: %d build: %d", version, revision, build);
 	};
-private:
-	char text[33];
 #endif /* #ifdef __cplusplus */
 }BADEVICE_VERSION, *PBADEVICE_VERSION;
 
@@ -181,6 +178,25 @@ typedef struct TSensorInfo
 	INFOVALUE		maxVal;		// Max. value
 	unsigned long	rsrv;			// Reserved for future use
 	char				desc[12]; 	// description of sensor as ASCII string (inkludes null termination)
+#ifdef __cplusplus
+	TSensorInfo(int status = 0)
+	{
+		memset(this, 0, sizeof(*this));
+		readVal.status = INFOVALUE_STATUS_OK;
+	}
+
+	bool operator==(const TSensorInfo& ref) const
+	{
+		return (INFOVALUE_STATUS_UNUSED != readVal.status) && (INFOVALUE_STATUS_UNUSED != ref.readVal.status);
+	}
+
+	int snprintf(char* buffer, size_t len) {
+		return ::snprintf(buffer, len, "%12s %s %s val:%u min:%u max:%u nom:%u",
+			desc,
+			LOCATIONCAPS[eType].name, PROBECAPS[eType].name,
+			readVal.value, minVal.value, maxVal.value, nomVal.value);
+	};
+#endif /* #ifdef __cplusplus */
 }SENSORINFO, *PSENSORINFO;
 
 ///////////////////////////////////////////////////////////
