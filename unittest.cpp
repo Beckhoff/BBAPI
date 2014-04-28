@@ -163,7 +163,7 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 #define CHECK_ARRAY_OLD(MSG, INDEX_OFFSET, EXPECTATION) \
 	test_generic<sizeof(EXPECTATION)>(bbapi, #INDEX_OFFSET, INDEX_OFFSET, &(EXPECTATION), MSG)
 #define CHECK_VALUE(MSG, INDEX_OFFSET, EXPECTATION, TYPE) \
-	test_value<TYPE>(bbapi, #INDEX_OFFSET, INDEX_OFFSET, EXPECTATION, MSG)
+	test_range<TYPE>(bbapi, #INDEX_OFFSET, INDEX_OFFSET, EXPECTATION, EXPECTATION, MSG)
 #define CHECK_OBJECT(MSG, INDEX_OFFSET, EXPECTATION, TYPE) \
 	test_object<TYPE>(bbapi, #INDEX_OFFSET, INDEX_OFFSET, EXPECTATION, MSG)
 #define CHECK_RANGE(MSG, INDEX_OFFSET, RANGE, TYPE) \
@@ -290,22 +290,13 @@ private:
 		fructose_loop_assert(nIndexOffset, -1 != bbapi.ioctl_read(offset, &value, sizeof(value)));
 		if(expectedValue) {
 			fructose_loop_assert(nIndexOffset, 0 == memcmp(expectedValue, &value, sizeof(value)));
-			pr_info(msg.c_str());
+			pr_info("%s", msg.c_str());
 			for(int i = N - 1; i >= 0; --i) {
 				pr_info(" %02x", value[i]);
 			}
 			pr_info("\n");
 			print_mem(value, 1);
 		}
-	}
-
-	template<typename T>
-	void test_value(const BiosApi& bbapi, const std::string& nIndexOffset, const unsigned long offset, const T expectedValue, const std::string& msg)
-	{
-		T value {0};
-		fructose_loop_assert(nIndexOffset, -1 != bbapi.ioctl_read(offset, &value, sizeof(value)));
-		fructose_loop_assert(nIndexOffset, expectedValue == value);
-		pr_info(msg.c_str(), value);
 	}
 
 	template<typename T>
