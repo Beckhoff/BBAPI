@@ -159,15 +159,15 @@ void print_mem(const unsigned char *p, size_t lines)
 struct TestBBAPI : fructose::test_base<TestBBAPI>
 {
 #define CHECK(INDEX_OFFSET, DATATYPE) \
-	test_generic<sizeof(DATATYPE)>(bbapi, #INDEX_OFFSET, INDEX_OFFSET, NULL, "CHECK")
+	test_generic<sizeof(DATATYPE)>(#INDEX_OFFSET, INDEX_OFFSET, NULL, "CHECK")
 #define CHECK_ARRAY_OLD(MSG, INDEX_OFFSET, EXPECTATION) \
-	test_generic<sizeof(EXPECTATION)>(bbapi, #INDEX_OFFSET, INDEX_OFFSET, &(EXPECTATION), MSG)
+	test_generic<sizeof(EXPECTATION)>(#INDEX_OFFSET, INDEX_OFFSET, &(EXPECTATION), MSG)
 #define CHECK_VALUE(MSG, INDEX_OFFSET, EXPECTATION, TYPE) \
-	test_range<TYPE>(bbapi, #INDEX_OFFSET, INDEX_OFFSET, EXPECTATION, EXPECTATION, MSG)
+	test_range<TYPE>(#INDEX_OFFSET, INDEX_OFFSET, EXPECTATION, EXPECTATION, MSG)
 #define CHECK_OBJECT(MSG, INDEX_OFFSET, EXPECTATION, TYPE) \
-	test_object<TYPE>(bbapi, #INDEX_OFFSET, INDEX_OFFSET, EXPECTATION, MSG)
+	test_object<TYPE>(#INDEX_OFFSET, INDEX_OFFSET, EXPECTATION, MSG)
 #define CHECK_RANGE(MSG, INDEX_OFFSET, RANGE, TYPE) \
-	test_range<TYPE>(bbapi, #INDEX_OFFSET, INDEX_OFFSET, RANGE, MSG)
+	test_range<TYPE>(#INDEX_OFFSET, INDEX_OFFSET, RANGE, MSG)
 
 	void test_CXPowerSupply(const std::string& test_name)
 	{
@@ -272,7 +272,7 @@ private:
 	BiosApi bbapi;
 
 	template<size_t N>
-	void test_generic(const BiosApi& bbapi, const std::string& nIndexOffset, const unsigned long offset, const void *const expectedValue, const std::string& msg)
+	void test_generic(const std::string& nIndexOffset, const unsigned long offset, const void *const expectedValue, const std::string& msg)
 	{
 		uint8_t value[N];
 		memset(value, 0, sizeof(value));
@@ -289,7 +289,7 @@ private:
 	}
 
 	template<typename T>
-	void test_object(const BiosApi& bbapi, const std::string& nIndexOffset, const unsigned long offset, const T expectedValue, const std::string& msg)
+	void test_object(const std::string& nIndexOffset, const unsigned long offset, const T expectedValue, const std::string& msg)
 	{
 		char text[256];
 		T value {0};
@@ -300,7 +300,7 @@ private:
 	}
 
 	template<typename T>
-	void test_range(const BiosApi& bbapi, const std::string& nIndexOffset, const unsigned long offset, const T lower, const T upper, const std::string& msg)
+	void test_range(const std::string& nIndexOffset, const unsigned long offset, const T lower, const T upper, const std::string& msg)
 	{
 		T value = 0;
 		fructose_loop_assert(nIndexOffset, -1 != bbapi.ioctl_read(offset, &value, sizeof(value)));
@@ -354,11 +354,6 @@ void cx_ups_show(int file)
 	#define BIOSIOFFS_CXUPS_GETBATTRATEDCAPACITY			0x00000099	// Get rated capacity W:0, R:4 [mAh]
 	#define BIOSIOFFS_CXUPS_GETSMBUSADDRESS				0x000000F0	// Get SMBus address W:0, R:2 (hHost, address)
 #endif
-}
-
-void set_led(int file, unsigned long offset, uint8_t color)
-{
-	ioctl_write(file, BIOSIGRP_LED, offset, &color, sizeof(color));
 }
 
 int main(int argc, char *argv[])
