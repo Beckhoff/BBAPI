@@ -363,12 +363,6 @@ void set_led(int file, unsigned long offset, uint8_t color)
 
 int main(int argc, char *argv[])
 {
-	int file = open(FILE_PATH, O_RDWR);
-	if ( -1 == file) {
-		pr_info("Open '%s' failed\n", FILE_PATH);
-		return -1;
-	}
-
 	TestBBAPI bbapiTest;
 	bbapiTest.add_test("test_General", &TestBBAPI::test_General);
 	bbapiTest.add_test("test_PwrCtrl", &TestBBAPI::test_PwrCtrl);
@@ -376,14 +370,5 @@ int main(int argc, char *argv[])
 	bbapiTest.add_test("test_System", &TestBBAPI::test_System);
 	bbapiTest.add_test("test_CXPowerSupply", &TestBBAPI::test_CXPowerSupply);
 	bbapiTest.run(argc, argv);
-
-#if 0
-	cx_ups_show(file);
-	set_led(file, BIOSIOFFS_LED_SET_TC, 1);
-	set_led(file, BIOSIOFFS_LED_SET_USER, 1);
-	//bbapi_callbacks_install(file);
-#endif
-
-	if(file != -1) close(file);
 	return 0;
 }
