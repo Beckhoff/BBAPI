@@ -42,7 +42,7 @@
 static const BADEVICE_MBINFO EXPECTED_GENERAL_BOARDINFO = CONFIG_GENERAL_BBAPI_BOARDINFO;
 static const uint8_t EXPECTED_GENERAL_BOARDNAME[16] = CONFIG_GENERAL_BBAPI_BOARDNAME;
 static const uint8_t EXPECTED_GENERAL_PLATFORM = CONFIG_GENERAL_BBAPI_PLATFORM;
-static const BADEVICE_VERSION EXPECTED_GENERAL_VERSION = CONFIG_GENERAL_BBAPI_VERSION;
+static const BADEVICE_VERSION EXPECTED_GENERAL_VERSION CONFIG_GENERAL_BBAPI_VERSION;
 
 static const uint8_t EXPECTED_PWRCTRL_BL_REVISION[3] = CONFIG_PWRCTRL_BL_REVISION;
 static const uint8_t EXPECTED_PWRCTRL_FW_REVISION[3] = CONFIG_PWRCTRL_FW_REVISION;
@@ -93,7 +93,7 @@ int ioctl_write(int file, uint32_t group, uint32_t offset, void* in, uint32_t si
 }
 
 template<typename T>
-T __attribute__ ((deprecated)) bbapi_read(int file, unsigned long group, unsigned long offset)
+T /*__attribute__ ((deprecated))*/ bbapi_read(int file, unsigned long group, unsigned long offset)
 {
 	T value = 0;
 	ioctl_read(file, group, offset, &value, sizeof(value));
@@ -124,7 +124,7 @@ struct BiosApi
 
 	// TODO REMOVE this function was deprecated because it doesn't check the return value of the ioctl call to the driver
 	template<typename T>
-	T __attribute__ ((deprecated)) read(unsigned long offset) const
+	T /*__attribute__ ((deprecated))*/ read(unsigned long offset) const
 	{
 		return bbapi_read<T>(m_File, m_Group, offset);
 	}
@@ -164,6 +164,8 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 	test_generic<sizeof(EXPECTATION)>(bbapi, #INDEX_OFFSET, INDEX_OFFSET, &(EXPECTATION), MSG)
 #define CHECK_VALUE(MSG, INDEX_OFFSET, EXPECTATION, TYPE) \
 	test_value<TYPE>(bbapi, #INDEX_OFFSET, INDEX_OFFSET, EXPECTATION, MSG)
+#define CHECK_OBJECT(MSG, INDEX_OFFSET, EXPECTATION, TYPE) \
+	test_object<TYPE>(bbapi, #INDEX_OFFSET, INDEX_OFFSET, EXPECTATION, MSG)
 #define CHECK_RANGE(MSG, INDEX_OFFSET, RANGE, TYPE) \
 	test_range<TYPE>(bbapi, #INDEX_OFFSET, INDEX_OFFSET, RANGE, MSG)
 
@@ -209,10 +211,7 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 		fructose_assert_same_data(&EXPECTED_GENERAL_BOARDNAME, &boardname, sizeof(boardname));
 		pr_info("Board: %s\n", boardname);
 		CHECK_VALUE("platform:     0x%02x (0x00->32 bit, 0x01-> 64bit)\n", BIOSIOFFS_GENERAL_GETPLATFORMINFO, EXPECTED_GENERAL_PLATFORM, uint8_t);
-		BADEVICE_VERSION version;
-		bbapi.ioctl_read(BIOSIOFFS_GENERAL_VERSION, &version, sizeof(version));
-		fructose_assert_same_data(&EXPECTED_GENERAL_VERSION, &version, sizeof(version));
-		pr_info("BIOS API ver.: %d rev.: %d build: %d\n", version.version, version.revision, version.build);
+		CHECK_OBJECT("BIOS API %s\n", BIOSIOFFS_GENERAL_VERSION, EXPECTED_GENERAL_VERSION, BADEVICE_VERSION);
 	}
 
 	void test_PwrCtrl(const std::string& test_name)
@@ -303,10 +302,19 @@ private:
 	template<typename T>
 	void test_value(const BiosApi& bbapi, const std::string& nIndexOffset, const unsigned long offset, const T expectedValue, const std::string& msg)
 	{
-		T value = 0;
+		T value {0};
 		fructose_loop_assert(nIndexOffset, -1 != bbapi.ioctl_read(offset, &value, sizeof(value)));
 		fructose_loop_assert(nIndexOffset, expectedValue == value);
 		pr_info(msg.c_str(), value);
+	}
+
+	template<typename T>
+	void test_object(const BiosApi& bbapi, const std::string& nIndexOffset, const unsigned long offset, const T expectedValue, const std::string& msg)
+	{
+		T value {0};
+		fructose_loop_assert(nIndexOffset, -1 != bbapi.ioctl_read(offset, &value, sizeof(value)));
+		fructose_loop_assert(nIndexOffset, expectedValue == value);
+		pr_info(msg.c_str(), value.ToString());
 	}
 
 	template<typename T>

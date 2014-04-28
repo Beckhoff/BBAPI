@@ -40,6 +40,24 @@ typedef struct  TBaDevice_Version
 	unsigned char		version;
 	unsigned char		revision;
 	unsigned short		build;
+#ifdef __cplusplus
+	TBaDevice_Version(unsigned char v = 0, unsigned char r = 0, unsigned short b = 0)
+		: version(v), revision(r), build(b)
+	{
+	}
+
+	bool operator==(const TBaDevice_Version& ref) const
+	{
+		return 0 == memcmp(&version, &ref, sizeof(version) + sizeof(revision) + sizeof(build));
+	}
+
+	const char* ToString() {
+		snprintf(text, sizeof(text), "ver.: %d rev.: %d build: %d", version, revision, build);
+		return text;
+	};
+private:
+	char text[33];
+#endif /* #ifdef __cplusplus */
 }BADEVICE_VERSION, *PBADEVICE_VERSION;
 
 ////////////////////////////////////////////////////////////////
