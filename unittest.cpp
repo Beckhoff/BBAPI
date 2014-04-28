@@ -100,7 +100,7 @@ int ioctl_write(int file, uint32_t group, uint32_t offset, void* in, uint32_t si
 }
 
 template<typename T>
-T bbapi_read(int file, unsigned long group, unsigned long offset)
+T __attribute__ ((deprecated)) bbapi_read(int file, unsigned long group, unsigned long offset)
 {
 	T value = 0;
 	ioctl_read(file, group, offset, &value, sizeof(value));
@@ -129,8 +129,9 @@ struct BiosApi
 		m_Group = group;
 	}
 
+	// TODO REMOVE this function was deprecated because it doesn't check the return value of the ioctl call to the driver
 	template<typename T>
-	T read(unsigned long offset) const
+	T __attribute__ ((deprecated)) read(unsigned long offset) const
 	{
 		return bbapi_read<T>(m_File, m_Group, offset);
 	}
@@ -143,34 +144,6 @@ struct BiosApi
 protected:
 	const int m_File;
 	unsigned long m_Group;
-};
-
-struct TestSensors : public BiosApi, fructose::test_base<TestSensors>
-{
-	TestSensors() : BiosApi(BIOSIGRP_SYSTEM) {};
-
-	void test_sensors(const std::string& test_name)
-	{
-		uint32_t num_sensors = read<uint32_t>(BIOSIOFFS_SYSTEM_COUNT_SENSORS);
-		while (num_sensors > 0) {
-			show_sensor(num_sensors);
-			--num_sensors;
-		}
-	}
-
-private:
-	void show_sensor(uint32_t sensor)
-	{
-		SENSORINFO info;
-		memset(&info, 0, sizeof(info));
-		fructose_assert_ne(-1, ioctl_read(sensor, &info, sizeof(info)));
-		fructose_loop_assert(sensor, INFOVALUE_STATUS_UNUSED != info.readVal.status);
-
-		pr_info("%02u: %12s %s %s val:%u min:%u max:%u nom:%u)\n",
-			sensor, info.desc,
-			LOCATIONCAPS[info.eType].name, PROBECAPS[info.eType].name,
-			info.readVal.value, info.minVal.value, info.maxVal.value, info.nomVal.value);
-	}
 };
 
 #define TESTING_ENABLED 0
@@ -194,8 +167,10 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 {
 #define CHECK(INDEX_OFFSET, DATATYPE) \
 	test_generic<sizeof(DATATYPE)>(bbapi, #INDEX_OFFSET, INDEX_OFFSET, NULL)
-#define CHECK_VALUE(INDEX_OFFSET, EXPECTATION) \
+#define CHECK_ARRAY_OLD(INDEX_OFFSET, EXPECTATION) \
 	test_generic<sizeof(EXPECTATION)>(bbapi, #INDEX_OFFSET, INDEX_OFFSET, &(EXPECTATION))
+#define CHECK_VALUE(MSG, INDEX_OFFSET, EXPECTATION, TYPE) \
+	test_value<TYPE>(bbapi, #INDEX_OFFSET, INDEX_OFFSET, EXPECTATION, MSG)
 #define CHECK_RANGE(MSG, INDEX_OFFSET, RANGE, TYPE) \
 	test_range<TYPE>(bbapi, #INDEX_OFFSET, INDEX_OFFSET, RANGE, MSG)
 
@@ -205,29 +180,26 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 		uint16_t fw_version;
 		fw_version = bbapi.read<uint16_t>(BIOSIOFFS_CXPWRSUPP_GETFWVERSION);
 
-		CHECK_VALUE(BIOSIOFFS_CXPWRSUPP_GETTYPE, EXPECTED_CXPWRSUPP_TYPE);
-		pr_info("Type:         %04d\n", bbapi.read<uint32_t>(BIOSIOFFS_CXPWRSUPP_GETTYPE));
-		CHECK_VALUE(BIOSIOFFS_CXPWRSUPP_GETSERIALNO, EXPECTED_CXPWRSUPP_SERIALNO);
-		pr_info("Serial:       %04d\n", bbapi.read<uint32_t>(BIOSIOFFS_CXPWRSUPP_GETSERIALNO));
-		CHECK_VALUE(BIOSIOFFS_CXPWRSUPP_GETFWVERSION, EXPECTED_CXPWRSUPP_FWVERSION);
+		CHECK_VALUE("Type:         %04d\n", BIOSIOFFS_CXPWRSUPP_GETTYPE, EXPECTED_CXPWRSUPP_TYPE, uint32_t);
+		CHECK_VALUE("Serial:       %04d\n", BIOSIOFFS_CXPWRSUPP_GETSERIALNO, EXPECTED_CXPWRSUPP_SERIALNO, uint32_t);
+		CHECK_ARRAY_OLD(BIOSIOFFS_CXPWRSUPP_GETFWVERSION, EXPECTED_CXPWRSUPP_FWVERSION);
 		pr_info("Fw ver.:      %02d.%02d\n", fw_version >> 8, fw_version & 0xff);
-		CHECK_RANGE("Boot #:       %04d\n", BIOSIOFFS_CXPWRSUPP_GETBOOTCOUNTER, CONFIG_CXPWRSUPP_BOOTCOUNTER_RANGE, uint32_t);
-		CHECK_RANGE("Optime:       %04d minutes since production\n", BIOSIOFFS_CXPWRSUPP_GETOPERATIONTIME, CONFIG_CXPWRSUPP_OPERATIONTIME_RANGE, uint32_t);
-		CHECK_RANGE("act. 5V:      %5d mV\n", BIOSIOFFS_CXPWRSUPP_GET5VOLT, CONFIG_CXPWRSUPP_5VOLT_RANGE, uint16_t);
-		CHECK_RANGE("max. 5V:      %5d mV\n", BIOSIOFFS_CXPWRSUPP_GETMAX5VOLT, CONFIG_CXPWRSUPP_5VOLT_RANGE, uint16_t);
-		CHECK_RANGE("act. 12V:      %5d mV\n", BIOSIOFFS_CXPWRSUPP_GET12VOLT, CONFIG_CXPWRSUPP_12VOLT_RANGE, uint16_t);
-		CHECK_RANGE("max. 12V:      %5d mV\n", BIOSIOFFS_CXPWRSUPP_GETMAX12VOLT, CONFIG_CXPWRSUPP_12VOLT_RANGE, uint16_t);
-		CHECK_RANGE("act. 24V:      %5d mV\n", BIOSIOFFS_CXPWRSUPP_GET24VOLT, CONFIG_CXPWRSUPP_24VOLT_RANGE, uint16_t);
-		CHECK_RANGE("max. 24V:      %5d mV\n", BIOSIOFFS_CXPWRSUPP_GETMAX24VOLT, CONFIG_CXPWRSUPP_24VOLT_RANGE, uint16_t);
-		CHECK_RANGE("act. temp.:   %5d C°\n", BIOSIOFFS_CXPWRSUPP_GETTEMP, CONFIG_CXPWRSUPP_TEMP_RANGE, int8_t);
-		CHECK_RANGE("min. temp.:   %5d C°\n", BIOSIOFFS_CXPWRSUPP_GETMINTEMP, CONFIG_CXPWRSUPP_TEMP_RANGE, int8_t);
-		CHECK_RANGE("max. temp.:   %5d C°\n", BIOSIOFFS_CXPWRSUPP_GETMAXTEMP, CONFIG_CXPWRSUPP_TEMP_RANGE, int8_t);
-		CHECK_RANGE("act. current: %5d mA\n", BIOSIOFFS_CXPWRSUPP_GETCURRENT, CONFIG_CXPWRSUPP_CURRENT_RANGE, uint16_t);
-		CHECK_RANGE("max. current: %5d mA\n", BIOSIOFFS_CXPWRSUPP_GETMAXCURRENT, CONFIG_CXPWRSUPP_CURRENT_RANGE, uint16_t);
-		CHECK_RANGE("act. power: %5d mW\n", BIOSIOFFS_CXPWRSUPP_GETPOWER, CONFIG_CXPWRSUPP_POWER_RANGE, uint32_t);
-		CHECK_RANGE("max. power: %5d mW\n", BIOSIOFFS_CXPWRSUPP_GETMAXPOWER, CONFIG_CXPWRSUPP_POWER_RANGE, uint32_t);
-		CHECK_VALUE(BIOSIOFFS_CXPWRSUPP_GETBUTTONSTATE, EXPECTED_CXPWRSUPP_BUTTON_STATE);
-		pr_info("button state:     0x%02x\n", bbapi.read<uint8_t>(BIOSIOFFS_CXPWRSUPP_GETBUTTONSTATE));
+		CHECK_RANGE("Boot #:       %04d\n",     BIOSIOFFS_CXPWRSUPP_GETBOOTCOUNTER,   CONFIG_CXPWRSUPP_BOOTCOUNTER_RANGE, uint32_t);
+		CHECK_RANGE("Optime:       %04d min\n", BIOSIOFFS_CXPWRSUPP_GETOPERATIONTIME, CONFIG_CXPWRSUPP_OPERATIONTIME_RANGE, uint32_t);
+		CHECK_RANGE("act. 5V:      %5d mV\n",   BIOSIOFFS_CXPWRSUPP_GET5VOLT,         CONFIG_CXPWRSUPP_5VOLT_RANGE,   uint16_t);
+		CHECK_RANGE("max. 5V:      %5d mV\n",   BIOSIOFFS_CXPWRSUPP_GETMAX5VOLT,      CONFIG_CXPWRSUPP_5VOLT_RANGE,   uint16_t);
+		CHECK_RANGE("act. 12V:     %5d mV\n",   BIOSIOFFS_CXPWRSUPP_GET12VOLT,        CONFIG_CXPWRSUPP_12VOLT_RANGE,  uint16_t);
+		CHECK_RANGE("max. 12V:     %5d mV\n",   BIOSIOFFS_CXPWRSUPP_GETMAX12VOLT,     CONFIG_CXPWRSUPP_12VOLT_RANGE,  uint16_t);
+		CHECK_RANGE("act. 24V:     %5d mV\n",   BIOSIOFFS_CXPWRSUPP_GET24VOLT,        CONFIG_CXPWRSUPP_24VOLT_RANGE,  uint16_t);
+		CHECK_RANGE("max. 24V:     %5d mV\n",   BIOSIOFFS_CXPWRSUPP_GETMAX24VOLT,     CONFIG_CXPWRSUPP_24VOLT_RANGE,  uint16_t);
+		CHECK_RANGE("act. temp.:   %5d C°\n",   BIOSIOFFS_CXPWRSUPP_GETTEMP,          CONFIG_CXPWRSUPP_TEMP_RANGE,    int8_t);
+		CHECK_RANGE("min. temp.:   %5d C°\n",   BIOSIOFFS_CXPWRSUPP_GETMINTEMP,       CONFIG_CXPWRSUPP_TEMP_RANGE,    int8_t);
+		CHECK_RANGE("max. temp.:   %5d C°\n",   BIOSIOFFS_CXPWRSUPP_GETMAXTEMP,       CONFIG_CXPWRSUPP_TEMP_RANGE,    int8_t);
+		CHECK_RANGE("act. current: %5d mA\n",   BIOSIOFFS_CXPWRSUPP_GETCURRENT,       CONFIG_CXPWRSUPP_CURRENT_RANGE, uint16_t);
+		CHECK_RANGE("max. current: %5d mA\n",   BIOSIOFFS_CXPWRSUPP_GETMAXCURRENT,    CONFIG_CXPWRSUPP_CURRENT_RANGE, uint16_t);
+		CHECK_RANGE("act. power:   %5d mW\n",   BIOSIOFFS_CXPWRSUPP_GETPOWER,         CONFIG_CXPWRSUPP_POWER_RANGE,   uint32_t);
+		CHECK_RANGE("max. power:   %5d mW\n",   BIOSIOFFS_CXPWRSUPP_GETMAXPOWER,      CONFIG_CXPWRSUPP_POWER_RANGE,   uint32_t);
+		CHECK_VALUE("button state:     0x%02x\n", BIOSIOFFS_CXPWRSUPP_GETBUTTONSTATE, EXPECTED_CXPWRSUPP_BUTTON_STATE, uint8_t);
 
 #if 0
 		#define BIOSIOFFS_CXPWRSUPP_ENABLEBACKLIGHT			0x00000060	// Set display backlight, W:1 (0x00 := OFF, 0xFF := ON), R:0
@@ -259,19 +231,19 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 	void test_PwrCtrl(const std::string& test_name)
 	{
 		bbapi.setGroupOffset(BIOSIGRP_PWRCTRL);
-		CHECK_VALUE(BIOSIOFFS_PWRCTRL_BOOTLDR_REV, EXPECTED_PWRCTRL_BL_REVISION);
-		CHECK_VALUE(BIOSIOFFS_PWRCTRL_FIRMWARE_REV, EXPECTED_PWRCTRL_FW_REVISION);
-		CHECK_VALUE(BIOSIOFFS_PWRCTRL_DEVICE_ID, EXPECTED_PWRCTRL_DEVICE_ID);
+		CHECK_ARRAY_OLD(BIOSIOFFS_PWRCTRL_BOOTLDR_REV, EXPECTED_PWRCTRL_BL_REVISION);
+		CHECK_ARRAY_OLD(BIOSIOFFS_PWRCTRL_FIRMWARE_REV, EXPECTED_PWRCTRL_FW_REVISION);
+		CHECK_VALUE("Device id:    0x%02x\n", BIOSIOFFS_PWRCTRL_DEVICE_ID, EXPECTED_PWRCTRL_DEVICE_ID, uint8_t);
 		CHECK_RANGE("Optime:       %04d minutes since production\n", BIOSIOFFS_PWRCTRL_OPERATING_TIME, CONFIG_PWRCTRL_OPERATION_TIME_RANGE, uint32_t);
 		CHECK      (BIOSIOFFS_PWRCTRL_BOARD_TEMP, uint8_t[2]);
 		CHECK      (BIOSIOFFS_PWRCTRL_INPUT_VOLTAGE, uint8_t[2]);
-		CHECK_VALUE(BIOSIOFFS_PWRCTRL_SERIAL_NUMBER, EXPECTED_PWRCTRL_SERIAL);
+		CHECK_ARRAY_OLD(BIOSIOFFS_PWRCTRL_SERIAL_NUMBER, EXPECTED_PWRCTRL_SERIAL);
 		CHECK_RANGE("Boot #:       %04d\n", BIOSIOFFS_PWRCTRL_BOOT_COUNTER, CONFIG_PWRCTRL_BOOT_COUNTER_RANGE, uint16_t);
-		CHECK_VALUE(BIOSIOFFS_PWRCTRL_PRODUCTION_DATE, EXPECTED_PWRCTRL_PRODUCTION_DATE);
-		CHECK_VALUE(BIOSIOFFS_PWRCTRL_BOARD_POSITION, EXPECTED_PWRCTRL_POSITION);
-		CHECK_VALUE(BIOSIOFFS_PWRCTRL_SHUTDOWN_REASON, EXPECTED_PWRCTRL_LAST_SHUTDOWN);
-		CHECK_VALUE(BIOSIOFFS_PWRCTRL_TEST_COUNTER, EXPECTED_PWRCTRL_TEST_COUNT);
-		CHECK_VALUE(BIOSIOFFS_PWRCTRL_TEST_NUMBER, EXPECTED_PWRCTRL_TEST_NUMBER);
+		CHECK_ARRAY_OLD(BIOSIOFFS_PWRCTRL_PRODUCTION_DATE, EXPECTED_PWRCTRL_PRODUCTION_DATE);
+		CHECK_VALUE("µC Position:  0x%02x\n", BIOSIOFFS_PWRCTRL_BOARD_POSITION, EXPECTED_PWRCTRL_POSITION, uint8_t);
+		CHECK_ARRAY_OLD(BIOSIOFFS_PWRCTRL_SHUTDOWN_REASON, EXPECTED_PWRCTRL_LAST_SHUTDOWN);
+		CHECK_VALUE("Test count:   %03d\n", BIOSIOFFS_PWRCTRL_TEST_COUNTER, EXPECTED_PWRCTRL_TEST_COUNT, uint8_t);
+		CHECK_ARRAY_OLD(BIOSIOFFS_PWRCTRL_TEST_NUMBER, EXPECTED_PWRCTRL_TEST_NUMBER);
 	}
 
 	void test_SUPS(const std::string& test_name)
@@ -298,8 +270,32 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 #endif
 	}
 
+	void test_System(const std::string& test_name)
+	{
+		bbapi.setGroupOffset(BIOSIGRP_SYSTEM);
+		uint32_t num_sensors = bbapi.read<uint32_t>(BIOSIOFFS_SYSTEM_COUNT_SENSORS);
+		while (num_sensors > 0) {
+			show_sensor(num_sensors);
+			--num_sensors;
+		}
+	}
+
 private:
 	BiosApi bbapi;
+
+	void show_sensor(uint32_t sensor)
+	{
+		SENSORINFO info;
+		memset(&info, 0, sizeof(info));
+		fructose_assert_ne(-1, bbapi.ioctl_read(sensor, &info, sizeof(info)));
+		fructose_loop_assert(sensor, INFOVALUE_STATUS_UNUSED != info.readVal.status);
+
+		pr_info("%02u: %12s %s %s val:%u min:%u max:%u nom:%u)\n",
+			sensor, info.desc,
+			LOCATIONCAPS[info.eType].name, PROBECAPS[info.eType].name,
+			info.readVal.value, info.minVal.value, info.maxVal.value, info.nomVal.value);
+	}
+
 	template<size_t N>
 	void test_generic(const BiosApi& bbapi, const std::string& nIndexOffset, const unsigned long offset, const void *const expectedValue)
 	{
@@ -310,6 +306,15 @@ private:
 			fructose_loop_assert(nIndexOffset, 0 == memcmp(expectedValue, &value, sizeof(value)));
 			print_mem(value, 1);
 		}
+	}
+
+	template<typename T>
+	void test_value(const BiosApi& bbapi, const std::string& nIndexOffset, const unsigned long offset, const T expectedValue, const std::string& msg)
+	{
+		T value = 0;
+		fructose_loop_assert(nIndexOffset, -1 != bbapi.ioctl_read(offset, &value, sizeof(value)));
+		fructose_loop_assert(nIndexOffset, expectedValue == value);
+		pr_info(msg.c_str(), value);
 	}
 
 	template<typename T>
@@ -382,14 +387,11 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	TestSensors sensorTest;
-	sensorTest.add_test("test_sensors", &TestSensors::test_sensors);
-	sensorTest.run(argc, argv);
-
 	TestBBAPI bbapiTest;
 	bbapiTest.add_test("test_General", &TestBBAPI::test_General);
 	bbapiTest.add_test("test_PwrCtrl", &TestBBAPI::test_PwrCtrl);
 	bbapiTest.add_test("test_SUPS", &TestBBAPI::test_SUPS);
+	bbapiTest.add_test("test_System", &TestBBAPI::test_System);
 	bbapiTest.add_test("test_CXPowerSupply", &TestBBAPI::test_CXPowerSupply);
 	bbapiTest.run(argc, argv);
 
