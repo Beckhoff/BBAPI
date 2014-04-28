@@ -96,14 +96,6 @@ int ioctl_write(int file, uint32_t group, uint32_t offset, void* in, uint32_t si
 	return 0;
 }
 
-template<typename T>
-T /*__attribute__ ((deprecated))*/ bbapi_read(int file, unsigned long group, unsigned long offset)
-{
-	T value = 0;
-	ioctl_read(file, group, offset, &value, sizeof(value));
-	return value;
-}
-
 using namespace fructose;
 
 struct BiosApi
@@ -126,13 +118,6 @@ struct BiosApi
 	void setGroupOffset(unsigned long group)
 	{
 		m_Group = group;
-	}
-
-	// TODO REMOVE this function was deprecated because it doesn't check the return value of the ioctl call to the driver
-	template<typename T>
-	T __attribute__ ((deprecated)) read(unsigned long offset) const
-	{
-		return bbapi_read<T>(m_File, m_Group, offset);
 	}
 
 	int ioctl_read(unsigned long offset, void* out, unsigned long size) const
@@ -293,13 +278,13 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 			pr_info("S-UPS test case disabled\n");
 			return;
 		}
+#if 0
 		bbapi.setGroupOffset(BIOSIGRP_SUPS);
 		uint16_t revision = bbapi.read<uint16_t>(BIOSIOFFS_SUPS_REVISION);
 		pr_info("S-UPS status:    0x%02x\n", bbapi.read<uint8_t>(BIOSIOFFS_SUPS_STATUS));
 		pr_info("S-UPS revision:  %d.%d\n", revision >> 8, 0xff & revision);
 		CHECK_ARRAY_OLD("S-UPS revision:  ", BIOSIOFFS_SUPS_REVISION, EXPECTED_SUPS_REVISION);
 		pr_info("# Power fails:  %d\n", bbapi.read<uint16_t>(BIOSIOFFS_SUPS_PWRFAIL_COUNTER));
-#if 0
 		#define BIOSIOFFS_SUPS_ENABLE								0x00000000	// Enable/disable SUPS, W:1, R:0
 		#define BIOSIOFFS_SUPS_PWRFAIL_TIMES					0x00000004	// Get latest power fail time stamps, W:0, R:12
 		#define BIOSIOFFS_SUPS_SET_SHUTDOWN_TYPE				0x00000005	// Set the Shutdown behavior, W:1, R:0
@@ -316,7 +301,8 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 	{
 		SENSORINFO info;
 		bbapi.setGroupOffset(BIOSIGRP_SYSTEM);
-		uint32_t num_sensors = bbapi.read<uint32_t>(BIOSIOFFS_SYSTEM_COUNT_SENSORS);
+		uint32_t num_sensors;
+		bbapi.ioctl_read(BIOSIOFFS_SYSTEM_COUNT_SENSORS, &num_sensors, sizeof(num_sensors));
 		while (num_sensors > 0) {
 			pr_info("%02d:", num_sensors);
 			CHECK_OBJECT("%s\n", num_sensors, info, SENSORINFO);
