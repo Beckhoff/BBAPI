@@ -71,13 +71,6 @@ static const uint32_t EXPECTED_CXPWRSUPP_BUTTON_STATE = CONFIG_CXPWRSUPP_BUTTON_
 #define STRING_SIZE 17				// Size of String for Display
 #define BBAPI_CMD 0x5000			// BIOS API Command number for IOCTL call
 
-#define CXPWRSUPP_BUTTON_STATE_OFF			0x00
-#define CXPWRSUPP_BUTTON_STATE_RIGHT		0x01
-#define CXPWRSUPP_BUTTON_STATE_LEFT			0x02
-#define CXPWRSUPP_BUTTON_STATE_DOWN			0x04
-#define CXPWRSUPP_BUTTON_STATE_UP			0x08
-#define CXPWRSUPP_BUTTON_STATE_SELECT		0x10
-
 
 int ioctl_read(int file, uint32_t group, uint32_t offset, void* out, uint32_t size)
 {
@@ -166,9 +159,9 @@ void print_mem(const unsigned char *p, size_t lines)
 struct TestBBAPI : fructose::test_base<TestBBAPI>
 {
 #define CHECK(INDEX_OFFSET, DATATYPE) \
-	test_generic<sizeof(DATATYPE)>(bbapi, #INDEX_OFFSET, INDEX_OFFSET, NULL)
-#define CHECK_ARRAY_OLD(INDEX_OFFSET, EXPECTATION) \
-	test_generic<sizeof(EXPECTATION)>(bbapi, #INDEX_OFFSET, INDEX_OFFSET, &(EXPECTATION))
+	test_generic<sizeof(DATATYPE)>(bbapi, #INDEX_OFFSET, INDEX_OFFSET, NULL, "CHECK")
+#define CHECK_ARRAY_OLD(MSG, INDEX_OFFSET, EXPECTATION) \
+	test_generic<sizeof(EXPECTATION)>(bbapi, #INDEX_OFFSET, INDEX_OFFSET, &(EXPECTATION), MSG)
 #define CHECK_VALUE(MSG, INDEX_OFFSET, EXPECTATION, TYPE) \
 	test_value<TYPE>(bbapi, #INDEX_OFFSET, INDEX_OFFSET, EXPECTATION, MSG)
 #define CHECK_RANGE(MSG, INDEX_OFFSET, RANGE, TYPE) \
@@ -177,13 +170,9 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 	void test_CXPowerSupply(const std::string& test_name)
 	{
 		bbapi.setGroupOffset(BIOSIGRP_CXPWRSUPP);
-		uint16_t fw_version;
-		fw_version = bbapi.read<uint16_t>(BIOSIOFFS_CXPWRSUPP_GETFWVERSION);
-
 		CHECK_VALUE("Type:         %04d\n", BIOSIOFFS_CXPWRSUPP_GETTYPE, EXPECTED_CXPWRSUPP_TYPE, uint32_t);
 		CHECK_VALUE("Serial:       %04d\n", BIOSIOFFS_CXPWRSUPP_GETSERIALNO, EXPECTED_CXPWRSUPP_SERIALNO, uint32_t);
-		CHECK_ARRAY_OLD(BIOSIOFFS_CXPWRSUPP_GETFWVERSION, EXPECTED_CXPWRSUPP_FWVERSION);
-		pr_info("Fw ver.:      %02d.%02d\n", fw_version >> 8, fw_version & 0xff);
+		CHECK_ARRAY_OLD("Fw ver.:     ", BIOSIOFFS_CXPWRSUPP_GETFWVERSION, EXPECTED_CXPWRSUPP_FWVERSION);
 		CHECK_RANGE("Boot #:       %04d\n",     BIOSIOFFS_CXPWRSUPP_GETBOOTCOUNTER,   CONFIG_CXPWRSUPP_BOOTCOUNTER_RANGE, uint32_t);
 		CHECK_RANGE("Optime:       %04d min\n", BIOSIOFFS_CXPWRSUPP_GETOPERATIONTIME, CONFIG_CXPWRSUPP_OPERATIONTIME_RANGE, uint32_t);
 		CHECK_RANGE("act. 5V:      %5d mV\n",   BIOSIOFFS_CXPWRSUPP_GET5VOLT,         CONFIG_CXPWRSUPP_5VOLT_RANGE,   uint16_t);
@@ -219,9 +208,7 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 		bbapi.ioctl_read(BIOSIOFFS_GENERAL_GETBOARDNAME, &boardname, sizeof(boardname));
 		fructose_assert_same_data(&EXPECTED_GENERAL_BOARDNAME, &boardname, sizeof(boardname));
 		pr_info("Board: %s\n", boardname);
-		uint8_t platform = bbapi.read<uint8_t>(BIOSIOFFS_GENERAL_GETPLATFORMINFO);
-		fructose_assert_eq(EXPECTED_GENERAL_PLATFORM, platform);
-		pr_info("platform is %s bit\n", platform ? "64" : "32");
+		CHECK_VALUE("platform:     0x%02x (0x00->32 bit, 0x01-> 64bit)\n", BIOSIOFFS_GENERAL_GETPLATFORMINFO, EXPECTED_GENERAL_PLATFORM, uint8_t);
 		BADEVICE_VERSION version;
 		bbapi.ioctl_read(BIOSIOFFS_GENERAL_VERSION, &version, sizeof(version));
 		fructose_assert_same_data(&EXPECTED_GENERAL_VERSION, &version, sizeof(version));
@@ -231,19 +218,19 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 	void test_PwrCtrl(const std::string& test_name)
 	{
 		bbapi.setGroupOffset(BIOSIGRP_PWRCTRL);
-		CHECK_ARRAY_OLD(BIOSIOFFS_PWRCTRL_BOOTLDR_REV, EXPECTED_PWRCTRL_BL_REVISION);
-		CHECK_ARRAY_OLD(BIOSIOFFS_PWRCTRL_FIRMWARE_REV, EXPECTED_PWRCTRL_FW_REVISION);
+		CHECK_ARRAY_OLD("Bl ver.:      ", BIOSIOFFS_PWRCTRL_BOOTLDR_REV, EXPECTED_PWRCTRL_BL_REVISION);
+		CHECK_ARRAY_OLD("Fw ver.:      ", BIOSIOFFS_PWRCTRL_FIRMWARE_REV, EXPECTED_PWRCTRL_FW_REVISION);
 		CHECK_VALUE("Device id:    0x%02x\n", BIOSIOFFS_PWRCTRL_DEVICE_ID, EXPECTED_PWRCTRL_DEVICE_ID, uint8_t);
 		CHECK_RANGE("Optime:       %04d minutes since production\n", BIOSIOFFS_PWRCTRL_OPERATING_TIME, CONFIG_PWRCTRL_OPERATION_TIME_RANGE, uint32_t);
 		CHECK      (BIOSIOFFS_PWRCTRL_BOARD_TEMP, uint8_t[2]);
 		CHECK      (BIOSIOFFS_PWRCTRL_INPUT_VOLTAGE, uint8_t[2]);
-		CHECK_ARRAY_OLD(BIOSIOFFS_PWRCTRL_SERIAL_NUMBER, EXPECTED_PWRCTRL_SERIAL);
+		CHECK_ARRAY_OLD("Serial:       ", BIOSIOFFS_PWRCTRL_SERIAL_NUMBER, EXPECTED_PWRCTRL_SERIAL);
 		CHECK_RANGE("Boot #:       %04d\n", BIOSIOFFS_PWRCTRL_BOOT_COUNTER, CONFIG_PWRCTRL_BOOT_COUNTER_RANGE, uint16_t);
-		CHECK_ARRAY_OLD(BIOSIOFFS_PWRCTRL_PRODUCTION_DATE, EXPECTED_PWRCTRL_PRODUCTION_DATE);
+		CHECK_ARRAY_OLD("Production date: ", BIOSIOFFS_PWRCTRL_PRODUCTION_DATE, EXPECTED_PWRCTRL_PRODUCTION_DATE);
 		CHECK_VALUE("µC Position:  0x%02x\n", BIOSIOFFS_PWRCTRL_BOARD_POSITION, EXPECTED_PWRCTRL_POSITION, uint8_t);
-		CHECK_ARRAY_OLD(BIOSIOFFS_PWRCTRL_SHUTDOWN_REASON, EXPECTED_PWRCTRL_LAST_SHUTDOWN);
+		CHECK_ARRAY_OLD("Last shutdown reason: ", BIOSIOFFS_PWRCTRL_SHUTDOWN_REASON, EXPECTED_PWRCTRL_LAST_SHUTDOWN);
 		CHECK_VALUE("Test count:   %03d\n", BIOSIOFFS_PWRCTRL_TEST_COUNTER, EXPECTED_PWRCTRL_TEST_COUNT, uint8_t);
-		CHECK_ARRAY_OLD(BIOSIOFFS_PWRCTRL_TEST_NUMBER, EXPECTED_PWRCTRL_TEST_NUMBER);
+		CHECK_ARRAY_OLD("Test number: ", BIOSIOFFS_PWRCTRL_TEST_NUMBER, EXPECTED_PWRCTRL_TEST_NUMBER);
 	}
 
 	void test_SUPS(const std::string& test_name)
@@ -297,13 +284,18 @@ private:
 	}
 
 	template<size_t N>
-	void test_generic(const BiosApi& bbapi, const std::string& nIndexOffset, const unsigned long offset, const void *const expectedValue)
+	void test_generic(const BiosApi& bbapi, const std::string& nIndexOffset, const unsigned long offset, const void *const expectedValue, const std::string& msg)
 	{
 		uint8_t value[N];
 		memset(value, 0, sizeof(value));
 		fructose_loop_assert(nIndexOffset, -1 != bbapi.ioctl_read(offset, &value, sizeof(value)));
 		if(expectedValue) {
 			fructose_loop_assert(nIndexOffset, 0 == memcmp(expectedValue, &value, sizeof(value)));
+			pr_info(msg.c_str());
+			for(int i = N - 1; i >= 0; --i) {
+				pr_info(" %02x", value[i]);
+			}
+			pr_info("\n");
 			print_mem(value, 1);
 		}
 	}
