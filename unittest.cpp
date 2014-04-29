@@ -39,13 +39,10 @@
  * Unittest configuration
  */
 #include "test_config.h"
-
-static const uint8_t EXPECTED_PWRCTRL_BL_REVISION[3] = CONFIG_PWRCTRL_BL_REVISION;
-static const uint8_t EXPECTED_PWRCTRL_FW_REVISION[3] = CONFIG_PWRCTRL_FW_REVISION;
 static const uint8_t EXPECTED_PWRCTRL_PRODUCTION_DATE[2] = CONFIG_PWRCTRL_PRODUCTION_DATE;
 static const uint8_t EXPECTED_PWRCTRL_LAST_SHUTDOWN[3] = CONFIG_PWRCTRL_LAST_SHUTDOWN;
 static const uint8_t EXPECTED_CXPWRSUPP_FWVERSION[2] = CONFIG_CXPWRSUPP_FWVERSION;
-static const uint8_t EXPECTED_CXUPS_FIRMWAREVER[2] = CONFIG_CXUPS_FIRMWAREVER;
+static const uint8_t EXPECTED_CXUPS_FIRMWAREVER[3] = CONFIG_CXUPS_FIRMWAREVER;
 static const uint8_t EXPECTED_SUPS_REVISION[2] = CONFIG_SUPS_REVISION;
 
 #define FILE_PATH	"/dev/BBAPI" 	// Path to character Device
@@ -82,6 +79,24 @@ struct BiosString
 	};
 };
 
+struct BiosVersion
+{
+	uint8_t _major;
+	uint8_t _minor;
+	uint8_t _revision;
+	BiosVersion(uint8_t maj = 0, uint8_t min = 0, uint8_t rev = 0)
+		: _major(maj), _minor(min), _revision(rev)
+	{
+	}
+
+	bool operator==(const BiosVersion& ref) const {
+		return 0 == memcmp(this, &ref, sizeof(*this));
+	}
+
+	int snprintf(char* buffer, size_t len) const {
+		return ::snprintf(buffer, len, "%d.%d-%d", _major, _minor, _revision);
+	};
+};
 
 int ioctl_read(int file, uint32_t group, uint32_t offset, void* out, uint32_t size)
 {
@@ -258,8 +273,8 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 	{
 		bbapi.setGroupOffset(BIOSIGRP_PWRCTRL);
 		pr_info("\nPower control test results:\n===========================\n");
-		CHECK_ARRAY_OLD("Bl ver.:      ", BIOSIOFFS_PWRCTRL_BOOTLDR_REV, EXPECTED_PWRCTRL_BL_REVISION);
-		CHECK_ARRAY_OLD("Fw ver.:      ", BIOSIOFFS_PWRCTRL_FIRMWARE_REV, EXPECTED_PWRCTRL_FW_REVISION);
+		CHECK_OBJECT("Bl ver.:      %s\n", BIOSIOFFS_PWRCTRL_BOOTLDR_REV, CONFIG_PWRCTRL_BL_REVISION, BiosVersion);
+		CHECK_OBJECT("Fw ver.:      %s\n", BIOSIOFFS_PWRCTRL_FIRMWARE_REV, CONFIG_PWRCTRL_FW_REVISION, BiosVersion);
 		CHECK_VALUE("Device id:    0x%02x\n", BIOSIOFFS_PWRCTRL_DEVICE_ID, CONFIG_PWRCTRL_DEVICE_ID, uint8_t);
 		CHECK_RANGE("Optime:       %04d min.\n",BIOSIOFFS_PWRCTRL_OPERATING_TIME, CONFIG_PWRCTRL_OPERATION_TIME_RANGE, uint32_t);
 		CHECK      (BIOSIOFFS_PWRCTRL_BOARD_TEMP, uint8_t[2]);
@@ -360,10 +375,10 @@ int main(int argc, char *argv[])
 	TestBBAPI bbapiTest;
 	bbapiTest.add_test("test_General", &TestBBAPI::test_General);
 	bbapiTest.add_test("test_PwrCtrl", &TestBBAPI::test_PwrCtrl);
-	//bbapiTest.add_test("test_SUPS", &TestBBAPI::test_SUPS);
-	//bbapiTest.add_test("test_System", &TestBBAPI::test_System);
-	//bbapiTest.add_test("test_CXPowerSupply", &TestBBAPI::test_CXPowerSupply);
-	//bbapiTest.add_test("test_CXUPS", &TestBBAPI::test_CXUPS);
+	bbapiTest.add_test("test_SUPS", &TestBBAPI::test_SUPS);
+	bbapiTest.add_test("test_System", &TestBBAPI::test_System);
+	bbapiTest.add_test("test_CXPowerSupply", &TestBBAPI::test_CXPowerSupply);
+	bbapiTest.add_test("test_CXUPS", &TestBBAPI::test_CXUPS);
 	bbapiTest.run(argc, argv);
 	return 0;
 }
