@@ -39,9 +39,6 @@
  * Unittest configuration
  */
 #include "test_config.h"
-static const BADEVICE_MBINFO EXPECTED_GENERAL_BOARDINFO = CONFIG_GENERAL_BBAPI_BOARDINFO;
-static const uint8_t EXPECTED_GENERAL_BOARDNAME[16] = CONFIG_GENERAL_BBAPI_BOARDNAME;
-static const BADEVICE_VERSION EXPECTED_GENERAL_VERSION CONFIG_GENERAL_BBAPI_VERSION;
 
 static const uint8_t EXPECTED_PWRCTRL_BL_REVISION[3] = CONFIG_PWRCTRL_BL_REVISION;
 static const uint8_t EXPECTED_PWRCTRL_FW_REVISION[3] = CONFIG_PWRCTRL_FW_REVISION;
@@ -67,6 +64,28 @@ static const uint8_t EXPECTED_SUPS_REVISION[2] = CONFIG_SUPS_REVISION;
 
 #define STRING_SIZE 17				// Size of String for Display
 #define BBAPI_CMD 0x5000			// BIOS API Command number for IOCTL call
+
+template<size_t N>
+struct BiosString
+{
+	char data[N];
+	BiosString(const char* text = NULL)
+	{
+		if(text) {
+			strncpy(data, text, sizeof(data));
+		} else {
+			memset(data, 0, sizeof(data));
+		}
+	}
+
+	bool operator==(const BiosString& ref) const {
+		return 0 == memcmp(this, &ref, sizeof(*this));
+	}
+
+	int snprintf(char* buffer, size_t len) const {
+		return ::snprintf(buffer, len, "%.*s", (int)sizeof(data), data);
+	};
+};
 
 
 int ioctl_read(int file, uint32_t group, uint32_t offset, void* out, uint32_t size)
@@ -234,13 +253,10 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 	{
 		bbapi.setGroupOffset(BIOSIGRP_GENERAL);
 		pr_info("\nGeneral test results:\n=====================\n");
-		CHECK_OBJECT("Mainboard: %s\n", BIOSIOFFS_GENERAL_GETBOARDINFO, EXPECTED_GENERAL_BOARDINFO, BADEVICE_MBINFO);
-		char boardname[16] = {0};
-		bbapi.ioctl_read(BIOSIOFFS_GENERAL_GETBOARDNAME, &boardname, sizeof(boardname));
-		fructose_assert_same_data(&EXPECTED_GENERAL_BOARDNAME, &boardname, sizeof(boardname));
-		pr_info("Board: %s\n", boardname);
+		CHECK_OBJECT("Mainboard: %s\n", BIOSIOFFS_GENERAL_GETBOARDINFO, CONFIG_GENERAL_BOARDINFO, BADEVICE_MBINFO);
+		CHECK_OBJECT("Board: %s\n", BIOSIOFFS_GENERAL_GETBOARDNAME, CONFIG_GENERAL_BOARDNAME, BiosString<16>);
 		CHECK_VALUE("platform:     0x%02x (0x00->32 bit, 0x01-> 64bit)\n", BIOSIOFFS_GENERAL_GETPLATFORMINFO, CONFIG_GENERAL_PLATFORM, uint8_t);
-		CHECK_OBJECT("BIOS API %s\n", BIOSIOFFS_GENERAL_VERSION, EXPECTED_GENERAL_VERSION, BADEVICE_VERSION);
+		CHECK_OBJECT("BIOS API %s\n", BIOSIOFFS_GENERAL_VERSION, CONFIG_GENERAL_VERSION, BADEVICE_VERSION);
 	}
 
 	void test_PwrCtrl(const std::string& test_name)

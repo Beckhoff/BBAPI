@@ -29,14 +29,14 @@
 
 /** general configuration */
 /* unittest configuration for my (Patrick) CX2030 */
-#define CONFIG_GENERAL_BBAPI_BOARDINFO {"CX20x0\0", 1, 1, 52}
-#define CONFIG_GENERAL_BBAPI_BOARDNAME "CX20x0\0\0\0\0\0\0\0\0\0"
+#define CONFIG_GENERAL_BOARDINFO {"CX20x0\0", 1, 1, 52}
+#define CONFIG_GENERAL_BOARDNAME "CX20x0\0\0\0\0\0\0\0\0\0"
 #if defined(__i386__)
 #define CONFIG_GENERAL_PLATFORM 0x00
 #elif defined(__x86_64__)
 #define CONFIG_GENERAL_PLATFORM 0x01
 #endif
-#define CONFIG_GENERAL_BBAPI_VERSION {2, 9, 1}
+#define CONFIG_GENERAL_VERSION {2, 9, 1}
 
 /** PWRCTRL configuration */
 #define CONFIG_PWRCTRL_BL_REVISION {0, 14, 0}
