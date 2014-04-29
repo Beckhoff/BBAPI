@@ -116,7 +116,7 @@ static int bbapi_copy_bios(struct bbapi_object *bbapi, void __iomem * pos)
  *
  * If successful bbapi->memory and bbapi->entry point to the bios in RAM
  *
- * Return: 0 if the bios was successfuly copied into RAM
+ * Return: 0 if the bios was successfully copied into RAM
  */
 static int bbapi_find_bios(struct bbapi_object *bbapi)
 {
