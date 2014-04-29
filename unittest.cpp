@@ -107,7 +107,7 @@ struct BiosPair
 	}
 
 	int snprintf(char* buffer, size_t len) const {
-		return ::snprintf(buffer, len, "%d.%d", first, second);
+		return ::snprintf(buffer, len, "%d-%d", first, second);
 	};
 };
 
@@ -184,14 +184,14 @@ void print_mem(const unsigned char *p, size_t lines)
 
 struct TestBBAPI : fructose::test_base<TestBBAPI>
 {
-#define CHECK(INDEX_OFFSET, DATATYPE) \
-	test_generic<sizeof(DATATYPE)>(#INDEX_OFFSET, INDEX_OFFSET, NULL, "CHECK")
 #define CHECK_VALUE(MSG, INDEX_OFFSET, EXPECTATION, TYPE) \
 	test_range<TYPE>(#INDEX_OFFSET, INDEX_OFFSET, EXPECTATION, EXPECTATION, MSG)
-#define CHECK_OBJECT(MSG, INDEX_OFFSET, EXPECTATION, TYPE) \
+#define CHECK_CLASS(MSG, INDEX_OFFSET, EXPECTATION, TYPE) \
 	test_object<TYPE>(#INDEX_OFFSET, INDEX_OFFSET, EXPECTATION, MSG)
 #define CHECK_RANGE(MSG, INDEX_OFFSET, RANGE, TYPE) \
 	test_range<TYPE>(#INDEX_OFFSET, INDEX_OFFSET, RANGE, MSG)
+#define READ_OBJECT(MSG, INDEX_OFFSET, EXPECTATION, TYPE) \
+	test_object<TYPE>(#INDEX_OFFSET, INDEX_OFFSET, EXPECTATION, MSG, false)
 
 	void test_CXPowerSupply(const std::string& test_name)
 	{
@@ -199,7 +199,7 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 		pr_info("\nCX power supply test results:\n=============================\n");
 		CHECK_VALUE("Type:                  %04d\n", BIOSIOFFS_CXPWRSUPP_GETTYPE, CONFIG_CXPWRSUPP_TYPE, uint32_t);
 		CHECK_VALUE("Serial:                %04d\n", BIOSIOFFS_CXPWRSUPP_GETSERIALNO, CONFIG_CXPWRSUPP_SERIALNO, uint32_t);
-		CHECK_OBJECT("Fw ver.:                %s\n", BIOSIOFFS_CXPWRSUPP_GETFWVERSION, CONFIG_CXPWRSUPP_FWVERSION, BiosPair);
+		CHECK_CLASS("Fw ver.:                %s\n", BIOSIOFFS_CXPWRSUPP_GETFWVERSION, CONFIG_CXPWRSUPP_FWVERSION, BiosPair);
 		CHECK_RANGE("Boot #:                %04d\n",     BIOSIOFFS_CXPWRSUPP_GETBOOTCOUNTER,   CONFIG_CXPWRSUPP_BOOTCOUNTER_RANGE, uint32_t);
 		CHECK_RANGE("Optime:                %04d min.\n",BIOSIOFFS_CXPWRSUPP_GETOPERATIONTIME, CONFIG_CXPWRSUPP_OPERATIONTIME_RANGE, uint32_t);
 		CHECK_RANGE("act. 5V:              %5d mV\n",   BIOSIOFFS_CXPWRSUPP_GET5VOLT,         CONFIG_CXPWRSUPP_5VOLT_RANGE,   uint16_t);
@@ -231,7 +231,7 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 		bbapi.setGroupOffset(BIOSIGRP_CXUPS);
 		pr_info("\nCX UPS test results:\n====================\n");
 		CHECK_VALUE("UPS enabled:           0x%02x\n", BIOSIOFFS_CXUPS_GETENABLED, CONFIG_CXUPS_ENABLED, uint8_t);
-		CHECK_OBJECT("Fw ver.:                %s\n", BIOSIOFFS_CXUPS_GETFIRMWAREVER, CONFIG_CXUPS_FIRMWAREVER, BiosPair);
+		CHECK_CLASS("Fw ver.:                %s\n", BIOSIOFFS_CXUPS_GETFIRMWAREVER, CONFIG_CXUPS_FIRMWAREVER, BiosPair);
 		CHECK_VALUE("Power status:          0x%02x\n", BIOSIOFFS_CXUPS_GETPOWERSTATUS, CONFIG_CXUPS_POWERSTATUS, uint8_t);
 		CHECK_VALUE("Battery status:        0x%02x\n", BIOSIOFFS_CXUPS_GETBATTERYSTATUS, CONFIG_CXUPS_BATTERYSTATUS, uint8_t);
 		CHECK_VALUE("Battery capacity: %9d %\n",       BIOSIOFFS_CXUPS_GETBATTERYCAPACITY, CONFIG_CXUPS_BATTERYCAPACITY, uint8_t);
@@ -274,29 +274,30 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 	{
 		bbapi.setGroupOffset(BIOSIGRP_GENERAL);
 		pr_info("\nGeneral test results:\n=====================\n");
-		CHECK_OBJECT("Mainboard: %s\n", BIOSIOFFS_GENERAL_GETBOARDINFO, CONFIG_GENERAL_BOARDINFO, BADEVICE_MBINFO);
-		CHECK_OBJECT("Board: %s\n", BIOSIOFFS_GENERAL_GETBOARDNAME, CONFIG_GENERAL_BOARDNAME, BiosString<16>);
+		CHECK_CLASS("Mainboard: %s\n", BIOSIOFFS_GENERAL_GETBOARDINFO, CONFIG_GENERAL_BOARDINFO, BADEVICE_MBINFO);
+		CHECK_CLASS("Board: %s\n", BIOSIOFFS_GENERAL_GETBOARDNAME, CONFIG_GENERAL_BOARDNAME, BiosString<16>);
 		CHECK_VALUE("platform:     0x%02x (0x00->32 bit, 0x01-> 64bit)\n", BIOSIOFFS_GENERAL_GETPLATFORMINFO, CONFIG_GENERAL_PLATFORM, uint8_t);
-		CHECK_OBJECT("BIOS API %s\n", BIOSIOFFS_GENERAL_VERSION, CONFIG_GENERAL_VERSION, BADEVICE_VERSION);
+		CHECK_CLASS("BIOS API %s\n", BIOSIOFFS_GENERAL_VERSION, CONFIG_GENERAL_VERSION, BADEVICE_VERSION);
 	}
 
 	void test_PwrCtrl(const std::string& test_name)
 	{
 		bbapi.setGroupOffset(BIOSIGRP_PWRCTRL);
 		pr_info("\nPower control test results:\n===========================\n");
-		CHECK_OBJECT("Bl ver.:      %s\n", BIOSIOFFS_PWRCTRL_BOOTLDR_REV, CONFIG_PWRCTRL_BL_REVISION, BiosVersion);
-		CHECK_OBJECT("Fw ver.:      %s\n", BIOSIOFFS_PWRCTRL_FIRMWARE_REV, CONFIG_PWRCTRL_FW_REVISION, BiosVersion);
+		CHECK_CLASS("Bl ver.:      %s\n", BIOSIOFFS_PWRCTRL_BOOTLDR_REV, CONFIG_PWRCTRL_BL_REVISION, BiosVersion);
+		CHECK_CLASS("Fw ver.:      %s\n", BIOSIOFFS_PWRCTRL_FIRMWARE_REV, CONFIG_PWRCTRL_FW_REVISION, BiosVersion);
 		CHECK_VALUE("Device id:    0x%02x\n", BIOSIOFFS_PWRCTRL_DEVICE_ID, CONFIG_PWRCTRL_DEVICE_ID, uint8_t);
 		CHECK_RANGE("Optime:       %04d min.\n",BIOSIOFFS_PWRCTRL_OPERATING_TIME, CONFIG_PWRCTRL_OPERATION_TIME_RANGE, uint32_t);
-		CHECK      (BIOSIOFFS_PWRCTRL_BOARD_TEMP, uint8_t[2]);
-		CHECK      (BIOSIOFFS_PWRCTRL_INPUT_VOLTAGE, uint8_t[2]);
-		CHECK_OBJECT("Serial:       %s\n", BIOSIOFFS_PWRCTRL_SERIAL_NUMBER, CONFIG_PWRCTRL_SERIAL, BiosString<17>);
+		READ_OBJECT("Temp. [min-max]: %s °C\n", BIOSIOFFS_PWRCTRL_BOARD_TEMP, 0, BiosPair);
+		READ_OBJECT("Volt. [min-max]: %s V\n", BIOSIOFFS_PWRCTRL_INPUT_VOLTAGE, 0, BiosPair);
+		CHECK_CLASS("Production date: %s\n", BIOSIOFFS_PWRCTRL_PRODUCTION_DATE, CONFIG_PWRCTRL_PRODUCTION_DATE, BiosPair);
+		CHECK_CLASS("Serial:       %s\n", BIOSIOFFS_PWRCTRL_SERIAL_NUMBER, CONFIG_PWRCTRL_SERIAL, BiosString<17>);
 		CHECK_RANGE("Boot #:       %04d\n", BIOSIOFFS_PWRCTRL_BOOT_COUNTER, CONFIG_PWRCTRL_BOOT_COUNTER_RANGE, uint16_t);
-		CHECK_OBJECT("Production date: %s\n", BIOSIOFFS_PWRCTRL_PRODUCTION_DATE, CONFIG_PWRCTRL_PRODUCTION_DATE, BiosPair);
+		CHECK_CLASS("Production date: %s\n", BIOSIOFFS_PWRCTRL_PRODUCTION_DATE, CONFIG_PWRCTRL_PRODUCTION_DATE, BiosPair);
 		CHECK_VALUE("µC Position:  0x%02x\n", BIOSIOFFS_PWRCTRL_BOARD_POSITION, CONFIG_PWRCTRL_POSITION, uint8_t);
-		CHECK_OBJECT("Last shutdown reason: %s\n", BIOSIOFFS_PWRCTRL_SHUTDOWN_REASON, CONFIG_PWRCTRL_LAST_SHUTDOWN, BiosVersion);
+		CHECK_CLASS("Last shutdown reason: %s\n", BIOSIOFFS_PWRCTRL_SHUTDOWN_REASON, CONFIG_PWRCTRL_LAST_SHUTDOWN, BiosVersion);
 		CHECK_VALUE("Test count:   %03d\n", BIOSIOFFS_PWRCTRL_TEST_COUNTER, CONFIG_PWRCTRL_TEST_COUNT, uint8_t);
-		CHECK_OBJECT("Test number:  %s\n", BIOSIOFFS_PWRCTRL_TEST_NUMBER, CONFIG_PWRCTRL_TEST_NUMBER, BiosString<7>);
+		CHECK_CLASS("Test number:  %s\n", BIOSIOFFS_PWRCTRL_TEST_NUMBER, CONFIG_PWRCTRL_TEST_NUMBER, BiosString<7>);
 	}
 
 	void test_SUPS(const std::string& test_name)
@@ -334,7 +335,7 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 		pr_info("\nSystem test results:\n====================\n");
 		while (num_sensors > 0) {
 			pr_info("%02d:", num_sensors);
-			CHECK_OBJECT("%s\n", num_sensors, info, SENSORINFO);
+			CHECK_CLASS("%s\n", num_sensors, info, SENSORINFO);
 			--num_sensors;
 		}
 	}
@@ -342,30 +343,15 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 private:
 	BiosApi bbapi;
 
-	template<size_t N>
-	void test_generic(const std::string& nIndexOffset, const unsigned long offset, const void *const expectedValue, const std::string& msg)
-	{
-		uint8_t value[N];
-		memset(value, 0, sizeof(value));
-		fructose_loop_assert(nIndexOffset, -1 != bbapi.ioctl_read(offset, &value, sizeof(value)));
-		if(expectedValue) {
-			fructose_loop_assert(nIndexOffset, 0 == memcmp(expectedValue, &value, sizeof(value)));
-			pr_info("%s", msg.c_str());
-			for(size_t i = 0; i < N; ++i) {
-				pr_info(" %02x", value[i]);
-			}
-			pr_info("\n");
-			print_mem(value, 1);
-		}
-	}
-
 	template<typename T>
-	void test_object(const std::string& nIndexOffset, const unsigned long offset, const T expectedValue, const std::string& msg)
+	void test_object(const std::string& nIndexOffset, const unsigned long offset, const T expectedValue, const std::string& msg, const bool doCompare = true)
 	{
 		char text[256];
 		T value {0};
 		fructose_loop_assert(nIndexOffset, -1 != bbapi.ioctl_read(offset, &value, sizeof(value)));
-		fructose_loop_assert(nIndexOffset, value == expectedValue);
+		if (doCompare) {
+			fructose_loop_assert(nIndexOffset, value == expectedValue);
+		}
 		value.snprintf(text, sizeof(text));
 		pr_info(msg.c_str(), text);
 	}
