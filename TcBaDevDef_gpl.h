@@ -46,12 +46,11 @@ typedef struct  TBaDevice_Version
 	{
 	}
 
-	bool operator==(const TBaDevice_Version& ref) const
-	{
-		return 0 == memcmp(&version, &ref, sizeof(version) + sizeof(revision) + sizeof(build));
+	bool operator==(const TBaDevice_Version& ref) const {
+		return 0 == memcmp(this, &ref, sizeof(*this));
 	}
 
-	int snprintf(char* buffer, size_t len) {
+	int snprintf(char* buffer, size_t len) const {
 		return ::snprintf(buffer, len, "ver.: %d rev.: %d build: %d", version, revision, build);
 	};
 #endif /* #ifdef __cplusplus */
@@ -66,6 +65,25 @@ typedef struct  TBaDevice_MBInfo
 	unsigned char		biosMajVersion;
 	unsigned char		biosMinVersion;
 	unsigned char		reserved;
+#ifdef __cplusplus
+	TBaDevice_MBInfo(const char* name = NULL, unsigned char revision = 0, unsigned char major = 0, unsigned char minor = 0)
+		: MBRevision(revision), biosMajVersion(major), biosMinVersion(minor), reserved(0)
+	{
+		if(name) {
+			strncpy(MBName, name, sizeof(MBName));
+		} else {
+			memset(MBName, 0, sizeof(MBName));
+		}
+	}
+
+	bool operator==(const TBaDevice_MBInfo& ref) const {
+		return 0 == memcmp(this, &ref, sizeof(*this));
+	}
+
+	int snprintf(char* buffer, size_t len) const {
+		return ::snprintf(buffer, len, "%.8s hw: %d v%d.%d", MBName, MBRevision, biosMajVersion, biosMinVersion);
+	};
+#endif /* #ifdef __cplusplus */
 }BADEVICE_MBINFO, *PBADEVICE_MBINFO;
 
 ////////////////////////////////////////////////////////////////
@@ -185,15 +203,13 @@ typedef struct TSensorInfo
 		readVal.status = INFOVALUE_STATUS_OK;
 	}
 
-	bool operator==(const TSensorInfo& ref) const
-	{
+	bool operator==(const TSensorInfo& ref) const {
 		return (INFOVALUE_STATUS_UNUSED != readVal.status) && (INFOVALUE_STATUS_UNUSED != ref.readVal.status);
 	}
 
-	int snprintf(char* buffer, size_t len) {
+	int snprintf(char* buffer, size_t len) const {
 		return ::snprintf(buffer, len, "%12s %s %s val:%u min:%u max:%u nom:%u",
-			desc,
-			LOCATIONCAPS[eType].name, PROBECAPS[eType].name,
+			desc, LOCATIONCAPS[eType].name, PROBECAPS[eType].name,
 			readVal.value, minVal.value, maxVal.value, nomVal.value);
 	};
 #endif /* #ifdef __cplusplus */

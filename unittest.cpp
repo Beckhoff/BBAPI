@@ -234,10 +234,7 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 	{
 		bbapi.setGroupOffset(BIOSIGRP_GENERAL);
 		pr_info("\nGeneral test results:\n=====================\n");
-		BADEVICE_MBINFO info;
-		bbapi.ioctl_read(BIOSIOFFS_GENERAL_GETBOARDINFO, &info, sizeof(info));
-		fructose_assert_same_data(&EXPECTED_GENERAL_BOARDINFO, &info, sizeof(info));
-		pr_info("%s hw: %d v%d.%d\n", info.MBName, info.MBRevision, info.biosMajVersion, info.biosMinVersion);
+		CHECK_OBJECT("Mainboard: %s\n", BIOSIOFFS_GENERAL_GETBOARDINFO, EXPECTED_GENERAL_BOARDINFO, BADEVICE_MBINFO);
 		char boardname[16] = {0};
 		bbapi.ioctl_read(BIOSIOFFS_GENERAL_GETBOARDNAME, &boardname, sizeof(boardname));
 		fructose_assert_same_data(&EXPECTED_GENERAL_BOARDNAME, &boardname, sizeof(boardname));
@@ -351,11 +348,11 @@ int main(int argc, char *argv[])
 {
 	TestBBAPI bbapiTest;
 	bbapiTest.add_test("test_General", &TestBBAPI::test_General);
-	bbapiTest.add_test("test_PwrCtrl", &TestBBAPI::test_PwrCtrl);
-	bbapiTest.add_test("test_SUPS", &TestBBAPI::test_SUPS);
-	bbapiTest.add_test("test_System", &TestBBAPI::test_System);
-	bbapiTest.add_test("test_CXPowerSupply", &TestBBAPI::test_CXPowerSupply);
-	bbapiTest.add_test("test_CXUPS", &TestBBAPI::test_CXUPS);
+	//bbapiTest.add_test("test_PwrCtrl", &TestBBAPI::test_PwrCtrl);
+	//bbapiTest.add_test("test_SUPS", &TestBBAPI::test_SUPS);
+	//bbapiTest.add_test("test_System", &TestBBAPI::test_System);
+	//bbapiTest.add_test("test_CXPowerSupply", &TestBBAPI::test_CXPowerSupply);
+	//bbapiTest.add_test("test_CXUPS", &TestBBAPI::test_CXUPS);
 	bbapiTest.run(argc, argv);
 	return 0;
 }
