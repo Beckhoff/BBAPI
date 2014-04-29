@@ -42,15 +42,10 @@
 
 static const uint8_t EXPECTED_PWRCTRL_BL_REVISION[3] = CONFIG_PWRCTRL_BL_REVISION;
 static const uint8_t EXPECTED_PWRCTRL_FW_REVISION[3] = CONFIG_PWRCTRL_FW_REVISION;
-static const char EXPECTED_PWRCTRL_SERIAL[16+1] = CONFIG_PWRCTRL_SERIAL;
 static const uint8_t EXPECTED_PWRCTRL_PRODUCTION_DATE[2] = CONFIG_PWRCTRL_PRODUCTION_DATE;
 static const uint8_t EXPECTED_PWRCTRL_LAST_SHUTDOWN[3] = CONFIG_PWRCTRL_LAST_SHUTDOWN;
-static const char EXPECTED_PWRCTRL_TEST_NUMBER[6+1] = CONFIG_PWRCTRL_TEST_NUMBER;
-
 static const uint8_t EXPECTED_CXPWRSUPP_FWVERSION[2] = CONFIG_CXPWRSUPP_FWVERSION;
-
 static const uint8_t EXPECTED_CXUPS_FIRMWAREVER[2] = CONFIG_CXUPS_FIRMWAREVER;
-
 static const uint8_t EXPECTED_SUPS_REVISION[2] = CONFIG_SUPS_REVISION;
 
 #define FILE_PATH	"/dev/BBAPI" 	// Path to character Device
@@ -269,13 +264,13 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 		CHECK_RANGE("Optime:       %04d min.\n",BIOSIOFFS_PWRCTRL_OPERATING_TIME, CONFIG_PWRCTRL_OPERATION_TIME_RANGE, uint32_t);
 		CHECK      (BIOSIOFFS_PWRCTRL_BOARD_TEMP, uint8_t[2]);
 		CHECK      (BIOSIOFFS_PWRCTRL_INPUT_VOLTAGE, uint8_t[2]);
-		CHECK_ARRAY_OLD("Serial:       ", BIOSIOFFS_PWRCTRL_SERIAL_NUMBER, CONFIG_PWRCTRL_SERIAL);
+		CHECK_OBJECT("Serial:       %s\n", BIOSIOFFS_PWRCTRL_SERIAL_NUMBER, CONFIG_PWRCTRL_SERIAL, BiosString<17>);
 		CHECK_RANGE("Boot #:       %04d\n", BIOSIOFFS_PWRCTRL_BOOT_COUNTER, CONFIG_PWRCTRL_BOOT_COUNTER_RANGE, uint16_t);
 		CHECK_ARRAY_OLD("Production date: ", BIOSIOFFS_PWRCTRL_PRODUCTION_DATE, EXPECTED_PWRCTRL_PRODUCTION_DATE);
 		CHECK_VALUE("µC Position:  0x%02x\n", BIOSIOFFS_PWRCTRL_BOARD_POSITION, CONFIG_PWRCTRL_POSITION, uint8_t);
 		CHECK_ARRAY_OLD("Last shutdown reason: ", BIOSIOFFS_PWRCTRL_SHUTDOWN_REASON, EXPECTED_PWRCTRL_LAST_SHUTDOWN);
 		CHECK_VALUE("Test count:   %03d\n", BIOSIOFFS_PWRCTRL_TEST_COUNTER, CONFIG_PWRCTRL_TEST_COUNT, uint8_t);
-		CHECK_ARRAY_OLD("Test number: ", BIOSIOFFS_PWRCTRL_TEST_NUMBER, EXPECTED_PWRCTRL_TEST_NUMBER);
+		CHECK_OBJECT("Test number:  %s\n", BIOSIOFFS_PWRCTRL_TEST_NUMBER, CONFIG_PWRCTRL_TEST_NUMBER, BiosString<7>);
 	}
 
 	void test_SUPS(const std::string& test_name)
@@ -364,7 +359,7 @@ int main(int argc, char *argv[])
 {
 	TestBBAPI bbapiTest;
 	bbapiTest.add_test("test_General", &TestBBAPI::test_General);
-	//bbapiTest.add_test("test_PwrCtrl", &TestBBAPI::test_PwrCtrl);
+	bbapiTest.add_test("test_PwrCtrl", &TestBBAPI::test_PwrCtrl);
 	//bbapiTest.add_test("test_SUPS", &TestBBAPI::test_SUPS);
 	//bbapiTest.add_test("test_System", &TestBBAPI::test_System);
 	//bbapiTest.add_test("test_CXPowerSupply", &TestBBAPI::test_CXPowerSupply);
