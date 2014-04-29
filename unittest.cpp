@@ -52,6 +52,8 @@
 #define STRING_SIZE 17				// Size of String for Display
 #define BBAPI_CMD 0x5000			// BIOS API Command number for IOCTL call
 
+using namespace fructose;
+
 template<size_t N>
 struct BiosString
 {
@@ -131,8 +133,6 @@ int ioctl_write(int file, uint32_t group, uint32_t offset, void* in, uint32_t si
 	return 0;
 }
 
-using namespace fructose;
-
 struct BiosApi
 {
 	BiosApi(unsigned long group = 0)
@@ -164,23 +164,6 @@ protected:
 	const int m_File;
 	unsigned long m_Group;
 };
-
-#define TESTING_ENABLED 0
-void print_mem(const unsigned char *p, size_t lines)
-{
-#if TESTING_ENABLED
-	pr_info("mem at: %p\n", p);
-	pr_info(" 0  1  2  3  4  5  6  7   8  9  A  B  C  D  E  F\n");
-	while (lines > 0) {
-		pr_info
-		    ("%02x %02x %02x %02x %02x %02x %02x %02x  %02x %02x %02x %02x %02x %02x %02x %02x\n",
-		     p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9],
-		     p[10], p[11], p[12], p[13], p[14], p[15]);
-		p += 16;
-		--lines;
-	}
-#endif /* #if TESTING_ENABLED */
-}
 
 struct TestBBAPI : fructose::test_base<TestBBAPI>
 {
@@ -290,7 +273,6 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 		CHECK_RANGE("Optime:       %04d min.\n",BIOSIOFFS_PWRCTRL_OPERATING_TIME, CONFIG_PWRCTRL_OPERATION_TIME_RANGE, uint32_t);
 		READ_OBJECT("Temp. [min-max]: %s °C\n", BIOSIOFFS_PWRCTRL_BOARD_TEMP, 0, BiosPair);
 		READ_OBJECT("Volt. [min-max]: %s V\n", BIOSIOFFS_PWRCTRL_INPUT_VOLTAGE, 0, BiosPair);
-		CHECK_CLASS("Production date: %s\n", BIOSIOFFS_PWRCTRL_PRODUCTION_DATE, CONFIG_PWRCTRL_PRODUCTION_DATE, BiosPair);
 		CHECK_CLASS("Serial:       %s\n", BIOSIOFFS_PWRCTRL_SERIAL_NUMBER, CONFIG_PWRCTRL_SERIAL, BiosString<17>);
 		CHECK_RANGE("Boot #:       %04d\n", BIOSIOFFS_PWRCTRL_BOOT_COUNTER, CONFIG_PWRCTRL_BOOT_COUNTER_RANGE, uint16_t);
 		CHECK_CLASS("Production date: %s\n", BIOSIOFFS_PWRCTRL_PRODUCTION_DATE, CONFIG_PWRCTRL_PRODUCTION_DATE, BiosPair);
@@ -359,7 +341,7 @@ private:
 	template<typename T>
 	void test_range(const std::string& nIndexOffset, const unsigned long offset, const T lower, const T upper, const std::string& msg)
 	{
-		T value = 0;
+		T value {0};
 		fructose_loop_assert(nIndexOffset, -1 != bbapi.ioctl_read(offset, &value, sizeof(value)));
 		fructose_loop2_assert(nIndexOffset, lower, value, lower <= value);
 		fructose_loop2_assert(nIndexOffset, upper, value, upper >= value);
