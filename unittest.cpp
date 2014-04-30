@@ -27,6 +27,9 @@
 #include <fcntl.h>
 #include <stdint.h>
 
+#include <chrono>
+#include <thread>
+
 #include "bbapi.h"
 #include "TcBaDevDef_gpl.h"
 
@@ -123,7 +126,7 @@ int ioctl_read(int file, uint32_t group, uint32_t offset, void* out, uint32_t si
 	return 0;
 }
 
-int ioctl_write(int file, uint32_t group, uint32_t offset, void* in, uint32_t size)
+int ioctl_write(int file, uint32_t group, uint32_t offset, const void* in, uint32_t size)
 {
 	struct bbapi_struct data {group, offset, in, size, NULL, 0};
 	if (-1 == ioctl(file, BBAPI_CMD, &data)) {
@@ -158,6 +161,11 @@ struct BiosApi
 	int ioctl_read(unsigned long offset, void* out, unsigned long size) const
 	{
 		return ::ioctl_read(m_File, m_Group, offset, out, size);
+	}
+
+	int ioctl_write(unsigned long offset, const void* in, unsigned long size) const
+	{
+		return ::ioctl_write(m_File, m_Group, offset, in, size);
 	}
 
 protected:
@@ -199,12 +207,31 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 		CHECK_RANGE("act. power:           %5d mW\n",   BIOSIOFFS_CXPWRSUPP_GETPOWER,         CONFIG_CXPWRSUPP_POWER_RANGE,   uint32_t);
 		CHECK_RANGE("max. power:           %5d mW\n",   BIOSIOFFS_CXPWRSUPP_GETMAXPOWER,      CONFIG_CXPWRSUPP_POWER_RANGE,   uint32_t);
 		CHECK_VALUE("button state:          0x%02x\n",   BIOSIOFFS_CXPWRSUPP_GETBUTTONSTATE,   CONFIG_CXPWRSUPP_BUTTON_STATE, uint8_t);
-#if 0
-		#define BIOSIOFFS_CXPWRSUPP_ENABLEBACKLIGHT			0x00000060	// Set display backlight, W:1 (0x00 := OFF, 0xFF := ON), R:0
-		#define BIOSIOFFS_CXPWRSUPP_DISPLAYLINE1				0x00000061	// Set display line 1, W:17(BYTE[17]), R:0
-		#define BIOSIOFFS_CXPWRSUPP_DISPLAYLINE2				0x00000062	// Set display line 2, W:17(BYTE[17]), R:0
-#endif
 	}
+
+	void test_CXPowerSupply_write(const std::string& test_name)
+	{
+		const char empty[16+1] = "                ";
+		const char line1[16+1] = "1234567890123456";
+		const char line2[16+1] = "6543210987654321";
+		bbapi.setGroupOffset(BIOSIGRP_CXPWRSUPP);
+		pr_info("\nCX power supply write test:\n===========================\n");
+		uint8_t backlight = 0;
+		bbapi.ioctl_write(BIOSIOFFS_CXPWRSUPP_ENABLEBACKLIGHT, &backlight, sizeof(backlight));
+		bbapi.ioctl_write(BIOSIOFFS_CXPWRSUPP_DISPLAYLINE1, &empty, sizeof(empty));
+		bbapi.ioctl_write(BIOSIOFFS_CXPWRSUPP_DISPLAYLINE2, &empty, sizeof(empty));
+		pr_info("Backlight should be OFF\n");
+		std::this_thread::sleep_for(std::chrono::seconds(1));
+		backlight = 0xff;
+		bbapi.ioctl_write(BIOSIOFFS_CXPWRSUPP_ENABLEBACKLIGHT, &backlight, sizeof(backlight));
+		pr_info("Backlight should be ON\n");
+		pr_info("Display should be empty\n");
+		std::this_thread::sleep_for(std::chrono::seconds(1));
+		bbapi.ioctl_write(BIOSIOFFS_CXPWRSUPP_DISPLAYLINE1, &line1, sizeof(line1));
+		bbapi.ioctl_write(BIOSIOFFS_CXPWRSUPP_DISPLAYLINE2, &line2, sizeof(line2));
+		pr_info("Display should show:\n%s\n%s\n\n", line1, line2);
+	}
+
 	void test_CXUPS(const std::string& test_name)
 	{
 		if(CONFIG_CXUPS_DISABLED) {
@@ -261,6 +288,8 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 		CHECK_CLASS("Board: %s\n", BIOSIOFFS_GENERAL_GETBOARDNAME, CONFIG_GENERAL_BOARDNAME, BiosString<16>);
 		CHECK_VALUE("platform:     0x%02x (0x00->32 bit, 0x01-> 64bit)\n", BIOSIOFFS_GENERAL_GETPLATFORMINFO, CONFIG_GENERAL_PLATFORM, uint8_t);
 		CHECK_CLASS("BIOS API %s\n", BIOSIOFFS_GENERAL_VERSION, CONFIG_GENERAL_VERSION, BADEVICE_VERSION);
+
+		fructose_fail("TODO implement test to check internal driver functions");
 	}
 
 	void test_PwrCtrl(const std::string& test_name)
@@ -310,12 +339,12 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 
 	void test_System(const std::string& test_name)
 	{
-		SENSORINFO info;
 		bbapi.setGroupOffset(BIOSIGRP_SYSTEM);
 		uint32_t num_sensors;
 		bbapi.ioctl_read(BIOSIOFFS_SYSTEM_COUNT_SENSORS, &num_sensors, sizeof(num_sensors));
 		pr_info("\nSystem test results:\n====================\n");
 		while (num_sensors > 0) {
+			SENSORINFO info;
 			pr_info("%02d:", num_sensors);
 			CHECK_CLASS("%s\n", num_sensors, info, SENSORINFO);
 			--num_sensors;
@@ -358,6 +387,7 @@ int main(int argc, char *argv[])
 	bbapiTest.add_test("test_System", &TestBBAPI::test_System);
 	bbapiTest.add_test("test_CXPowerSupply", &TestBBAPI::test_CXPowerSupply);
 	bbapiTest.add_test("test_CXUPS", &TestBBAPI::test_CXUPS);
+	bbapiTest.add_test("test_CXPowerSupply_write", &TestBBAPI::test_CXPowerSupply_write);
 	bbapiTest.run(argc, argv);
 	return 0;
 }
