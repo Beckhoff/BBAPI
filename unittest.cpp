@@ -79,24 +79,24 @@ struct BiosString
 	};
 };
 
-struct BiosVersion
+template<typename T>
+struct BiosTriple
 {
-	uint8_t _major;
-	uint8_t _minor;
-	uint8_t _revision;
-	BiosVersion(uint8_t maj = 0, uint8_t min = 0, uint8_t rev = 0)
-		: _major(maj), _minor(min), _revision(rev)
+	T data[3];
+	BiosTriple(T first = 0, T second = 0, T third = 0)
+		: data{first, second, third}
 	{
 	}
 
-	bool operator==(const BiosVersion& ref) const {
+	bool operator==(const BiosTriple& ref) const {
 		return 0 == memcmp(this, &ref, sizeof(*this));
 	}
 
 	int snprintf(char* buffer, size_t len) const {
-		return ::snprintf(buffer, len, "%d.%d-%d", _major, _minor, _revision);
+		return ::snprintf(buffer, len, "%d.%d-%d", data[0], data[1], data[2]);
 	};
 };
+typedef BiosTriple<uint8_t> BiosVersion;
 
 struct BiosPair
 {
@@ -186,6 +186,10 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 
 	void test_CXPowerSupply(const std::string& test_name)
 	{
+		if(CONFIG_CXPWRSUPP_DISABLED) {
+			pr_info("\nCX power supply test case disabled\n");
+			return;
+		}
 		bbapi.setGroupOffset(BIOSIGRP_CXPWRSUPP);
 		pr_info("\nCX power supply test results:\n=============================\n");
 		CHECK_VALUE("Type:                  %04d\n", BIOSIOFFS_CXPWRSUPP_GETTYPE, CONFIG_CXPWRSUPP_TYPE, uint32_t);
@@ -214,21 +218,25 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 		const char empty[16+1] = "                ";
 		const char line1[16+1] = "1234567890123456";
 		const char line2[16+1] = "6543210987654321";
+		if(CONFIG_CXPWRSUPP_DISABLED) {
+			pr_info("\nCX power supply write test case disabled\n");
+			return;
+		}
 		bbapi.setGroupOffset(BIOSIGRP_CXPWRSUPP);
 		pr_info("\nCX power supply write test:\n===========================\n");
 		uint8_t backlight = 0;
-		bbapi.ioctl_write(BIOSIOFFS_CXPWRSUPP_ENABLEBACKLIGHT, &backlight, sizeof(backlight));
-		bbapi.ioctl_write(BIOSIOFFS_CXPWRSUPP_DISPLAYLINE1, &empty, sizeof(empty));
-		bbapi.ioctl_write(BIOSIOFFS_CXPWRSUPP_DISPLAYLINE2, &empty, sizeof(empty));
+		fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_CXPWRSUPP_ENABLEBACKLIGHT, &backlight, sizeof(backlight)));
+		fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_CXPWRSUPP_DISPLAYLINE1, &empty, sizeof(empty)));
+		fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_CXPWRSUPP_DISPLAYLINE2, &empty, sizeof(empty)));
 		pr_info("Backlight should be OFF\n");
 		std::this_thread::sleep_for(std::chrono::seconds(1));
 		backlight = 0xff;
-		bbapi.ioctl_write(BIOSIOFFS_CXPWRSUPP_ENABLEBACKLIGHT, &backlight, sizeof(backlight));
+		fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_CXPWRSUPP_ENABLEBACKLIGHT, &backlight, sizeof(backlight)));
 		pr_info("Backlight should be ON\n");
 		pr_info("Display should be empty\n");
 		std::this_thread::sleep_for(std::chrono::seconds(1));
-		bbapi.ioctl_write(BIOSIOFFS_CXPWRSUPP_DISPLAYLINE1, &line1, sizeof(line1));
-		bbapi.ioctl_write(BIOSIOFFS_CXPWRSUPP_DISPLAYLINE2, &line2, sizeof(line2));
+		fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_CXPWRSUPP_DISPLAYLINE1, &line1, sizeof(line1)));
+		fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_CXPWRSUPP_DISPLAYLINE2, &line2, sizeof(line2)));
 		pr_info("Display should show:\n%s\n%s\n\n", line1, line2);
 	}
 
@@ -317,24 +325,33 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 			pr_info("S-UPS test case disabled\n");
 			return;
 		}
-#if 0
 		bbapi.setGroupOffset(BIOSIGRP_SUPS);
 		pr_info("\nSUPS test results:\n====================\n");
-		uint16_t revision = bbapi.read<uint16_t>(BIOSIOFFS_SUPS_REVISION);
-		pr_info("S-UPS status:    0x%02x\n", bbapi.read<uint8_t>(BIOSIOFFS_SUPS_STATUS));
-		pr_info("S-UPS revision:  %d.%d\n", revision >> 8, 0xff & revision);
-		CHECK_ARRAY_OLD("S-UPS revision:  ", BIOSIOFFS_SUPS_REVISION, EXPECTED_SUPS_REVISION);
-		pr_info("# Power fails:  %d\n", bbapi.read<uint16_t>(BIOSIOFFS_SUPS_PWRFAIL_COUNTER));
-		#define BIOSIOFFS_SUPS_ENABLE								0x00000000	// Enable/disable SUPS, W:1, R:0
-		#define BIOSIOFFS_SUPS_PWRFAIL_TIMES					0x00000004	// Get latest power fail time stamps, W:0, R:12
-		#define BIOSIOFFS_SUPS_SET_SHUTDOWN_TYPE				0x00000005	// Set the Shutdown behavior, W:1, R:0
-		#define BIOSIOFFS_SUPS_GET_SHUTDOWN_TYPE				0x00000006	// Get the Shutdown behavior and reset, W:0, R:1
-		#define BIOSIOFFS_SUPS_ACTIVE_COUNT						0x00000007	// Get the SUSV Active Count and reset, W:0, R:1
-		#define BIOSIOFFS_SUPS_INTERNAL_PWRF_STATUS			0x00000008	// Get the number of Pwr-Fail in the SUSV, W:0, R:1
-		#define BIOSIOFFS_SUPS_CAPACITY_TEST					0x00000009	// Capacitator test, W:0, R:0
-		#define BIOSIOFFS_SUPS_TEST_RESULT						0x0000000a	// Get SUPS test result, W:0, R:1
-		#define BIOSIOFFS_SUPS_GPIO_PIN							0x000000a0	// Get the Address and the GPIO-Pin from PWR-Fail PIN, W:0, R:4
-#endif
+		uint8_t enable = 0;
+		fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_SUPS_ENABLE, &enable, sizeof(enable)));
+		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		CHECK_VALUE("Status:    0x%02x\n", BIOSIOFFS_SUPS_STATUS, CONFIG_SUPS_STATUS_OFF, uint8_t);
+		enable = 1;
+		fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_SUPS_ENABLE, &enable, sizeof(enable)));
+		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		CHECK_VALUE("Status:    0x%02x\n", BIOSIOFFS_SUPS_STATUS, CONFIG_SUPS_STATUS_100, uint8_t);
+
+		CHECK_CLASS("Revision:               %s\n", BIOSIOFFS_SUPS_REVISION, CONFIG_SUPS_REVISION, BiosPair);
+		CHECK_VALUE("Power fail:       %9d #\n",       BIOSIOFFS_SUPS_PWRFAIL_COUNTER, CONFIG_SUPS_POWERFAILCOUNT, uint16_t);
+		CHECK_CLASS("Power failed:           %s\n", BIOSIOFFS_SUPS_PWRFAIL_TIMES, CONFIG_SUPS_PWRFAIL_TIMES, BiosTriple<uint32_t>);
+
+		uint8_t shutdownType[] {0x01, 0xA1, 0xFF};
+		for(size_t i = 0; i < sizeof(shutdownType); ++i) {
+			fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_SUPS_SET_SHUTDOWN_TYPE, &shutdownType[i], sizeof(shutdownType[0])));
+			CHECK_VALUE("Shutdown type:  0x%02x\n",       BIOSIOFFS_SUPS_GET_SHUTDOWN_TYPE, shutdownType[i], uint8_t);
+		}
+
+		CHECK_VALUE("S-UPS active:     %9d #\n",       BIOSIOFFS_SUPS_ACTIVE_COUNT, CONFIG_SUPS_ACTIVE_COUNT, uint8_t);
+		CHECK_VALUE("S-UPS Power fail: %9d #\n",       BIOSIOFFS_SUPS_INTERNAL_PWRF_STATUS, CONFIG_SUPS_INTERNAL_PWRF_STATUS, uint8_t);
+
+		fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_SUPS_CAPACITY_TEST, NULL, 0));
+		CHECK_VALUE("Capacitor test:   %9d #\n",       BIOSIOFFS_SUPS_TEST_RESULT, CONFIG_SUPS_TEST_RESULT, uint8_t);
+		CHECK_CLASS("GPIO:    %s\n", BIOSIOFFS_SUPS_GPIO_PIN, CONFIG_SUPS_GPIO_PIN, TSUps_GpioInfo);
 	}
 
 	void test_System(const std::string& test_name)
@@ -386,8 +403,8 @@ int main(int argc, char *argv[])
 	bbapiTest.add_test("test_SUPS", &TestBBAPI::test_SUPS);
 	bbapiTest.add_test("test_System", &TestBBAPI::test_System);
 	bbapiTest.add_test("test_CXPowerSupply", &TestBBAPI::test_CXPowerSupply);
-	bbapiTest.add_test("test_CXUPS", &TestBBAPI::test_CXUPS);
 	bbapiTest.add_test("test_CXPowerSupply_write", &TestBBAPI::test_CXPowerSupply_write);
+	bbapiTest.add_test("test_CXUPS", &TestBBAPI::test_CXUPS);
 	bbapiTest.run(argc, argv);
 	return 0;
 }

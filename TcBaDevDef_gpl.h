@@ -215,6 +215,30 @@ typedef struct TSensorInfo
 #endif /* #ifdef __cplusplus */
 }SENSORINFO, *PSENSORINFO;
 
+////////////////////////////////////////////////////////////////
+// SUPS or watchdog GPIO pin info
+typedef struct TSUps_GpioInfo
+{
+	unsigned short		ioAddr;
+	unsigned char		offset;
+	unsigned char		params;
+	unsigned long		rsv;//reserved
+#ifdef __cplusplus
+	TSUps_GpioInfo(uint16_t addr = 0, uint8_t off = 0, uint8_t param = 0)
+		: ioAddr(addr), offset(off), params(param), rsv(0)
+	{
+	}
+
+	bool operator==(const TSUps_GpioInfo& ref) const {
+		return (ioAddr == ref.ioAddr) && (offset == ref.offset) && (params == ref.params);
+	}
+
+	int snprintf(char* buffer, size_t len) const {
+		return ::snprintf(buffer, len, "0x%04x, 0x%02x, 0x%02x [ioAddr, offset, params]", ioAddr, offset, params);
+	};
+#endif /* #ifdef __cplusplus */
+}SUPS_GPIO_INFO, *PSUPS_GPIO_INFO, WATCHDOG_GPIO_INFO, *PWATCHDOG_GPIO_INFO;
+
 ///////////////////////////////////////////////////////////
 // Index-Group/Index-Offset specification
 ///////////////////////////////////////////////////////////
