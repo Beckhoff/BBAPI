@@ -242,7 +242,7 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 
 	void test_CXUPS(const std::string& test_name)
 	{
-		if(CONFIG_CXUPS_DISABLED) {
+		if(!CONFIG_CXUPS_ENABLED) {
 			pr_info("\nCX UPS test case disabled\n");
 			return;
 		}
