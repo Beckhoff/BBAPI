@@ -213,7 +213,7 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 		CHECK_VALUE("button state:          0x%02x\n",   BIOSIOFFS_CXPWRSUPP_GETBUTTONSTATE,   CONFIG_CXPWRSUPP_BUTTON_STATE, uint8_t);
 	}
 
-	void test_CXPowerSupply_write(const std::string& test_name)
+	void test_CXPowerSupply_display(const std::string& test_name)
 	{
 		const char empty[16+1] = "                ";
 		const char line1[16+1] = "1234567890123456";
@@ -223,7 +223,7 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 			return;
 		}
 		bbapi.setGroupOffset(BIOSIGRP_CXPWRSUPP);
-		pr_info("\nCX power supply write test:\n===========================\n");
+		pr_info("\nCX power supply display test:\n=============================\n");
 		uint8_t backlight = 0;
 		fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_CXPWRSUPP_ENABLEBACKLIGHT, &backlight, sizeof(backlight)));
 		fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_CXPWRSUPP_DISPLAYLINE1, &empty, sizeof(empty)));
@@ -403,8 +403,8 @@ int main(int argc, char *argv[])
 	bbapiTest.add_test("test_SUPS", &TestBBAPI::test_SUPS);
 	bbapiTest.add_test("test_System", &TestBBAPI::test_System);
 	bbapiTest.add_test("test_CXPowerSupply", &TestBBAPI::test_CXPowerSupply);
-	bbapiTest.add_test("test_CXPowerSupply_write", &TestBBAPI::test_CXPowerSupply_write);
 	bbapiTest.add_test("test_CXUPS", &TestBBAPI::test_CXUPS);
+	bbapiTest.add_test("test_CXPowerSupply_display", &TestBBAPI::test_CXPowerSupply_display);
 	bbapiTest.run(argc, argv);
 	return 0;
 }
