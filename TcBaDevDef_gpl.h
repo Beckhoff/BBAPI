@@ -282,6 +282,16 @@ typedef struct TSUps_GpioInfo
 	#define BIOSIOFFS_SUPS_TEST_RESULT						0x0000000a	// Get SUPS test result, W:0, R:1
 	#define BIOSIOFFS_SUPS_GPIO_PIN							0x000000a0	// Get the Address and the GPIO-Pin from PWR-Fail PIN, W:0, R:4
 
+#define BIOSIGRP_WATCHDOG	0x00006000	// Watchdog functions
+	#define BIOSIOFFS_WATCHDOG_ENABLE_TRIGGER				0x00000000	// Enable/trigger watchdog, W:1 (0 == Disable, 1..255 == Enable + set internal, R:0
+	#define BIOSIOFFS_WATCHDOG_CONFIG						0x00000001	// Configure watchdog, W:1 (sets interval timebase, 0 == seconds, 1 == minutes), R:0
+	#define BIOSIOFFS_WATCHDOG_GETCONFIG					0x00000002	// Get WD config, W:0, R:1
+	#define BIOSIOFFS_WATCHDOG_SETCONFIG					0x00000003	// Set WD config, W:1, R:0
+	#define BIOSIOFFS_WATCHDOG_ACTIVATE_PWRCTRL			0x00000004	// Activate PwrCtrl IO-Watchdog, W:1, R:0
+	#define BIOSIOFFS_WATCHDOG_TRIGGER_TIMESPAN			0x00000005	// Enables/trigger the watchdog with TimeSpan, W:2, R:0
+	#define BIOSIOFFS_WATCHDOG_IORETRIGGER					0x00000006	// IO-Retrigger, W:0, R:0
+	#define BIOSIOFFS_WATCHDOG_GPIO_PIN						0x00000007	// Get IO Addr for direct retrigger, W:0, R:4 
+
 #define BIOSIGRP_LED			0x00008000	// TwinCAT and user LED functions
 	#define BIOSIOFFS_LED_SET_TC								0x00000000	// Sets TwinCAT LED, W:1, R:0 (write value 0=off, 1=red, 2=blue, 3=green)
 	#define BIOSIOFFS_LED_SET_USER							0x00000001	// Sets user LED, W:1, R:0 (write value 0=off, 1=red, 2=blue, 3=green)

@@ -27,8 +27,8 @@
 
 /** select test device */
 //#define TEST_DEVICE DEVICE_CX5000
-#define TEST_DEVICE DEVICE_CX2030_CX2100_0904
-//#define TEST_DEVICE DEVICE_CX2030_CX2100_0004
+//#define TEST_DEVICE DEVICE_CX2030_CX2100_0904
+#define TEST_DEVICE DEVICE_CX2030_CX2100_0004
 
 /** reused ranges */
 #define BOOTCOUNTER_RANGE 1, 1500
@@ -150,5 +150,8 @@
 #define CONFIG_CXUPS_POWER 0
 #define CONFIG_CXUPS_POWER_RANGE 20000, 100000
 #define CONFIG_CXUPS_TEMP_RANGE 0, 85
+
+/** Watchdog configuration */
+#define CONFIG_WATCHDOG_GPIO_PIN {0x600, 0x50, 0x1}
 
 #endif /* #ifndef _TEST_CONFIG_H_ */

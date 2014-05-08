@@ -21,9 +21,6 @@
 #ifndef __API_H_
 #define __API_H_
 
-#define DRV_VERSION      "1.1"
-#define DRV_DESCRIPTION  "Beckhoff CCAT Ethernet/EtherCAT Network Driver"
-
 #undef pr_fmt
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -50,4 +47,6 @@ struct bbapi_object {
 	struct simple_cdev dev;
 	struct mutex mutex;
 };
+
+extern unsigned int bbapi_call_kern(const struct bbapi_struct *const cmd, unsigned int *bytes_written);
 #endif /* #ifndef __API_H_ */

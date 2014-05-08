@@ -368,6 +368,36 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 		}
 	}
 
+	void test_Watchdog(const std::string& test_name)
+	{
+		bbapi.setGroupOffset(BIOSIGRP_WATCHDOG);
+		pr_info("\nWatchdog test results:\n=======================\n");
+		CHECK_VALUE("WD Config:       %9d #\n",       BIOSIOFFS_WATCHDOG_GETCONFIG, 18, uint8_t);
+		const uint8_t timebase = 0;
+		const uint8_t timeout = 5;
+		const uint8_t enable = 1;
+		const uint8_t timespan[2] = {timeout, timeout};
+		fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_WATCHDOG_CONFIG, &timebase, sizeof(timebase)));
+		fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_WATCHDOG_ENABLE_TRIGGER, &timeout, sizeof(timeout)));
+		fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_WATCHDOG_ACTIVATE_PWRCTRL, &enable, sizeof(enable)));
+		fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_WATCHDOG_TRIGGER_TIMESPAN, &timespan, sizeof(timespan)));
+		CHECK_CLASS("GPIO:   %s\n", BIOSIOFFS_WATCHDOG_GPIO_PIN, CONFIG_WATCHDOG_GPIO_PIN, TSUps_GpioInfo);
+
+		std::this_thread::sleep_for(std::chrono::seconds(timeout - 1));
+		fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_WATCHDOG_IORETRIGGER, NULL, 0));
+		//fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_WATCHDOG_TRIGGER_TIMESPAN, &timespan, sizeof(timespan)));
+		pr_info("------> TICK <---------");
+		std::cout << "------> TICK <---------" << std::endl;
+		std::this_thread::sleep_for(std::chrono::seconds(timeout - 1));
+		fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_WATCHDOG_IORETRIGGER, NULL, 0));
+		//fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_WATCHDOG_TRIGGER_TIMESPAN, &timespan, sizeof(timespan)));
+		pr_info("------> TICK <---------");
+		std::cout << "------> TICK <---------" << std::endl;
+		std::this_thread::sleep_for(std::chrono::seconds(timeout - 1));
+		pr_info("------> ZZZZIIPPPP <---------");
+
+	}
+
 private:
 	BiosApi bbapi;
 
@@ -398,6 +428,7 @@ private:
 int main(int argc, char *argv[])
 {
 	TestBBAPI bbapiTest;
+#if 1
 	bbapiTest.add_test("test_General", &TestBBAPI::test_General);
 	bbapiTest.add_test("test_PwrCtrl", &TestBBAPI::test_PwrCtrl);
 	bbapiTest.add_test("test_SUPS", &TestBBAPI::test_SUPS);
@@ -405,6 +436,9 @@ int main(int argc, char *argv[])
 	bbapiTest.add_test("test_CXPowerSupply", &TestBBAPI::test_CXPowerSupply);
 	bbapiTest.add_test("test_CXUPS", &TestBBAPI::test_CXUPS);
 	bbapiTest.add_test("test_CXPowerSupply_display", &TestBBAPI::test_CXPowerSupply_display);
+#else
+	bbapiTest.add_test("test_Watchdog", &TestBBAPI::test_Watchdog);
+#endif
 	bbapiTest.run(argc, argv);
 	return 0;
 }

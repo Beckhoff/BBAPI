@@ -33,6 +33,9 @@
 
 #include "api.h"
 
+#define DRV_VERSION      "1.1"
+#define DRV_DESCRIPTION  "Beckhoff BIOS API Driver"
+
 /* Global Variables */
 static struct bbapi_object g_bbapi;
 
@@ -78,6 +81,20 @@ __asm__("mov %%rax, %0": "=m"(ret):);
 	return ret;
 }
 #endif
+
+unsigned int bbapi_call_kern(const struct bbapi_struct *const cmd, unsigned int *bytes_written)
+{
+	unsigned int result;
+	if(!cmd || !bytes_written) {
+		pr_warn("%s(%p, %p) invalid\n", __FUNCTION__, cmd, bytes_written);
+		return -EINVAL;
+	}
+	mutex_lock(&g_bbapi.mutex);
+	result = bbapi_call(&g_bbapi, cmd, bytes_written);
+	mutex_unlock(&g_bbapi.mutex);
+	return result;
+}
+EXPORT_SYMBOL_GPL(bbapi_call_kern);
 
 /**
  * bbapi_copy_bios() - Copy BIOS from SPI flash into RAM
@@ -286,7 +303,7 @@ static void __exit bbapi_exit(void)
 {
 	vfree(g_bbapi.memory);
 	simple_cdev_remove(&g_bbapi.dev);
-	printk(KERN_INFO "Beckhoff BIOS API: BBAPI unregistered\n");
+	pr_info("Beckhoff BIOS API: BBAPI unregistered\n");
 }
 
 module_init(bbapi_init_module);
