@@ -516,7 +516,7 @@ int main(int argc, char *argv[])
 	bbapiTest.run(argc, argv);
 #else
 	TestWatchdog wdTest;
-	wdTest.add_test("test_Simple", &TestWatchdog::test_Simple);
+	//wdTest.add_test("test_Simple", &TestWatchdog::test_Simple);
 	//wdTest.add_test("test_MagicClose", &TestWatchdog::test_MagicClose);
 	wdTest.add_test("test_IOCTL", &TestWatchdog::test_IOCTL);
 	//wdTest.add_test("test_Kill", &TestWatchdog::test_Kill);

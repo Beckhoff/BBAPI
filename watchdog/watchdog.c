@@ -28,9 +28,6 @@
 #include "../TcBaDevDef_gpl.h"
 #include "watchdog.h"
 
-static uint8_t g_timebase = 0; // by default we use seconds
-static uint8_t g_timeout = BBAPI_WATCHDOG_TIMEOUT_SEC;
-
 static int bbapi_wd_write(uint32_t offset, const void *const in, uint32_t size)
 {
 	return bbapi_write(BIOSIGRP_WATCHDOG, offset, in, size);
@@ -50,30 +47,28 @@ static int wd_ping(struct watchdog_device *wd)
  */
 static int wd_set_timeout(struct watchdog_device *wd, unsigned int seconds)
 {
-	g_timebase = seconds > 255;
-	if (g_timebase) {
-		g_timeout = seconds / 60;
-		wd->timeout = 60 * g_timeout;
+	if (seconds > 255) {
+		wd->timeout = seconds - (seconds % 60);
 	} else {
-		g_timeout = seconds;
 		wd->timeout = seconds;
 	}
-	pr_info("%s(%u) set\n", __FUNCTION__, wd->timeout);
 	return 0;
 }
 
 static int wd_start(struct watchdog_device *wd)
 {
 	const uint8_t enable = 1;
+	const uint8_t timebase = wd->timeout > 255;
+	const uint8_t timeout = timebase ? wd->timeout / 60 : wd->timeout;
 	if (bbapi_wd_write(BIOSIOFFS_WATCHDOG_ACTIVATE_PWRCTRL, &enable, sizeof(enable))) {
 		pr_warn("%s(): select PwrCtrl IO watchdog failed\n", __FUNCTION__);
 		return -1;
 	}
-	if (bbapi_wd_write(BIOSIOFFS_WATCHDOG_CONFIG, &g_timebase, sizeof(g_timebase))) {
+	if (bbapi_wd_write(BIOSIOFFS_WATCHDOG_CONFIG, &timebase, sizeof(timebase))) {
 		pr_warn("%s(): BIOSIOFFS_WATCHDOG_CONFIG failed\n", __FUNCTION__);
 		return -1;
 	}
-	if (bbapi_wd_write(BIOSIOFFS_WATCHDOG_ENABLE_TRIGGER, &g_timeout, sizeof(g_timeout))) {
+	if (bbapi_wd_write(BIOSIOFFS_WATCHDOG_ENABLE_TRIGGER, &timeout, sizeof(timeout))) {
 		pr_warn("%s(): enable watchdog failed\n", __FUNCTION__);
 		return -1;
 	}
@@ -113,6 +108,7 @@ static const struct watchdog_info wd_info = {
 static struct watchdog_device g_wd = {
 	.info = &wd_info,
 	.ops = &wd_ops,
+	.timeout = BBAPI_WATCHDOG_TIMEOUT_SEC,
 	.max_timeout = 255 * 60,
 };
 
