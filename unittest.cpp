@@ -26,6 +26,9 @@
 #include <string.h>
 #include <fcntl.h>
 #include <stdint.h>
+#include <sys/ioctl.h>
+#include <linux/types.h>
+#include <linux/watchdog.h>
 
 #include <chrono>
 #include <thread>
@@ -249,7 +252,7 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 		bbapi.setGroupOffset(BIOSIGRP_CXUPS);
 		pr_info("\nCX UPS test results:\n====================\n");
 		CHECK_VALUE("UPS enabled:           0x%02x\n", BIOSIOFFS_CXUPS_GETENABLED, CONFIG_CXUPS_ENABLED, uint8_t);
-		CHECK_CLASS("Fw ver.:                %s\n", BIOSIOFFS_CXUPS_GETFIRMWAREVER, CONFIG_CXUPS_FIRMWAREVER, BiosPair);
+		CHECK_CLASS("Fw ver.:                %s\n",    BIOSIOFFS_CXUPS_GETFIRMWAREVER, CONFIG_CXUPS_FIRMWAREVER, BiosPair);
 		CHECK_VALUE("Power status:          0x%02x\n", BIOSIOFFS_CXUPS_GETPOWERSTATUS, CONFIG_CXUPS_POWERSTATUS, uint8_t);
 		CHECK_VALUE("Battery status:        0x%02x\n", BIOSIOFFS_CXUPS_GETBATTERYSTATUS, CONFIG_CXUPS_BATTERYSTATUS, uint8_t);
 		CHECK_VALUE("Battery capacity: %9d %\n",       BIOSIOFFS_CXUPS_GETBATTERYCAPACITY, CONFIG_CXUPS_BATTERYCAPACITY, uint8_t);
@@ -386,16 +389,13 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 		std::this_thread::sleep_for(std::chrono::seconds(timeout - 1));
 		fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_WATCHDOG_IORETRIGGER, NULL, 0));
 		//fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_WATCHDOG_TRIGGER_TIMESPAN, &timespan, sizeof(timespan)));
-		pr_info("------> TICK <---------");
 		std::cout << "------> TICK <---------" << std::endl;
 		std::this_thread::sleep_for(std::chrono::seconds(timeout - 1));
 		fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_WATCHDOG_IORETRIGGER, NULL, 0));
 		//fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_WATCHDOG_TRIGGER_TIMESPAN, &timespan, sizeof(timespan)));
-		pr_info("------> TICK <---------");
 		std::cout << "------> TICK <---------" << std::endl;
 		std::this_thread::sleep_for(std::chrono::seconds(timeout - 1));
-		pr_info("------> ZZZZIIPPPP <---------");
-
+		std::cout << "------> ZZZZIIPPPP <---------" << std::endl;
 	}
 
 private:
@@ -425,10 +425,86 @@ private:
 	}
 };
 
+
+struct TestWatchdog : fructose::test_base<TestWatchdog>
+{
+	void test_Kill(const std::string& test_name)
+	{
+		const int fd = open("/dev/watchdog", O_WRONLY);
+		fructose_assert_ne(-1, fd);
+		pr_info("\nWarning watchdog will trigger a reboot soon...\n");
+		std::this_thread::sleep_for(std::chrono::seconds(BBAPI_WATCHDOG_TIMEOUT_SEC + 1));
+		close(fd);
+	}
+
+	void test_Simple(const std::string& test_name)
+	{
+		pr_info("\nSimple watchdog test results:\n=============================\n");
+		const int fd = open("/dev/watchdog", O_WRONLY);
+		fructose_assert_ne(-1, fd);
+		for (size_t i = 0; i < BBAPI_WATCHDOG_TIMEOUT_SEC; ++i) {
+			std::this_thread::sleep_for(std::chrono::seconds(1));
+			write(fd, "\0", 1);
+		}
+		close(fd);
+	}
+
+	void test_MagicClose(const std::string& test_name)
+	{
+		pr_info("\nMagicClose watchdog test results:\n=================================\n");
+		fructose_fail("TODO implement this test");
+	}
+
+	void test_IOCTL(const std::string& test_name)
+	{
+		pr_info("\nIOCTL watchdog test results:\n============================\n");
+
+		const int fd = open("/dev/watchdog", O_WRONLY);
+		fructose_assert_ne(-1, fd);
+
+		// durations over 255 sec. have to be mapped to minutes
+		const int timeout_min = 256;
+		int read = 0;
+		fructose_assert_eq(0, ioctl(fd, WDIOC_SETTIMEOUT, &timeout_min));
+		fructose_assert_eq(0, ioctl(fd, WDIOC_GETTIMEOUT, &read));
+		fructose_assert_eq(4 * 60, read);
+
+		// setting a too large timeout should fail, old value should remain
+		const int timeout_overflow = 60 * 256;
+		fructose_assert_eq(-1, ioctl(fd, WDIOC_SETTIMEOUT, &timeout_overflow));
+		fructose_assert_eq(0, ioctl(fd, WDIOC_GETTIMEOUT, &read));
+		fructose_assert_eq(4 * 60, read);
+
+		const int timeout_sec = 255;
+		fructose_assert_eq(0, ioctl(fd, WDIOC_SETTIMEOUT, &timeout_sec));
+		fructose_assert_eq(0, ioctl(fd, WDIOC_GETTIMEOUT, &read));
+		fructose_assert_eq(timeout_sec, read);
+
+		const char identity[] = "bbapi_watchdog\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+		struct watchdog_info ident;
+		fructose_assert_eq(0, ioctl(fd, WDIOC_GETSUPPORT, &ident));
+		fructose_assert_eq(0, memcmp(identity, ident.identity, sizeof(ident.identity)));
+		fructose_assert_eq(0, ident.firmware_version);
+		fructose_assert_eq(WDIOF_SETTIMEOUT, ident.options);
+
+		// pretimeout is not supported by BBAPI watchdog
+		const int pretimeout = 10;
+		int pre;
+		fructose_assert_eq(-1, ioctl(fd, WDIOC_SETPRETIMEOUT, &pretimeout));
+		fructose_assert_eq(-1, ioctl(fd, WDIOC_GETPRETIMEOUT, &pre));
+
+		// timeleft is not supported by BBAPI watchdog
+		int timeleft;
+		fructose_assert_eq(-1, ioctl(fd, WDIOC_GETTIMELEFT, &timeleft));
+
+		fructose_fail("TODO implement STATUS and KEEPALIVE test cases");
+	}
+};
+
 int main(int argc, char *argv[])
 {
+#if 0
 	TestBBAPI bbapiTest;
-#if 1
 	bbapiTest.add_test("test_General", &TestBBAPI::test_General);
 	bbapiTest.add_test("test_PwrCtrl", &TestBBAPI::test_PwrCtrl);
 	bbapiTest.add_test("test_SUPS", &TestBBAPI::test_SUPS);
@@ -436,9 +512,15 @@ int main(int argc, char *argv[])
 	bbapiTest.add_test("test_CXPowerSupply", &TestBBAPI::test_CXPowerSupply);
 	bbapiTest.add_test("test_CXUPS", &TestBBAPI::test_CXUPS);
 	bbapiTest.add_test("test_CXPowerSupply_display", &TestBBAPI::test_CXPowerSupply_display);
-#else
-	bbapiTest.add_test("test_Watchdog", &TestBBAPI::test_Watchdog);
-#endif
+	//bbapiTest.add_test("test_Watchdog", &TestBBAPI::test_Watchdog);
 	bbapiTest.run(argc, argv);
+#else
+	TestWatchdog wdTest;
+	wdTest.add_test("test_Simple", &TestWatchdog::test_Simple);
+	//wdTest.add_test("test_MagicClose", &TestWatchdog::test_MagicClose);
+	wdTest.add_test("test_IOCTL", &TestWatchdog::test_IOCTL);
+	//wdTest.add_test("test_Kill", &TestWatchdog::test_Kill);
+	wdTest.run(argc, argv);
+#endif
 	return 0;
 }

@@ -33,68 +33,72 @@
 
 #include "api.h"
 
-#define DRV_VERSION      "1.1"
+#define DRV_VERSION      "1.2"
 #define DRV_DESCRIPTION  "Beckhoff BIOS API Driver"
 
 /* Global Variables */
 static struct bbapi_object g_bbapi;
-
 
 // BIOS API is called as with standard windows calling convention
 // for Linux we have to rebuild it using assembler
 #if defined(__i386__)
 static const uint64_t BBIOSAPI_SIGNATURE = 0x495041534F494242LL;	// API-String "BBIOSAPI"
 
-static unsigned int bbapi_call(struct bbapi_object *const bbapi,
+static unsigned int bbapi_call(const void __kernel *const in, void *const out, const void *const entry,
 			       const struct bbapi_struct *const cmd,
 			       unsigned int *bytes_written)
 {
 	unsigned int ret;
 __asm__("push %0": :"r"(bytes_written));
 __asm__("push %0": :"r"(cmd->nOutBufferSize));
-__asm__("push %0": :"r"(bbapi->out));
+__asm__("push %0": :"r"(out));
 __asm__("push %0": :"r"(cmd->nInBufferSize));
-__asm__("push %0": :"r"(bbapi->in));
+__asm__("push %0": :"r"(in));
 __asm__("push %0": :"r"(cmd->nIndexOffset));
 __asm__("push %0": :"r"(cmd->nIndexGroup));
-__asm__("call *%0": :"r"(bbapi->entry));
+__asm__("call *%0": :"r"(entry));
 __asm__("mov %%eax, %0": "=m"(ret):);
 	return ret;
 }
 #elif defined(__x86_64__)
 static const uint64_t BBIOSAPI_SIGNATURE = 0x3436584950414242LL;	// API-String "BBAPIX64"
 
-static unsigned int bbapi_call(struct bbapi_object *const bbapi,
+static unsigned int bbapi_call(const void __kernel *const in, void *const out, const void *const entry
 			       const struct bbapi_struct *const cmd,
 			       unsigned int *bytes_written)
 {
 	unsigned int ret = 0;
 __asm__("movq %0, 0x30(%%rsp)\n\t": :"r"(bytes_written));
 __asm__("movl %0, 0x28(%%rsp)": :"r"(cmd->nOutBufferSize));
-__asm__("movq %0, 0x20(%%rsp)": :"r"(bbapi->out));
+__asm__("movq %0, 0x20(%%rsp)": :"r"(out));
 __asm__("movq %0, %%r9": :"r"((uint64_t) cmd->nInBufferSize));
-__asm__("movq %0, %%r8": :"r"(bbapi->in));
+__asm__("movq %0, %%r8": :"r"(in));
 __asm__("movq %0, %%rdx": :"r"((uint64_t) cmd->nIndexOffset));
 __asm__("movq %0, %%rcx": :"r"((uint64_t) cmd->nIndexGroup));
-__asm__("call *%0": :"r"(bbapi->entry));
+__asm__("call *%0": :"r"(entry));
 __asm__("mov %%rax, %0": "=m"(ret):);
 	return ret;
 }
 #endif
 
-unsigned int bbapi_call_kern(const struct bbapi_struct *const cmd, unsigned int *bytes_written)
+unsigned int bbapi_write(uint32_t group, uint32_t offset, const void __kernel *in, uint32_t size)
 {
-	unsigned int result;
-	if(!cmd || !bytes_written) {
-		pr_warn("%s(%p, %p) invalid\n", __FUNCTION__, cmd, bytes_written);
-		return -EINVAL;
-	}
+	const struct bbapi_struct cmd = {
+		.nIndexGroup = group,
+		.nIndexOffset = offset,
+		.pInBuffer = NULL,
+		.nInBufferSize = size,
+		.pOutBuffer = NULL,
+		.nOutBufferSize = 0
+	};
+	unsigned int bytes_written = 0;
+	volatile unsigned int result = 0;
 	mutex_lock(&g_bbapi.mutex);
-	result = bbapi_call(&g_bbapi, cmd, bytes_written);
+	result = bbapi_call(in, NULL, g_bbapi.entry, &cmd, &bytes_written);
 	mutex_unlock(&g_bbapi.mutex);
 	return result;
 }
-EXPORT_SYMBOL_GPL(bbapi_call_kern);
+EXPORT_SYMBOL_GPL(bbapi_write);
 
 /**
  * bbapi_copy_bios() - Copy BIOS from SPI flash into RAM
@@ -194,7 +198,7 @@ static void bbapi_init_callbacks(struct bbapi_object *const bbapi)
 	mutex_lock(&bbapi->mutex);
 	memcpy(bbapi->in, &CALLBACKS, sizeof(CALLBACKS));
 
-	if (bbapi_call(bbapi, &cmd, &bytes_written)) {
+	if (bbapi_call(bbapi->in, bbapi->out, bbapi->entry, &cmd, &bytes_written)) {
 		pr_err("%s(): call to BIOS failed\n", __FUNCTION__);
 	}
 	mutex_unlock(&bbapi->mutex);
@@ -225,7 +229,7 @@ static int bbapi_ioctl_mutexed(struct bbapi_object *const bbapi,
 		return -EFAULT;
 	}
 	// Call the BIOS API
-	if (bbapi_call(bbapi, cmd, &bytes_written)) {
+	if (bbapi_call(bbapi->in, bbapi->out, bbapi->entry, cmd, &bytes_written)) {
 		pr_err("%s(): call to BIOS failed\n", __FUNCTION__);
 		return -EIO;
 	}
@@ -303,7 +307,7 @@ static void __exit bbapi_exit(void)
 {
 	vfree(g_bbapi.memory);
 	simple_cdev_remove(&g_bbapi.dev);
-	pr_info("Beckhoff BIOS API: BBAPI unregistered\n");
+	pr_info("unregistered\n");
 }
 
 module_init(bbapi_init_module);

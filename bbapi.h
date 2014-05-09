@@ -32,6 +32,7 @@
 #define BBAPI_BUFFER_SIZE 256
 
 #define FILE_PATH	"/dev/BBAPI" 	// Path to character Device
+#define BBAPI_WATCHDOG_TIMEOUT_SEC 3
 
 struct bbapi_struct {
 	uint32_t nIndexGroup;

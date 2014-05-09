@@ -14,6 +14,7 @@ install:
 	sudo cp ./$(TARGET).ko $(EXTRA_DIR)
 	sudo depmod -a
 	sudo modprobe $(TARGET)
+	sudo chmod a+rw /dev/watchdog
 
 clean:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
