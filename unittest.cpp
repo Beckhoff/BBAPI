@@ -371,33 +371,6 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 		}
 	}
 
-	void test_Watchdog(const std::string& test_name)
-	{
-		bbapi.setGroupOffset(BIOSIGRP_WATCHDOG);
-		pr_info("\nWatchdog test results:\n=======================\n");
-		CHECK_VALUE("WD Config:       %9d #\n",       BIOSIOFFS_WATCHDOG_GETCONFIG, 18, uint8_t);
-		const uint8_t timebase = 0;
-		const uint8_t timeout = 5;
-		const uint8_t enable = 1;
-		const uint8_t timespan[2] = {timeout, timeout};
-		fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_WATCHDOG_CONFIG, &timebase, sizeof(timebase)));
-		fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_WATCHDOG_ENABLE_TRIGGER, &timeout, sizeof(timeout)));
-		fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_WATCHDOG_ACTIVATE_PWRCTRL, &enable, sizeof(enable)));
-		fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_WATCHDOG_TRIGGER_TIMESPAN, &timespan, sizeof(timespan)));
-		CHECK_CLASS("GPIO:   %s\n", BIOSIOFFS_WATCHDOG_GPIO_PIN, CONFIG_WATCHDOG_GPIO_PIN, TSUps_GpioInfo);
-
-		std::this_thread::sleep_for(std::chrono::seconds(timeout - 1));
-		fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_WATCHDOG_IORETRIGGER, NULL, 0));
-		//fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_WATCHDOG_TRIGGER_TIMESPAN, &timespan, sizeof(timespan)));
-		std::cout << "------> TICK <---------" << std::endl;
-		std::this_thread::sleep_for(std::chrono::seconds(timeout - 1));
-		fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_WATCHDOG_IORETRIGGER, NULL, 0));
-		//fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_WATCHDOG_TRIGGER_TIMESPAN, &timespan, sizeof(timespan)));
-		std::cout << "------> TICK <---------" << std::endl;
-		std::this_thread::sleep_for(std::chrono::seconds(timeout - 1));
-		std::cout << "------> ZZZZIIPPPP <---------" << std::endl;
-	}
-
 private:
 	BiosApi bbapi;
 
@@ -428,16 +401,6 @@ private:
 
 struct TestWatchdog : fructose::test_base<TestWatchdog>
 {
-	void test_Kill(const std::string& test_name)
-	{
-		const int fd = open("/dev/watchdog", O_WRONLY);
-		pr_info("errno %d\n", errno);
-		fructose_assert_ne(-1, fd);
-		pr_info("\nWarning watchdog will trigger a reboot soon...\n");
-		std::this_thread::sleep_for(std::chrono::seconds(BBAPI_WATCHDOG_TIMEOUT_SEC + 2));
-		close(fd);
-	}
-
 	void test_Simple(const std::string& test_name)
 	{
 		(std::cout << "Simple watchdog test running...").flush();
@@ -447,17 +410,31 @@ struct TestWatchdog : fructose::test_base<TestWatchdog>
 		fructose_assert_eq(0, ioctl(fd, WDIOC_SETTIMEOUT, &timeout_sec));
 		for (int i = 0; i < 2 * timeout_sec; ++i) {
 			std::this_thread::sleep_for(std::chrono::seconds(1));
-			write(fd, "\0", 1);
+			fructose_assert_eq(1, write(fd, "V", 1));
 		}
-		close(fd);
-		std::cout << " done." << std::endl;
+		fructose_assert_eq(0, close(fd));
+		std::this_thread::sleep_for(std::chrono::seconds(timeout_sec));
+		if (!error()) {
+			std::cout << " done." << std::endl;
+		}
 	}
 
 	void test_MagicClose(const std::string& test_name)
 	{
 		(std::cout << "MagicClose watchdog test running...").flush();
-		fructose_fail("TODO implement this test");
-		std::cout << " done." << std::endl;
+		const int timeout = 2;
+		const int fd = open("/dev/watchdog", O_WRONLY);
+		fructose_assert_ne(-1, fd);
+		fructose_assert_eq(0, ioctl(fd, WDIOC_SETTIMEOUT, &timeout));
+		for (int i = 0; i < 2 * timeout; ++i) {
+			std::this_thread::sleep_for(std::chrono::seconds(1));
+			fructose_assert_eq(1, write(fd, "V", 1));
+		}
+		//write(fd, "\0", 1);
+		fructose_assert_eq(0, close(fd));
+		(std::cout << "WARNING watchdog will fire soon...").flush();
+		std::this_thread::sleep_for(std::chrono::seconds(timeout + 2));
+		fructose_fail("You shouldn't see, if the watchdog would work as expected!");
 	}
 
 	void test_IOCTL(const std::string& test_name)
@@ -493,7 +470,7 @@ struct TestWatchdog : fructose::test_base<TestWatchdog>
 		fructose_assert_eq(timeout_max_minutes, read);
 
 		const char identity[] = "bbapi_watchdog\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
-		const uint32_t options = WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING;
+		const uint32_t options = WDIOF_SETTIMEOUT | WDIOF_MAGICCLOSE | WDIOF_KEEPALIVEPING;
 		struct watchdog_info ident;
 		fructose_assert_eq(0, ioctl(fd, WDIOC_GETSUPPORT, &ident));
 		fructose_assert_eq(0, memcmp(identity, ident.identity, sizeof(ident.identity)));
@@ -509,34 +486,36 @@ struct TestWatchdog : fructose::test_base<TestWatchdog>
 		// timeleft is not supported by BBAPI watchdog
 		int timeleft;
 		fructose_assert_eq(-1, ioctl(fd, WDIOC_GETTIMELEFT, &timeleft));
-
-		fructose_fail("TODO implement TO_EARLY_TIMEOUT test cases");
-		close(fd);
-		std::cout << " done." << std::endl;
+		fructose_assert_eq(0, close(fd));
+		std::cout << "\nBBAPI watchdog feature 'to early trigger' not supported (indexOffset 0x5)\n";
 	}
 
 	void test_KeepAlive(const std::string& test_name)
 	{
 		(std::cout << "Watchdog keep alive ping test running...").flush();
+		const int timeout = 2;
 		const int fd = open("/dev/watchdog", O_WRONLY);
 		fructose_assert_ne(-1, fd);
-		for (int i = 0; i < 2; ++i) {
+		fructose_assert_eq(0, ioctl(fd, WDIOC_SETTIMEOUT, &timeout));
+		for (int i = 0; i < 2 * timeout; ++i) {
 			int status = 0;
 			std::this_thread::sleep_for(std::chrono::seconds(1));
-			write(fd, "\0", 1);
+			fructose_assert_eq(0, ioctl(fd, WDIOC_KEEPALIVE));
 			fructose_assert_eq(0, ioctl(fd, WDIOC_GETSTATUS, &status));
 			fructose_assert(status & WDIOF_KEEPALIVEPING);
 			fructose_assert_eq(0, ioctl(fd, WDIOC_GETSTATUS, &status));
 			fructose_assert_eq(0, status & WDIOF_KEEPALIVEPING);
 		}
-		close(fd);
-		std::cout << " done." << std::endl;
+		fructose_assert_eq(1, write(fd, "V", 1));
+		fructose_assert_eq(0, close(fd));
+		if (!error()) {
+			std::cout << " done." << std::endl;
+		}
 	}
 };
 
 int main(int argc, char *argv[])
 {
-#if 0
 	TestBBAPI bbapiTest;
 	bbapiTest.add_test("test_General", &TestBBAPI::test_General);
 	bbapiTest.add_test("test_PwrCtrl", &TestBBAPI::test_PwrCtrl);
@@ -545,16 +524,13 @@ int main(int argc, char *argv[])
 	bbapiTest.add_test("test_CXPowerSupply", &TestBBAPI::test_CXPowerSupply);
 	bbapiTest.add_test("test_CXUPS", &TestBBAPI::test_CXUPS);
 	bbapiTest.add_test("test_CXPowerSupply_display", &TestBBAPI::test_CXPowerSupply_display);
-	//bbapiTest.add_test("test_Watchdog", &TestBBAPI::test_Watchdog);
 	bbapiTest.run(argc, argv);
-#else
+
 	TestWatchdog wdTest;
-	//wdTest.add_test("test_Simple", &TestWatchdog::test_Simple);
-	//wdTest.add_test("test_MagicClose", &TestWatchdog::test_MagicClose);
+	wdTest.add_test("test_Simple", &TestWatchdog::test_Simple);
 	wdTest.add_test("test_IOCTL", &TestWatchdog::test_IOCTL);
 	wdTest.add_test("test_KeepAlive", &TestWatchdog::test_KeepAlive);
-	//wdTest.add_test("test_Kill", &TestWatchdog::test_Kill);
+	//wdTest.add_test("test_MagicClose", &TestWatchdog::test_MagicClose);
 	wdTest.run(argc, argv);
-#endif
 	return 0;
 }

@@ -106,7 +106,7 @@ static const struct watchdog_ops wd_ops = {
 #endif
 };
 static const struct watchdog_info wd_info = {
-	.options = WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING,
+	.options = WDIOF_SETTIMEOUT | WDIOF_MAGICCLOSE | WDIOF_KEEPALIVEPING,
 	.firmware_version = 0,
 	.identity = "bbapi_watchdog",
 };
