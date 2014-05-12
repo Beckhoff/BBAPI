@@ -27,4 +27,6 @@
 #undef pr_fmt
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#define WDOG_KEEPALIVE 15
+
 #endif /* #ifndef __WATCHDOG_H_ */

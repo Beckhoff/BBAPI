@@ -431,33 +431,38 @@ struct TestWatchdog : fructose::test_base<TestWatchdog>
 	void test_Kill(const std::string& test_name)
 	{
 		const int fd = open("/dev/watchdog", O_WRONLY);
+		pr_info("errno %d\n", errno);
 		fructose_assert_ne(-1, fd);
 		pr_info("\nWarning watchdog will trigger a reboot soon...\n");
-		std::this_thread::sleep_for(std::chrono::seconds(BBAPI_WATCHDOG_TIMEOUT_SEC + 1));
+		std::this_thread::sleep_for(std::chrono::seconds(BBAPI_WATCHDOG_TIMEOUT_SEC + 2));
 		close(fd);
 	}
 
 	void test_Simple(const std::string& test_name)
 	{
-		pr_info("\nSimple watchdog test results:\n=============================\n");
+		(std::cout << "Simple watchdog test running...").flush();
+		const int timeout_sec = 2;
 		const int fd = open("/dev/watchdog", O_WRONLY);
 		fructose_assert_ne(-1, fd);
-		for (size_t i = 0; i < BBAPI_WATCHDOG_TIMEOUT_SEC; ++i) {
+		fructose_assert_eq(0, ioctl(fd, WDIOC_SETTIMEOUT, &timeout_sec));
+		for (int i = 0; i < 2 * timeout_sec; ++i) {
 			std::this_thread::sleep_for(std::chrono::seconds(1));
 			write(fd, "\0", 1);
 		}
 		close(fd);
+		std::cout << " done." << std::endl;
 	}
 
 	void test_MagicClose(const std::string& test_name)
 	{
-		pr_info("\nMagicClose watchdog test results:\n=================================\n");
+		(std::cout << "MagicClose watchdog test running...").flush();
 		fructose_fail("TODO implement this test");
+		std::cout << " done." << std::endl;
 	}
 
 	void test_IOCTL(const std::string& test_name)
 	{
-		pr_info("\nIOCTL watchdog test results:\n============================\n");
+		(std::cout << "IOCTL watchdog test running...").flush();
 
 		const int fd = open("/dev/watchdog", O_WRONLY);
 		fructose_assert_ne(-1, fd);
@@ -470,22 +475,30 @@ struct TestWatchdog : fructose::test_base<TestWatchdog>
 		fructose_assert_eq(4 * 60, read);
 
 		// setting a too large timeout should fail, old value should remain
-		const int timeout_overflow = 60 * 256;
+		const int timeout_overflow = BBAPI_WATCHDOG_MAX_TIMEOUT_SEC + 1;
 		fructose_assert_eq(-1, ioctl(fd, WDIOC_SETTIMEOUT, &timeout_overflow));
 		fructose_assert_eq(0, ioctl(fd, WDIOC_GETTIMEOUT, &read));
 		fructose_assert_eq(4 * 60, read);
 
+		// test maximum seconds
 		const int timeout_sec = 255;
 		fructose_assert_eq(0, ioctl(fd, WDIOC_SETTIMEOUT, &timeout_sec));
 		fructose_assert_eq(0, ioctl(fd, WDIOC_GETTIMEOUT, &read));
 		fructose_assert_eq(timeout_sec, read);
 
+		// test maximum minutes
+		const int timeout_max_minutes = BBAPI_WATCHDOG_MAX_TIMEOUT_SEC;
+		fructose_assert_eq(0, ioctl(fd, WDIOC_SETTIMEOUT, &timeout_max_minutes));
+		fructose_assert_eq(0, ioctl(fd, WDIOC_GETTIMEOUT, &read));
+		fructose_assert_eq(timeout_max_minutes, read);
+
 		const char identity[] = "bbapi_watchdog\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+		const uint32_t options = WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING;
 		struct watchdog_info ident;
 		fructose_assert_eq(0, ioctl(fd, WDIOC_GETSUPPORT, &ident));
 		fructose_assert_eq(0, memcmp(identity, ident.identity, sizeof(ident.identity)));
 		fructose_assert_eq(0, ident.firmware_version);
-		fructose_assert_eq(WDIOF_SETTIMEOUT, ident.options);
+		fructose_assert_eq(options, ident.options);
 
 		// pretimeout is not supported by BBAPI watchdog
 		const int pretimeout = 10;
@@ -497,7 +510,27 @@ struct TestWatchdog : fructose::test_base<TestWatchdog>
 		int timeleft;
 		fructose_assert_eq(-1, ioctl(fd, WDIOC_GETTIMELEFT, &timeleft));
 
-		fructose_fail("TODO implement STATUS and KEEPALIVE test cases");
+		fructose_fail("TODO implement TO_EARLY_TIMEOUT test cases");
+		close(fd);
+		std::cout << " done." << std::endl;
+	}
+
+	void test_KeepAlive(const std::string& test_name)
+	{
+		(std::cout << "Watchdog keep alive ping test running...").flush();
+		const int fd = open("/dev/watchdog", O_WRONLY);
+		fructose_assert_ne(-1, fd);
+		for (int i = 0; i < 2; ++i) {
+			int status = 0;
+			std::this_thread::sleep_for(std::chrono::seconds(1));
+			write(fd, "\0", 1);
+			fructose_assert_eq(0, ioctl(fd, WDIOC_GETSTATUS, &status));
+			fructose_assert(status & WDIOF_KEEPALIVEPING);
+			fructose_assert_eq(0, ioctl(fd, WDIOC_GETSTATUS, &status));
+			fructose_assert_eq(0, status & WDIOF_KEEPALIVEPING);
+		}
+		close(fd);
+		std::cout << " done." << std::endl;
 	}
 };
 
@@ -519,6 +552,7 @@ int main(int argc, char *argv[])
 	//wdTest.add_test("test_Simple", &TestWatchdog::test_Simple);
 	//wdTest.add_test("test_MagicClose", &TestWatchdog::test_MagicClose);
 	wdTest.add_test("test_IOCTL", &TestWatchdog::test_IOCTL);
+	wdTest.add_test("test_KeepAlive", &TestWatchdog::test_KeepAlive);
 	//wdTest.add_test("test_Kill", &TestWatchdog::test_Kill);
 	wdTest.run(argc, argv);
 #endif

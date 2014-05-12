@@ -35,6 +35,7 @@ static int bbapi_wd_write(uint32_t offset, const void *const in, uint32_t size)
 
 static int wd_ping(struct watchdog_device *wd)
 {
+	set_bit(WDOG_KEEPALIVE, &wd->status);
 	return bbapi_wd_write(BIOSIOFFS_WATCHDOG_IORETRIGGER, NULL, 0);
 }
 
@@ -55,7 +56,7 @@ static int wd_set_timeout(struct watchdog_device *wd, unsigned int seconds)
 	return 0;
 }
 
-static int wd_start(struct watchdog_device *wd)
+static int wd_start(struct watchdog_device *const wd)
 {
 	const uint8_t enable = 1;
 	const uint8_t timebase = wd->timeout > 255;
@@ -72,8 +73,15 @@ static int wd_start(struct watchdog_device *wd)
 		pr_warn("%s(): enable watchdog failed\n", __FUNCTION__);
 		return -1;
 	}
-	pr_info("%s()\n", __FUNCTION__);
 	return 0;
+}
+
+static unsigned int wd_status(struct watchdog_device *const wd)
+{
+	const unsigned int value = wd->status;
+	pr_info("%s(): status: 0x%x 0x%x\n", __FUNCTION__, value, WDIOF_KEEPALIVEPING);
+	clear_bit(WDOG_KEEPALIVE, &wd->status);
+	return value;
 }
 
 static int wd_stop(struct watchdog_device *wd)
@@ -83,7 +91,6 @@ static int wd_stop(struct watchdog_device *wd)
 		pr_warn("%s(): disable watchdog failed\n", __FUNCTION__);
 		return -1;
 	}
-	pr_info("%s()\n", __FUNCTION__);
 	return 0;
 }
 
@@ -92,15 +99,14 @@ static const struct watchdog_ops wd_ops = {
 	.start = wd_start,
 	.stop = wd_stop,
 	.ping = wd_ping,
+	.status = wd_status,
 	.set_timeout = wd_set_timeout,
 #if 0
-	/* more optional operations */
-	unsigned int (*status)(struct watchdog_device *);
 	long (*ioctl)(struct watchdog_device *, unsigned int, unsigned long);
 #endif
 };
 static const struct watchdog_info wd_info = {
-	.options = WDIOF_SETTIMEOUT,
+	.options = WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING,
 	.firmware_version = 0,
 	.identity = "bbapi_watchdog",
 };
@@ -109,11 +115,12 @@ static struct watchdog_device g_wd = {
 	.info = &wd_info,
 	.ops = &wd_ops,
 	.timeout = BBAPI_WATCHDOG_TIMEOUT_SEC,
-	.max_timeout = 255 * 60,
+	.max_timeout = BBAPI_WATCHDOG_MAX_TIMEOUT_SEC,
 };
 
 static int __init bbapi_watchdog_init_module(void)
 {
+	BUILD_BUG_ON(1 << WDOG_KEEPALIVE != WDIOF_KEEPALIVEPING);
 	pr_info("%s, %s\n", DRV_DESCRIPTION, DRV_VERSION);
 	return watchdog_register_device(&g_wd);
 }

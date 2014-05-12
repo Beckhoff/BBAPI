@@ -32,7 +32,8 @@
 #define BBAPI_BUFFER_SIZE 256
 
 #define FILE_PATH	"/dev/BBAPI" 	// Path to character Device
-#define BBAPI_WATCHDOG_TIMEOUT_SEC 3
+#define BBAPI_WATCHDOG_TIMEOUT_SEC 60	// default timeout for watchdog
+#define BBAPI_WATCHDOG_MAX_TIMEOUT_SEC (255 * 60)
 
 struct bbapi_struct {
 	uint32_t nIndexGroup;
