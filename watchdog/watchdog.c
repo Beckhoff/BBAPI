@@ -28,7 +28,7 @@
 #include "../TcBaDevDef_gpl.h"
 #include "watchdog.h"
 
-static int bbapi_wd_write(uint32_t offset, const void *const in, uint32_t size)
+static int bbapi_wd_write(uint32_t offset, const void *in, uint32_t size)
 {
 	return bbapi_write(BIOSIGRP_WATCHDOG, offset, in, size);
 }
@@ -46,12 +46,12 @@ static int wd_ping(struct watchdog_device *wd)
  * into BBAPI timebase + timeout
  * As long as sec fits into a uint8_t we use seconds as a time base
  */
-static int wd_set_timeout(struct watchdog_device *wd, unsigned int seconds)
+static int wd_set_timeout(struct watchdog_device *wd, unsigned int sec)
 {
-	if (seconds > 255) {
-		wd->timeout = seconds - (seconds % 60);
+	if (sec > 255) {
+		wd->timeout = sec - (sec % 60);
 	} else {
-		wd->timeout = seconds;
+		wd->timeout = sec;
 	}
 	return 0;
 }
@@ -79,7 +79,6 @@ static int wd_start(struct watchdog_device *const wd)
 static unsigned int wd_status(struct watchdog_device *const wd)
 {
 	const unsigned int value = wd->status;
-	pr_info("%s(): status: 0x%x 0x%x\n", __FUNCTION__, value, WDIOF_KEEPALIVEPING);
 	clear_bit(WDOG_KEEPALIVE, &wd->status);
 	return value;
 }

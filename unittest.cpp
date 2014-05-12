@@ -430,7 +430,7 @@ struct TestWatchdog : fructose::test_base<TestWatchdog>
 			std::this_thread::sleep_for(std::chrono::seconds(1));
 			fructose_assert_eq(1, write(fd, "V", 1));
 		}
-		//write(fd, "\0", 1);
+		fructose_assert_eq(1, write(fd, "\0", 1));
 		fructose_assert_eq(0, close(fd));
 		(std::cout << "WARNING watchdog will fire soon...").flush();
 		std::this_thread::sleep_for(std::chrono::seconds(timeout + 2));
@@ -486,6 +486,7 @@ struct TestWatchdog : fructose::test_base<TestWatchdog>
 		// timeleft is not supported by BBAPI watchdog
 		int timeleft;
 		fructose_assert_eq(-1, ioctl(fd, WDIOC_GETTIMELEFT, &timeleft));
+		fructose_assert_eq(1, write(fd, "V", 1));
 		fructose_assert_eq(0, close(fd));
 		std::cout << "\nBBAPI watchdog feature 'to early trigger' not supported (indexOffset 0x5)\n";
 	}
