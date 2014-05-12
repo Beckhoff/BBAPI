@@ -65,8 +65,9 @@ __asm__("mov %%eax, %0": "=m"(ret):);
 static const uint64_t BBIOSAPI_SIGNATURE = 0x3436584950414242LL;	// API-String "BBAPIX64"
 
 static unsigned int bbapi_call(const void __kernel * const in, void *const out,
-			       const void *const entry const struct bbapi_struct
-			       *const cmd, unsigned int *bytes_written)
+			       const void *const entry,
+			       const struct bbapi_struct *const cmd,
+			       unsigned int *bytes_written)
 {
 	unsigned int ret = 0;
 __asm__("movq %0, 0x30(%%rsp)\n\t": :"r"(bytes_written));
