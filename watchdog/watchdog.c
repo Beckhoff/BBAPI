@@ -61,15 +61,18 @@ static int wd_start(struct watchdog_device *const wd)
 	const uint8_t enable = 1;
 	const uint8_t timebase = wd->timeout > 255;
 	const uint8_t timeout = timebase ? wd->timeout / 60 : wd->timeout;
-	if (bbapi_wd_write(BIOSIOFFS_WATCHDOG_ACTIVATE_PWRCTRL, &enable, sizeof(enable))) {
-		pr_warn("%s(): select PwrCtrl IO watchdog failed\n", __FUNCTION__);
+	const uint32_t offset_enable = BIOSIOFFS_WATCHDOG_ACTIVATE_PWRCTRL;
+	const uint32_t offset_timebase = BIOSIOFFS_WATCHDOG_CONFIG;
+	const uint32_t offset_timeout = BIOSIOFFS_WATCHDOG_ENABLE_TRIGGER;
+	if (bbapi_wd_write(offset_enable, &enable, sizeof(enable))) {
+		pr_warn("%s(): select PwrCtrl IO failed\n", __FUNCTION__);
 		return -1;
 	}
-	if (bbapi_wd_write(BIOSIOFFS_WATCHDOG_CONFIG, &timebase, sizeof(timebase))) {
-		pr_warn("%s(): BIOSIOFFS_WATCHDOG_CONFIG failed\n", __FUNCTION__);
+	if (bbapi_wd_write(offset_timebase, &timebase, sizeof(timebase))) {
+		pr_warn("%s(): set timebase failed\n", __FUNCTION__);
 		return -1;
 	}
-	if (bbapi_wd_write(BIOSIOFFS_WATCHDOG_ENABLE_TRIGGER, &timeout, sizeof(timeout))) {
+	if (bbapi_wd_write(offset_timeout, &timeout, sizeof(timeout))) {
 		pr_warn("%s(): enable watchdog failed\n", __FUNCTION__);
 		return -1;
 	}
@@ -85,8 +88,9 @@ static unsigned int wd_status(struct watchdog_device *const wd)
 
 static int wd_stop(struct watchdog_device *wd)
 {
+	const uint32_t offset = BIOSIOFFS_WATCHDOG_ENABLE_TRIGGER;
 	const uint8_t disable = 0;
-	if (bbapi_wd_write(BIOSIOFFS_WATCHDOG_ENABLE_TRIGGER, &disable, sizeof(disable))) {
+	if (bbapi_wd_write(offset, &disable, sizeof(disable))) {
 		pr_warn("%s(): disable watchdog failed\n", __FUNCTION__);
 		return -1;
 	}
@@ -101,9 +105,10 @@ static const struct watchdog_ops wd_ops = {
 	.status = wd_status,
 	.set_timeout = wd_set_timeout,
 #if 0
-	long (*ioctl)(struct watchdog_device *, unsigned int, unsigned long);
+	long (*ioctl) (struct watchdog_device *, unsigned int, unsigned long);
 #endif
 };
+
 static const struct watchdog_info wd_info = {
 	.options = WDIOF_SETTIMEOUT | WDIOF_MAGICCLOSE | WDIOF_KEEPALIVEPING,
 	.firmware_version = 0,

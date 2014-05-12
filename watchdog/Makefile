@@ -21,4 +21,4 @@ clean:
 
 # indent the source files with the kernels Lindent script
 indent: watchdog.c watchdog.h
-	./Lindent $?
+	../Lindent $?

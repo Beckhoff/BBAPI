@@ -48,5 +48,6 @@ struct bbapi_object {
 	struct mutex mutex;
 };
 
-extern unsigned int bbapi_write(uint32_t group, uint32_t offset, const void __kernel *in, uint32_t size);
+extern unsigned int bbapi_write(uint32_t group, uint32_t offset,
+				const void __kernel * in, uint32_t size);
 #endif /* #ifndef __API_H_ */

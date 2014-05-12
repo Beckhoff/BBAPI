@@ -44,7 +44,8 @@ static struct bbapi_object g_bbapi;
 #if defined(__i386__)
 static const uint64_t BBIOSAPI_SIGNATURE = 0x495041534F494242LL;	// API-String "BBIOSAPI"
 
-static unsigned int bbapi_call(const void __kernel *const in, void *const out, const void *const entry,
+static unsigned int bbapi_call(const void __kernel * const in, void *const out,
+			       const void *const entry,
 			       const struct bbapi_struct *const cmd,
 			       unsigned int *bytes_written)
 {
@@ -63,9 +64,9 @@ __asm__("mov %%eax, %0": "=m"(ret):);
 #elif defined(__x86_64__)
 static const uint64_t BBIOSAPI_SIGNATURE = 0x3436584950414242LL;	// API-String "BBAPIX64"
 
-static unsigned int bbapi_call(const void __kernel *const in, void *const out, const void *const entry
-			       const struct bbapi_struct *const cmd,
-			       unsigned int *bytes_written)
+static unsigned int bbapi_call(const void __kernel * const in, void *const out,
+			       const void *const entry const struct bbapi_struct
+			       *const cmd, unsigned int *bytes_written)
 {
 	unsigned int ret = 0;
 __asm__("movq %0, 0x30(%%rsp)\n\t": :"r"(bytes_written));
@@ -81,7 +82,8 @@ __asm__("mov %%rax, %0": "=m"(ret):);
 }
 #endif
 
-unsigned int bbapi_write(uint32_t group, uint32_t offset, const void __kernel *in, uint32_t size)
+unsigned int bbapi_write(uint32_t group, uint32_t offset,
+			 const void __kernel * const in, uint32_t size)
 {
 	const struct bbapi_struct cmd = {
 		.nIndexGroup = group,
@@ -98,6 +100,7 @@ unsigned int bbapi_write(uint32_t group, uint32_t offset, const void __kernel *i
 	mutex_unlock(&g_bbapi.mutex);
 	return result;
 }
+
 EXPORT_SYMBOL_GPL(bbapi_write);
 
 /**
@@ -169,12 +172,12 @@ static int bbapi_find_bios(struct bbapi_object *bbapi)
 
 #if defined(__x86_64__)
 static const struct bbapi_callback CALLBACKS[] = {
-	{{"READMSR\0"}, (uint64_t)&__do_nop},
-	{{"GETBUSDT"}, (uint64_t)&__do_nop},
-	{{"MAPMEM\0\0"}, (uint64_t)&__do_nop},
-	{{"UNMAPMEM"}, (uint64_t)&__do_nop},
-	{{"WRITEMSR"}, (uint64_t)&__do_nop},
-	{{"SETBUSDT"}, (uint64_t)&__do_nop},
+	{{"READMSR\0"}, (uint64_t) & __do_nop},
+	{{"GETBUSDT"}, (uint64_t) & __do_nop},
+	{{"MAPMEM\0\0"}, (uint64_t) & __do_nop},
+	{{"UNMAPMEM"}, (uint64_t) & __do_nop},
+	{{"WRITEMSR"}, (uint64_t) & __do_nop},
+	{{"SETBUSDT"}, (uint64_t) & __do_nop},
 	{{"\0\0\0\0\0\0\0\0"}, 0},
 };
 
@@ -183,22 +186,23 @@ static void bbapi_init_callbacks(struct bbapi_object *const bbapi)
 	static int initialized = 0;
 	unsigned int bytes_written = 0;
 	struct bbapi_struct cmd = {
-		.nIndexGroup = 0x00000000, //BIOSIOFFS_GENERAL,
-		.nIndexOffset = 0x000000FE, //BIOSIOFFS_GENERAL_LOADRESOURCEDATA
+		.nIndexGroup = 0x00000000,	//BIOSIOFFS_GENERAL,
+		.nIndexOffset = 0x000000FE,	//BIOSIOFFS_GENERAL_LOADRESOURCEDATA
 		.pInBuffer = NULL,
-		.nInBufferSize = 5*sizeof(struct bbapi_callback),
+		.nInBufferSize = 5 * sizeof(struct bbapi_callback),
 		.pOutBuffer = NULL,
 		.nOutBufferSize = 0,
 	};
 	BUILD_BUG_ON(sizeof(CALLBACKS) > sizeof(bbapi->in));
-	BUILD_BUG_ON(5*sizeof(struct bbapi_callback) > sizeof(bbapi->in));
+	BUILD_BUG_ON(5 * sizeof(struct bbapi_callback) > sizeof(bbapi->in));
 	if (initialized)
 		return;
 
 	mutex_lock(&bbapi->mutex);
 	memcpy(bbapi->in, &CALLBACKS, sizeof(CALLBACKS));
 
-	if (bbapi_call(bbapi->in, bbapi->out, bbapi->entry, &cmd, &bytes_written)) {
+	if (bbapi_call
+	    (bbapi->in, bbapi->out, bbapi->entry, &cmd, &bytes_written)) {
 		pr_err("%s(): call to BIOS failed\n", __FUNCTION__);
 	}
 	mutex_unlock(&bbapi->mutex);
@@ -213,7 +217,7 @@ static void bbapi_init_callbacks(struct bbapi_object *const bbapi)
 static int bbapi_ioctl_mutexed(struct bbapi_object *const bbapi,
 			       const struct bbapi_struct *const cmd)
 {
-	unsigned int bytes_written = 0;
+	unsigned int written = 0;
 	if (cmd->nInBufferSize > sizeof(bbapi->in)) {
 		pr_err("%s(): nInBufferSize invalid\n", __FUNCTION__);
 		return -EINVAL;
@@ -229,12 +233,12 @@ static int bbapi_ioctl_mutexed(struct bbapi_object *const bbapi,
 		return -EFAULT;
 	}
 	// Call the BIOS API
-	if (bbapi_call(bbapi->in, bbapi->out, bbapi->entry, cmd, &bytes_written)) {
+	if (bbapi_call(bbapi->in, bbapi->out, bbapi->entry, cmd, &written)) {
 		pr_err("%s(): call to BIOS failed\n", __FUNCTION__);
 		return -EIO;
 	}
 	// Copy the BIOS output to the output buffer in user space
-	if (copy_to_user(cmd->pOutBuffer, bbapi->out, bytes_written)) {
+	if (copy_to_user(cmd->pOutBuffer, bbapi->out, written)) {
 		pr_err("%s(): copy_to_user() failed\n", __FUNCTION__);
 		return -EFAULT;
 	}
@@ -254,7 +258,6 @@ static long bbapi_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 		pr_info("Wrong Command\n");
 		return -EINVAL;
 	}
-
 	// Init callbacks in bbapi_init_module() would crash the kernel so we do it here
 	//TODO reenable bbapi_init_callbacks(&g_bbapi);
 
