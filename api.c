@@ -64,11 +64,17 @@ __asm__("mov %%eax, %0": "=m"(ret):);
 #elif defined(__x86_64__)
 static const uint64_t BBIOSAPI_SIGNATURE = 0x3436584950414242LL;	// API-String "BBAPIX64"
 
+
+typedef __attribute__((ms_abi)) uint32_t (*PFN_BBIOSAPI_CALL)(uint32_t group, uint32_t offset, const void* in, uint32_t inSize, void* out, uint32_t outSize, uint32_t* bytes);
+
 static unsigned int bbapi_call(const void __kernel * const in, void *const out,
 			       const void *const entry,
 			       const struct bbapi_struct *const cmd,
 			       unsigned int *bytes_written)
 {
+	PFN_BBIOSAPI_CALL call = entry;
+	return call(cmd->nIndexGroup, cmd->nIndexOffset, in, cmd->nInBufferSize, out, cmd->nOutBufferSize, bytes_written);
+#if 0
 	unsigned int ret = 0;
 __asm__("movq %0, 0x30(%%rsp)\n\t": :"r"(bytes_written));
 __asm__("movl %0, 0x28(%%rsp)": :"r"(cmd->nOutBufferSize));
@@ -80,6 +86,7 @@ __asm__("movq %0, %%rcx": :"r"((uint64_t) cmd->nIndexGroup));
 __asm__("call *%0": :"r"(entry));
 __asm__("mov %%rax, %0": "=m"(ret):);
 	return ret;
+	#endif
 }
 #endif
 
@@ -101,7 +108,6 @@ unsigned int bbapi_write(uint32_t group, uint32_t offset,
 	mutex_unlock(&g_bbapi.mutex);
 	return result;
 }
-
 EXPORT_SYMBOL_GPL(bbapi_write);
 
 /**
@@ -132,6 +138,8 @@ static int bbapi_copy_bios(struct bbapi_object *bbapi, void __iomem * pos)
 	// copy BIOS API from SPI Flash into RAM to decrease performance impact on realtime applications
 	memcpy_fromio(bbapi->memory, pos, size);
 	bbapi->entry = bbapi->memory + offset;
+	pr_info("mem: %p, entry: %p, offset: %u, size: %zu\n", bbapi->memory, bbapi->entry, offset, size - offset);
+	print_hex_dump(KERN_INFO, NULL, DUMP_PREFIX_NONE, 16, 1, bbapi->entry, size - offset, 0);
 	return 0;
 }
 
