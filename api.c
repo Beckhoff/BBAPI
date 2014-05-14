@@ -33,17 +33,22 @@
 
 #include "api.h"
 
-#define DRV_VERSION      "1.2"
+#define DRV_VERSION      "1.0.1"
 #define DRV_DESCRIPTION  "Beckhoff BIOS API Driver"
 
 /* Global Variables */
 static struct bbapi_object g_bbapi;
 
-// BIOS API is called as with standard windows calling convention
-// for Linux we have to rebuild it using assembler
 #if defined(__i386__)
 static const uint64_t BBIOSAPI_SIGNATURE = 0x495041534F494242LL;	// API-String "BBIOSAPI"
 
+/**
+ * Beckhoff BIOS API uses windows calling convention. This function is a
+ * wrapper to the BBAPI entry function. I found no elegant and stable
+ * way to implement this for i386. stdcall + va_args was promissing but
+ * worked only with optimization level 1. As long as ms_abi is not supported
+ * on 32 bit x86 we stick with inline assembly...
+ */
 static unsigned int bbapi_call(const void __kernel * const in, void *const out,
 			       void *const entry,
 			       const struct bbapi_struct *const cmd,
@@ -64,8 +69,14 @@ __asm__("mov %%eax, %0": "=m"(ret):);
 #elif defined(__x86_64__)
 static const uint64_t BBIOSAPI_SIGNATURE = 0x3436584950414242LL;	// API-String "BBAPIX64"
 
+/**
+ * Beckhoff BIOS API uses windows calling convention. This function is a
+ * wrapper to the BBAPI entry function. For x86_64 __attribute_((ms_abi))
+ * is all we need but on i386 I found no elegant way to implement this.
+ * stdcall + va_arg was promissing but worked only with
+ * optimization level 1. So for i386 we stick inline assembly...
+ */
 typedef __attribute__((ms_abi)) uint32_t (*PFN_BBIOSAPI_CALL)(uint32_t group, uint32_t offset, const void* in, uint32_t inSize, void* out, uint32_t outSize, uint32_t* bytes);
-
 static unsigned int bbapi_call(const void __kernel * const in, void *const out,
 			       void *const entry,
 			       const struct bbapi_struct *const cmd,

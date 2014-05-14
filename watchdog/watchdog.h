@@ -21,7 +21,7 @@
 #ifndef __WATCHDOG_H_
 #define __WATCHDOG_H_
 
-#define DRV_VERSION      "0.1"
+#define DRV_VERSION      "0.2"
 #define DRV_DESCRIPTION  "Beckhoff BIOS API watchdog driver"
 
 #undef pr_fmt
