@@ -49,8 +49,8 @@ static const uint64_t BBIOSAPI_SIGNATURE = 0x495041534F494242LL;	// API-String "
  * worked only with optimization level 1. As long as ms_abi is not supported
  * on 32 bit x86 we stick with inline assembly...
  */
-static unsigned int bbapi_call(const void __kernel * const in, void *const out,
-			       void *const entry,
+static unsigned int bbapi_call(const void __kernel * const in,
+			       void __kernel * const out, void *const entry,
 			       const struct bbapi_struct *const cmd,
 			       unsigned int *bytes_written)
 {
@@ -76,14 +76,24 @@ static const uint64_t BBIOSAPI_SIGNATURE = 0x3436584950414242LL;	// API-String "
  * stdcall + va_arg was promissing but worked only with
  * optimization level 1. So for i386 we stick inline assembly...
  */
-typedef __attribute__((ms_abi)) uint32_t (*PFN_BBIOSAPI_CALL)(uint32_t group, uint32_t offset, const void* in, uint32_t inSize, void* out, uint32_t outSize, uint32_t* bytes);
-static unsigned int bbapi_call(const void __kernel * const in, void *const out,
-			       void *const entry,
+typedef
+    __attribute__ ((ms_abi)) uint32_t(*PFN_BBIOSAPI_CALL) (uint32_t group,
+							   uint32_t offset,
+							   const void *in,
+							   uint32_t inSize,
+							   void *out,
+							   uint32_t outSize,
+							   uint32_t * bytes);
+
+static unsigned int bbapi_call(const void __kernel * const in,
+			       void __kernel * const out,
+			       PFN_BBIOSAPI_CALL entry,
 			       const struct bbapi_struct *const cmd,
 			       unsigned int *bytes_written)
 {
-	PFN_BBIOSAPI_CALL call = entry;
-	return call(cmd->nIndexGroup, cmd->nIndexOffset, in, cmd->nInBufferSize, out, cmd->nOutBufferSize, bytes_written);
+	return entry(cmd->nIndexGroup, cmd->nIndexOffset, in,
+		     cmd->nInBufferSize, out, cmd->nOutBufferSize,
+		     bytes_written);
 }
 #endif
 
@@ -105,6 +115,7 @@ unsigned int bbapi_write(uint32_t group, uint32_t offset,
 	mutex_unlock(&g_bbapi.mutex);
 	return result;
 }
+
 EXPORT_SYMBOL_GPL(bbapi_write);
 
 /**

@@ -1,7 +1,7 @@
 TARGET = bbapi
 EXTRA_DIR = /lib/modules/$(shell uname -r)/extra/
 obj-m += $(TARGET).o
-$(TARGET)-objs := api.o simple_cdev.o lowlevel.o
+$(TARGET)-objs := api.o simple_cdev.o
 ccflags-y := -DDEBUG
 
 all:
