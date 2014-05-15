@@ -403,10 +403,11 @@ private:
 
 struct TestWatchdog : fructose::test_base<TestWatchdog>
 {
+	static const int SHORT_TIMEOUT = 2;
 	void test_Simple(const std::string& test_name)
 	{
 		(std::cout << "Simple watchdog test running...").flush();
-		const int timeout_sec = 2;
+		const int timeout_sec = SHORT_TIMEOUT;
 		const int fd = open("/dev/watchdog", O_WRONLY);
 		fructose_assert_ne(-1, fd);
 		fructose_assert_eq(0, ioctl(fd, WDIOC_SETTIMEOUT, &timeout_sec));
@@ -424,7 +425,7 @@ struct TestWatchdog : fructose::test_base<TestWatchdog>
 	void test_MagicClose(const std::string& test_name)
 	{
 		(std::cout << "MagicClose watchdog test running...").flush();
-		const int timeout = 2;
+		const int timeout = SHORT_TIMEOUT;
 		const int fd = open("/dev/watchdog", O_WRONLY);
 		fructose_assert_ne(-1, fd);
 		fructose_assert_eq(0, ioctl(fd, WDIOC_SETTIMEOUT, &timeout));
@@ -472,7 +473,7 @@ struct TestWatchdog : fructose::test_base<TestWatchdog>
 		fructose_assert_eq(timeout_max_minutes, read);
 
 		const char identity[] = "bbapi_watchdog\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
-		const uint32_t options = WDIOF_SETTIMEOUT | WDIOF_MAGICCLOSE | WDIOF_KEEPALIVEPING;
+		const uint32_t options = CONFIG_WATCHDOG_OPTIONS;
 		struct watchdog_info ident;
 		fructose_assert_eq(0, ioctl(fd, WDIOC_GETSUPPORT, &ident));
 		fructose_assert_eq(0, memcmp(identity, ident.identity, sizeof(ident.identity)));
@@ -495,8 +496,12 @@ struct TestWatchdog : fructose::test_base<TestWatchdog>
 
 	void test_KeepAlive(const std::string& test_name)
 	{
+		if(CONFIG_WATCHDOG_PING_DISABLED) {
+			pr_info("Watchdog keep alive ping test case disabled\n");
+			return;
+		}
 		(std::cout << "Watchdog keep alive ping test running...").flush();
-		const int timeout = 2;
+		const int timeout = SHORT_TIMEOUT;
 		const int fd = open("/dev/watchdog", O_WRONLY);
 		fructose_assert_ne(-1, fd);
 		fructose_assert_eq(0, ioctl(fd, WDIOC_SETTIMEOUT, &timeout));
@@ -534,6 +539,6 @@ int main(int argc, char *argv[])
 	wdTest.add_test("test_IOCTL", &TestWatchdog::test_IOCTL);
 	wdTest.add_test("test_KeepAlive", &TestWatchdog::test_KeepAlive);
 	wdTest.add_test("test_MagicClose", &TestWatchdog::test_MagicClose);
-//	wdTest.run(argc, argv);
+	wdTest.run(argc, argv);
 	return 0;
 }

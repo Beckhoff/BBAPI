@@ -27,17 +27,20 @@
 #include "../bbapi.h"
 #include "../TcBaDevDef_gpl.h"
 #include "watchdog.h"
+static int wd_start(struct watchdog_device *const wd);
 
 static int bbapi_wd_write(uint32_t offset, const void *in, uint32_t size)
 {
 	return bbapi_write(BIOSIGRP_WATCHDOG, offset, in, size);
 }
 
+#ifndef DEVICE_CX5000
 static int wd_ping(struct watchdog_device *wd)
 {
 	set_bit(WDOG_KEEPALIVE, &wd->status);
 	return bbapi_wd_write(BIOSIOFFS_WATCHDOG_IORETRIGGER, NULL, 0);
 }
+#endif
 
 /**
  * Linux watchdog API uses seconds in a range of unsigned int, Beckhoff
@@ -53,7 +56,7 @@ static int wd_set_timeout(struct watchdog_device *wd, unsigned int sec)
 	} else {
 		wd->timeout = sec;
 	}
-	return 0;
+	return wd_start(wd);
 }
 
 static int wd_start(struct watchdog_device *const wd)
@@ -101,7 +104,9 @@ static const struct watchdog_ops wd_ops = {
 	.owner = THIS_MODULE,
 	.start = wd_start,
 	.stop = wd_stop,
+#ifndef DEVICE_CX5000
 	.ping = wd_ping,
+#endif
 	.status = wd_status,
 	.set_timeout = wd_set_timeout,
 #if 0
@@ -110,7 +115,11 @@ static const struct watchdog_ops wd_ops = {
 };
 
 static const struct watchdog_info wd_info = {
+#ifdef DEVICE_CX5000
+	.options = WDIOF_SETTIMEOUT | WDIOF_MAGICCLOSE,
+#else
 	.options = WDIOF_SETTIMEOUT | WDIOF_MAGICCLOSE | WDIOF_KEEPALIVEPING,
+#endif
 	.firmware_version = 0,
 	.identity = "bbapi_watchdog",
 };

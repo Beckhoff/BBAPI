@@ -13,7 +13,6 @@ install:
 	sudo cp ./$(TARGET).ko $(EXTRA_DIR)
 	sudo depmod -a
 	sudo modprobe $(TARGET)
-	sudo chmod a+rw /dev/BBAPI
 
 clean:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
@@ -22,9 +21,9 @@ clean:
 test: cxdisplay.c lowlevel.S TcBaDevDef_gpl.h
 	gcc cxdisplay.c lowlevel.S -o test.bin -Wall -pedantic -std=c99
 
-unittest: clean test_config.h unittest.cpp TcBaDevDef_gpl.h
+unittest: test_config.h unittest.cpp TcBaDevDef_gpl.h
 	g++ unittest.cpp -o $@ -Wall -pedantic -std=c++0x -I../
-	./$@
+	sudo ./$@
 
 new_test: test.c lowlevel.S
 	gcc lowlevel.S test.c -o test.bin -Wall -pedantic -std=c99

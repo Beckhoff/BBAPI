@@ -176,7 +176,7 @@ static int bbapi_find_bios(struct bbapi_object *bbapi)
 		const uint64_t lword = ((uint64_t) high << 32 | low);
 		if (BBIOSAPI_SIGNATURE == lword) {
 			result = bbapi_copy_bios(bbapi, pos);
-			pr_info("BIOS found and copied.\n");
+			pr_info("BIOS found and copied. start: %p found: %p offset: %zu\n", start, pos, pos - start);
 			break;
 		}
 	}

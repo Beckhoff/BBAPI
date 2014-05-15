@@ -2,7 +2,7 @@ TARGET = bbapi_watchdog
 EXTRA_DIR = /lib/modules/$(shell uname -r)/extra/
 obj-m += $(TARGET).o
 $(TARGET)-objs := watchdog.o
-ccflags-y := -DDEBUG
+ccflags-y := -DDEVICE_CX5000 -DDEBUG
 KBUILD_EXTRA_SYMBOLS := /home/gpb/workspace/bbapi/Module.symvers
 
 all:
@@ -14,7 +14,6 @@ install:
 	sudo cp ./$(TARGET).ko $(EXTRA_DIR)
 	sudo depmod -a
 	sudo modprobe $(TARGET)
-	sudo chmod a+rw /dev/watchdog
 
 clean:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
