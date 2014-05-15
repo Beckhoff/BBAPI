@@ -2,7 +2,8 @@ TARGET = bbapi_watchdog
 EXTRA_DIR = /lib/modules/$(shell uname -r)/extra/
 obj-m += $(TARGET).o
 $(TARGET)-objs := watchdog.o
-ccflags-y := -DDEVICE_CX5000 -DDEBUG
+ccflags-y := -DDEBUG
+#ccflags-y := -DDEVICE_CX5000 -DDEBUG
 KBUILD_EXTRA_SYMBOLS := /home/gpb/workspace/bbapi/Module.symvers
 
 all:
