@@ -18,15 +18,9 @@ clean:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
 	rm -f *.c~ *.h~ *.bin unittest
 
-test: cxdisplay.c lowlevel.S TcBaDevDef_gpl.h
-	gcc cxdisplay.c lowlevel.S -o test.bin -Wall -pedantic -std=c99
-
 unittest: test_config.h unittest.cpp TcBaDevDef_gpl.h
 	g++ unittest.cpp -o $@ -Wall -pedantic -std=c++0x -I../
 	sudo ./$@
-
-new_test: test.c lowlevel.S
-	gcc lowlevel.S test.c -o test.bin -Wall -pedantic -std=c99
 
 # indent the source files with the kernels Lindent script
 indent: api.c api.h simple_cdev.c simple_cdev.h

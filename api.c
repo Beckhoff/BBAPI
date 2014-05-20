@@ -184,47 +184,6 @@ static int bbapi_find_bios(struct bbapi_object *bbapi)
 	return result;
 }
 
-#if defined(USE_CALLBACKS) && defined(__x86_64__)
-static const struct bbapi_callback CALLBACKS[] = {
-	{{"READMSR\0"}, (uint64_t) & __do_nop},
-	{{"GETBUSDT"}, (uint64_t) & __do_nop},
-	{{"MAPMEM\0\0"}, (uint64_t) & __do_nop},
-	{{"UNMAPMEM"}, (uint64_t) & __do_nop},
-	{{"WRITEMSR"}, (uint64_t) & __do_nop},
-	{{"SETBUSDT"}, (uint64_t) & __do_nop},
-	{{"\0\0\0\0\0\0\0\0"}, 0},
-};
-
-static void bbapi_init_callbacks(struct bbapi_object *const bbapi)
-{
-	static int initialized = 0;
-	unsigned int bytes_written = 0;
-	struct bbapi_struct cmd = {
-		.nIndexGroup = 0x00000000,	//BIOSIOFFS_GENERAL,
-		.nIndexOffset = 0x000000FE,	//BIOSIOFFS_GENERAL_LOADRESOURCEDATA
-		.pInBuffer = NULL,
-		.nInBufferSize = 5 * sizeof(struct bbapi_callback),
-		.pOutBuffer = NULL,
-		.nOutBufferSize = 0,
-	};
-	BUILD_BUG_ON(sizeof(CALLBACKS) > sizeof(bbapi->in));
-	BUILD_BUG_ON(5 * sizeof(struct bbapi_callback) > sizeof(bbapi->in));
-	if (initialized)
-		return;
-
-	mutex_lock(&bbapi->mutex);
-	memcpy(bbapi->in, &CALLBACKS, sizeof(CALLBACKS));
-
-	if (bbapi_call
-	    (bbapi->in, bbapi->out, bbapi->entry, &cmd, &bytes_written)) {
-		pr_err("%s(): call to BIOS failed\n", __FUNCTION__);
-	}
-	mutex_unlock(&bbapi->mutex);
-	initialized = 1;
-	pr_info("%s(): done.\n", __FUNCTION__);
-}
-#endif
-
 /**
  * You have to hold the lock on bbapi->mutex when calling this function!!!
  */
@@ -272,14 +231,17 @@ static long bbapi_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 		pr_info("Wrong Command\n");
 		return -EINVAL;
 	}
-	// Init callbacks in bbapi_init_module() would crash the kernel so we do it here
-	//TODO reenable bbapi_init_callbacks(&g_bbapi);
 
 	// Copy data (BBAPI struct) from User Space to Kernel Module - if it fails, return error
 	if (copy_from_user
 	    (&bbstruct, (const void __user *)arg, sizeof(bbstruct))) {
 		pr_err("copy_from_user failed\n");
 		return -EINVAL;
+	}
+
+	if (bbstruct.nIndexOffset >= 0xB0) {
+		pr_info("group: 0x%x offset: 0x%x not permitted from user mode\n", bbstruct.nIndexGroup, bbstruct.nIndexOffset);
+		return -EACCES;
 	}
 
 	mutex_lock(&g_bbapi.mutex);
@@ -302,7 +264,7 @@ static int bbapi_ioctl_old(struct inode *i, struct file *f, unsigned int cmd,
 static struct file_operations file_ops = {
 	.owner = THIS_MODULE,
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,35))
-	.ioctl = bbapi_ioctl
+	.ioctl = bbapi_ioctl_old
 #else
 	.unlocked_ioctl = bbapi_ioctl
 #endif
