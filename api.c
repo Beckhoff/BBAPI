@@ -122,13 +122,15 @@ EXPORT_SYMBOL_GPL(bbapi_write);
  * @bbapi: pointer to a not initialized bbapi_object
  * @pos: pointer to the BIOS identifier string in flash
  *
- * Directly behind the identifier string, the 32-Bit BIOS API
- * function offset follows. This offset is the location of
- * the BIOS API entry function and is located at most 4096
- * bytes in front of the BIOS memory end. So we calculate
- * the size of the BIOS and copy it from SPI Flash into RAM.
- * Accessing the BIOS directly would cause bad realtime
- * behaviour.
+ * We use BIOS shadowing to increase realtime performance.
+ * The BIOS identifier string is followed by the 32-Bit BIOS API
+ * function offset. This offset is the location of the BIOS API entry
+ * function and is located at most 4096 bytes in front of the
+ * BIOS memory end. So we calculate the size of the BIOS and copy it
+ * from SPI Flash into RAM.
+ * Accessing the BIOS in ROM while running realtime applications would
+ * otherwise have bad effects on the realtime behaviour.
+ * 
  * Note: PAGE_KERNEL_EXEC omits the "no execute bit" exception
  *
  * Return: 0 for success, -ENOMEM if the allocation of kernel memory fails
@@ -142,7 +144,6 @@ static int bbapi_copy_bios(struct bbapi_object *bbapi, void __iomem * pos)
 		pr_info("__vmalloc for Beckhoff BIOS API failed\n");
 		return -ENOMEM;
 	}
-	// copy BIOS API from SPI Flash into RAM to decrease performance impact on realtime applications
 	memcpy_fromio(bbapi->memory, pos, size);
 	bbapi->entry = bbapi->memory + offset;
 	return 0;
@@ -176,7 +177,8 @@ static int bbapi_find_bios(struct bbapi_object *bbapi)
 		const uint64_t lword = ((uint64_t) high << 32 | low);
 		if (BBIOSAPI_SIGNATURE == lword) {
 			result = bbapi_copy_bios(bbapi, pos);
-			pr_info("BIOS found and copied. start: %p found: %p offset: %zu\n", start, pos, pos - start);
+			pr_info("BIOS found and copied from: %p + 0x%x\n",
+				start, pos - start);
 			break;
 		}
 	}
@@ -231,7 +233,6 @@ static long bbapi_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 		pr_info("Wrong Command\n");
 		return -EINVAL;
 	}
-
 	// Copy data (BBAPI struct) from User Space to Kernel Module - if it fails, return error
 	if (copy_from_user
 	    (&bbstruct, (const void __user *)arg, sizeof(bbstruct))) {
@@ -240,7 +241,8 @@ static long bbapi_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 	}
 
 	if (bbstruct.nIndexOffset >= 0xB0) {
-		pr_info("group: 0x%x offset: 0x%x not permitted from user mode\n", bbstruct.nIndexGroup, bbstruct.nIndexOffset);
+		pr_info("cmd: 0x%x : 0x%x not available from user mode\n",
+			bbstruct.nIndexGroup, bbstruct.nIndexOffset);
 		return -EACCES;
 	}
 
