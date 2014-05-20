@@ -130,7 +130,7 @@ EXPORT_SYMBOL_GPL(bbapi_write);
  * from SPI Flash into RAM.
  * Accessing the BIOS in ROM while running realtime applications would
  * otherwise have bad effects on the realtime behaviour.
- * 
+ *
  * Note: PAGE_KERNEL_EXEC omits the "no execute bit" exception
  *
  * Return: 0 for success, -ENOMEM if the allocation of kernel memory fails
