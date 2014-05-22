@@ -97,23 +97,30 @@ static unsigned int bbapi_call(const void __kernel * const in,
 }
 #endif
 
-unsigned int bbapi_read(uint32_t group, uint32_t offset,
-			 void __kernel * const out, const uint32_t size)
+static unsigned int bbapi_rw(uint32_t group, uint32_t offset,
+			 const void __kernel * const in, uint32_t size_in,
+			 void __kernel * const out, const uint32_t size_out)
 {
 	const struct bbapi_struct cmd = {
 		.nIndexGroup = group,
 		.nIndexOffset = offset,
 		.pInBuffer = NULL,
-		.nInBufferSize = 0,
+		.nInBufferSize = size_in,
 		.pOutBuffer = NULL,
-		.nOutBufferSize = size
+		.nOutBufferSize = size_out
 	};
 	unsigned int bytes_written = 0;
 	volatile unsigned int result = 0;
 	mutex_lock(&g_bbapi.mutex);
-	result = bbapi_call(NULL, out, g_bbapi.entry, &cmd, &bytes_written);
+	result = bbapi_call(in, out, g_bbapi.entry, &cmd, &bytes_written);
 	mutex_unlock(&g_bbapi.mutex);
 	return result;
+}
+
+unsigned int bbapi_read(uint32_t group, uint32_t offset,
+			 void __kernel * const out, const uint32_t size)
+{
+	return bbapi_rw(group, offset, NULL, 0, out, size);
 }
 
 EXPORT_SYMBOL_GPL(bbapi_read);
@@ -121,20 +128,7 @@ EXPORT_SYMBOL_GPL(bbapi_read);
 unsigned int bbapi_write(uint32_t group, uint32_t offset,
 			 const void __kernel * const in, uint32_t size)
 {
-	const struct bbapi_struct cmd = {
-		.nIndexGroup = group,
-		.nIndexOffset = offset,
-		.pInBuffer = NULL,
-		.nInBufferSize = size,
-		.pOutBuffer = NULL,
-		.nOutBufferSize = 0
-	};
-	unsigned int bytes_written = 0;
-	volatile unsigned int result = 0;
-	mutex_lock(&g_bbapi.mutex);
-	result = bbapi_call(in, NULL, g_bbapi.entry, &cmd, &bytes_written);
-	mutex_unlock(&g_bbapi.mutex);
-	return result;
+	return bbapi_rw(group, offset, in, size, NULL, 0);
 }
 
 EXPORT_SYMBOL_GPL(bbapi_write);
@@ -199,7 +193,7 @@ static int bbapi_find_bios(struct bbapi_object *bbapi)
 		const uint64_t lword = ((uint64_t) high << 32 | low);
 		if (BBIOSAPI_SIGNATURE == lword) {
 			result = bbapi_copy_bios(bbapi, pos);
-			pr_info("BIOS found and copied from: %p + 0x%x\n",
+			pr_info("BIOS found and copied from: %p + 0x%zx\n",
 				start, pos - start);
 			break;
 		}
