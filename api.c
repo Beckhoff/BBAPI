@@ -27,6 +27,7 @@
 #include <linux/kdev_t.h>
 #include <linux/slab.h>
 #include <linux/vmalloc.h>
+#include <generated/utsrelease.h>
 #include <asm/io.h>
 #include <asm/uaccess.h>
 #include <asm/msr.h>
@@ -95,6 +96,27 @@ static unsigned int bbapi_call(const void __kernel * const in,
 		     bytes_written);
 }
 #endif
+
+unsigned int bbapi_read(uint32_t group, uint32_t offset,
+			 void __kernel * const out, const uint32_t size)
+{
+	const struct bbapi_struct cmd = {
+		.nIndexGroup = group,
+		.nIndexOffset = offset,
+		.pInBuffer = NULL,
+		.nInBufferSize = 0,
+		.pOutBuffer = NULL,
+		.nOutBufferSize = size
+	};
+	unsigned int bytes_written = 0;
+	volatile unsigned int result = 0;
+	mutex_lock(&g_bbapi.mutex);
+	result = bbapi_call(NULL, out, g_bbapi.entry, &cmd, &bytes_written);
+	mutex_unlock(&g_bbapi.mutex);
+	return result;
+}
+
+EXPORT_SYMBOL_GPL(bbapi_read);
 
 unsigned int bbapi_write(uint32_t group, uint32_t offset,
 			 const void __kernel * const in, uint32_t size)
@@ -272,6 +294,23 @@ static struct file_operations file_ops = {
 #endif
 };
 
+static void update_display(void)
+{
+	char board[16+1] = "                ";
+	bbapi_read(0x00000000, 0x00000001, &board, sizeof(board));
+	board[sizeof(board) - 1] = 0;
+	if (0 == strncmp(board, "CX20x0\0\0\0\0\0\0\0\0\0", sizeof(board))) {
+		uint8_t enable = 0xff;
+		char line1[16+1] = "Linux 7890123456";
+		strncpy(line1 + 6, UTS_RELEASE, sizeof(line1) - 1 - 6);
+		bbapi_write(0x00009000, 0x00000060, &enable, sizeof(enable));
+		bbapi_write(0x00009000, 0x00000062, &line1, sizeof(line1));
+		bbapi_write(0x00009000, 0x00000061, &board, sizeof(board));
+	} else {
+		pr_info("platform has no display or is not supported\n");
+	}
+}
+
 static int __init bbapi_init_module(void)
 {
 	pr_info("%s, %s\n", DRV_DESCRIPTION, DRV_VERSION);
@@ -281,6 +320,7 @@ static int __init bbapi_init_module(void)
 		pr_info("BIOS API not available on this System\n");
 		return -1;
 	}
+	update_display();
 	return simple_cdev_init(&g_bbapi.dev, "chardev", "BBAPI", &file_ops);
 }
 
