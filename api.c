@@ -33,6 +33,7 @@
 #include <asm/msr.h>
 
 #include "api.h"
+#include "TcBaDevDef_gpl.h"
 
 #define DRV_VERSION      "1.0.1"
 #define DRV_DESCRIPTION  "Beckhoff BIOS API Driver"
@@ -295,7 +296,7 @@ static void update_display(void)
 	board[sizeof(board) - 1] = 0;
 	if (0 == strncmp(board, "CX20x0\0\0\0\0\0\0\0\0\0", sizeof(board))) {
 		uint8_t enable = 0xff;
-		char line1[16+1] = "Linux 7890123456";
+		char line1[CXPWRSUPP_MAX_DISPLAY_LINE] = "Linux 7890123456";
 		strncpy(line1 + 6, UTS_RELEASE, sizeof(line1) - 1 - 6);
 		bbapi_write(0x00009000, 0x00000060, &enable, sizeof(enable));
 		bbapi_write(0x00009000, 0x00000062, &line1, sizeof(line1));
