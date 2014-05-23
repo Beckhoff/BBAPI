@@ -38,6 +38,8 @@
 #define CONFIG_GENERAL_PLATFORM 0x01
 #endif
 
+#define FILE_PATH	"/dev/bbapi" 	// Path to character Device
+
 /** select test device */
 #include "config_cx5000.h"
 //#include "config_cx2030_cx2100-0004.h"

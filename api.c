@@ -316,7 +316,7 @@ static int __init bbapi_init_module(void)
 		return -1;
 	}
 	update_display();
-	return simple_cdev_init(&g_bbapi.dev, "chardev", "BBAPI", &file_ops);
+	return simple_cdev_init(&g_bbapi.dev, "chardev", KBUILD_MODNAME, &file_ops);
 }
 
 static void __exit bbapi_exit(void)

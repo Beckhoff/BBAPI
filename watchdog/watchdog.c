@@ -24,7 +24,6 @@
 #include <linux/watchdog.h>
 
 #include "../api.h"
-#include "../bbapi.h"
 #include "../TcBaDevDef_gpl.h"
 #include "watchdog.h"
 static int wd_start(struct watchdog_device *const wd);
@@ -118,7 +117,7 @@ static const struct watchdog_info wd_info = {
 	.options = WDIOF_SETTIMEOUT | WDIOF_MAGICCLOSE | WDIOF_KEEPALIVEPING,
 #endif
 	.firmware_version = 0,
-	.identity = "bbapi_watchdog",
+	.identity = KBUILD_MODNAME,
 };
 
 static struct watchdog_device g_wd = {
@@ -130,7 +129,7 @@ static struct watchdog_device g_wd = {
 
 static int __init bbapi_watchdog_init_module(void)
 {
-	BUILD_BUG_ON(1 << WDOG_KEEPALIVE != WDIOF_KEEPALIVEPING);
+	BUILD_BUG_ON(BIT_MASK(WDOG_KEEPALIVE) != WDIOF_KEEPALIVEPING);
 	pr_info("%s, %s\n", DRV_DESCRIPTION, DRV_VERSION);
 	return watchdog_register_device(&g_wd);
 }

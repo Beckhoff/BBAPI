@@ -24,6 +24,33 @@
 typedef char TCHAR;
 #define _T(x) x
 #pragma GCC diagnostic ignored "-Wwrite-strings"
+
+#define BBAPI_CMD							0x5000	// BIOS API Command number for IOCTL call
+#define BBAPI_WATCHDOG_MAX_TIMEOUT_SEC (255 * 60) // BBAPI maximum timeout is 255 minutes
+
+#ifndef __KERNEL__
+#define __user
+#endif
+
+/* BBAPI specific constants */
+
+struct bbapi_struct {
+	uint32_t nIndexGroup;
+	uint32_t nIndexOffset;
+	const void __user *pInBuffer;
+	uint32_t nInBufferSize;
+	void __user *pOutBuffer;
+	uint32_t nOutBufferSize;
+#ifdef __cplusplus
+	bbapi_struct(uint32_t group, uint32_t offset, const void __user *pIn, uint32_t inSize, void __user *pOut, uint32_t outSize)
+	: nIndexGroup(group),
+	nIndexOffset(offset),
+	pInBuffer(pIn),
+	nInBufferSize(inSize),
+	pOutBuffer(pOut),
+	nOutBufferSize(outSize) {};
+#endif /* #ifdef __cplusplus */
+};
 #endif
 
 ///////////////////////////////////////////////////////////

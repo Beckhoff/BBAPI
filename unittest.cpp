@@ -34,7 +34,6 @@
 #include <iostream>
 #include <thread>
 
-#include "bbapi.h"
 #include "TcBaDevDef_gpl.h"
 
 #pragma GCC diagnostic ignored "-Wsign-compare"
@@ -47,17 +46,12 @@
  */
 #include "test_config.h"
 
-#define FILE_PATH	"/dev/BBAPI" 	// Path to character Device
-
 #define DEBUG 1
 #if DEBUG
 #define pr_info printf
 #else
 #define pr_info(...)
 #endif
-
-#define STRING_SIZE 17				// Size of String for Display
-#define BBAPI_CMD 0x5000			// BIOS API Command number for IOCTL call
 
 using namespace fructose;
 

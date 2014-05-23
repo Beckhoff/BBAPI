@@ -27,6 +27,7 @@
 #undef pr_fmt
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#define WDOG_KEEPALIVE 15
+#define WDOG_KEEPALIVE 15 /* == BIT_NUMBER(WDIOF_KEEPALIVEPING) */
+#define BBAPI_WATCHDOG_TIMEOUT_SEC 60	/* default timeout for watchdog */
 
 #endif /* #ifndef __WATCHDOG_H_ */
