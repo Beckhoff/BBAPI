@@ -31,6 +31,7 @@
 #include <linux/watchdog.h>
 
 #include <chrono>
+#include <iostream>
 #include <thread>
 
 #include "bbapi.h"
@@ -161,12 +162,12 @@ struct BiosApi
 		m_Group = group;
 	}
 
-	int ioctl_read(unsigned long offset, void* out, unsigned long size) const
+	int ioctl_read(uint32_t offset, void* out, unsigned long size) const
 	{
 		return ::ioctl_read(m_File, m_Group, offset, out, size);
 	}
 
-	int ioctl_write(unsigned long offset, const void* in, unsigned long size) const
+	int ioctl_write(uint32_t offset, const void* in, unsigned long size) const
 	{
 		return ::ioctl_write(m_File, m_Group, offset, in, size);
 	}
@@ -299,8 +300,32 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 		CHECK_CLASS("Board: %s\n", BIOSIOFFS_GENERAL_GETBOARDNAME, CONFIG_GENERAL_BOARDNAME, BiosString<16>);
 		CHECK_VALUE("platform:     0x%02x (0x00->32 bit, 0x01-> 64bit)\n", BIOSIOFFS_GENERAL_GETPLATFORMINFO, CONFIG_GENERAL_PLATFORM, uint8_t);
 		CHECK_CLASS("BIOS API %s\n", BIOSIOFFS_GENERAL_VERSION, CONFIG_GENERAL_VERSION, BADEVICE_VERSION);
+	}
 
-		fructose_fail("TODO implement test to check internal driver functions");
+	void test_LED(const std::string& test_name, const std::string& led_name, uint32_t offset)
+	{
+		const size_t num_colors = 4;
+		const char colors [num_colors][6] = {
+			"off",
+			"red",
+			"blue",
+			"green",
+		};
+		for (uint8_t color = num_colors - 1; color < num_colors; --color) {
+			fructose_assert(!bbapi.ioctl_write(offset, &color, sizeof(color)));
+			pr_info("%s should be %s, hit ENTER to continue", led_name.c_str(), colors[color]);
+			std::cin.get();
+		}
+	}
+
+	void test_manual_LEDs(const std::string& test_name)
+	{
+		bbapi.setGroupOffset(BIOSIGRP_LED);
+		pr_info("\nLED test:\n==============\n");
+		test_LED(test_name, "TwinCAT LED", BIOSIOFFS_LED_SET_TC);
+		if (CONFIG_LED_USER_ENABLED) {
+			test_LED(test_name, "User LED", BIOSIOFFS_LED_SET_USER);
+		}
 	}
 
 	void test_PwrCtrl(const std::string& test_name)
@@ -317,9 +342,9 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 		CHECK_RANGE("Boot #:       %04d\n", BIOSIOFFS_PWRCTRL_BOOT_COUNTER, CONFIG_PWRCTRL_BOOT_COUNTER_RANGE, uint16_t);
 		CHECK_CLASS("Production date: %s\n", BIOSIOFFS_PWRCTRL_PRODUCTION_DATE, CONFIG_PWRCTRL_PRODUCTION_DATE, BiosPair);
 		CHECK_VALUE("µC Position:  0x%02x\n", BIOSIOFFS_PWRCTRL_BOARD_POSITION, CONFIG_PWRCTRL_POSITION, uint8_t);
-#if (TEST_DEVICE != DEVICE_CX5000)
-		CHECK_CLASS("Last shutdown reason: %s\n", BIOSIOFFS_PWRCTRL_SHUTDOWN_REASON, CONFIG_PWRCTRL_LAST_SHUTDOWN, BiosVersion);
-#endif
+		if (CONFIG_PWRCTRL_LAST_SHUTDOWN_ENABLED) {
+			CHECK_CLASS("Last shutdown reason: %s\n", BIOSIOFFS_PWRCTRL_SHUTDOWN_REASON, CONFIG_PWRCTRL_LAST_SHUTDOWN, BiosVersion);
+		}
 		CHECK_VALUE("Test count:   %03d\n", BIOSIOFFS_PWRCTRL_TEST_COUNTER, CONFIG_PWRCTRL_TEST_COUNT, uint8_t);
 		CHECK_CLASS("Test number:  %s\n", BIOSIOFFS_PWRCTRL_TEST_NUMBER, CONFIG_PWRCTRL_TEST_NUMBER, BiosString<7>);
 	}
@@ -342,7 +367,7 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 		CHECK_VALUE("Status:    0x%02x\n", BIOSIOFFS_SUPS_STATUS, CONFIG_SUPS_STATUS_100, uint8_t);
 
 		CHECK_CLASS("Revision:               %s\n", BIOSIOFFS_SUPS_REVISION, CONFIG_SUPS_REVISION, BiosPair);
-		CHECK_VALUE("Power fail:       %9d #\n",       BIOSIOFFS_SUPS_PWRFAIL_COUNTER, CONFIG_SUPS_POWERFAILCOUNT, uint16_t);
+		CHECK_RANGE("Power fail:       %9d #\n",       BIOSIOFFS_SUPS_PWRFAIL_COUNTER, CONFIG_SUPS_POWERFAILCOUNT_RANGE, uint16_t);
 		CHECK_CLASS("Power failed:           %s\n", BIOSIOFFS_SUPS_PWRFAIL_TIMES, CONFIG_SUPS_PWRFAIL_TIMES, BiosTriple<uint32_t>);
 
 		uint8_t shutdownType[] {0x01, 0xA1, 0xFF};
@@ -532,6 +557,7 @@ int main(int argc, char *argv[])
 	bbapiTest.add_test("test_CXPowerSupply", &TestBBAPI::test_CXPowerSupply);
 	bbapiTest.add_test("test_CXUPS", &TestBBAPI::test_CXUPS);
 	bbapiTest.add_test("test_CXPowerSupply_display", &TestBBAPI::test_CXPowerSupply_display);
+	bbapiTest.add_test("test_manual_LEDs", &TestBBAPI::test_manual_LEDs);
 	bbapiTest.run(argc, argv);
 
 	TestWatchdog wdTest;
@@ -539,6 +565,6 @@ int main(int argc, char *argv[])
 	wdTest.add_test("test_IOCTL", &TestWatchdog::test_IOCTL);
 	wdTest.add_test("test_KeepAlive", &TestWatchdog::test_KeepAlive);
 //	wdTest.add_test("test_MagicClose", &TestWatchdog::test_MagicClose);
-	wdTest.run(argc, argv);
+//	wdTest.run(argc, argv);
 	return 0;
 }

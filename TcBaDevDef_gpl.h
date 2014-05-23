@@ -26,6 +26,11 @@ typedef char TCHAR;
 #pragma GCC diagnostic ignored "-Wwrite-strings"
 #endif
 
+///////////////////////////////////////////////////////////
+// Max. CX power supply display line length
+#define CXPWRSUPP_MAX_DISPLAY_CHARS 16 // without null delimiter
+#define CXPWRSUPP_MAX_DISPLAY_LINE (CXPWRSUPP_MAX_DISPLAY_CHARS + 1)  // 17 => inclusive null delimiter
+
 ////////////////////////////////////////////////////////////////
 // String description
 typedef struct TStringResourceCap

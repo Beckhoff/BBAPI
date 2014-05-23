@@ -52,13 +52,4 @@ struct bbapi_struct {
 	nOutBufferSize(outSize) {};
 #endif /* #ifdef __cplusplus */
 };
-
-struct bbapi_callback {
-	const uint8_t name[8];
-	const uint64_t func;
-};
-
-extern uint32_t __do_nop(uint32_t reg, uint32_t *hi, uint32_t *lo);
-extern uint32_t reboot(uint32_t reg, uint32_t *hi, uint32_t *lo);
-extern uint32_t ExtOsReadMSR(uint32_t reg, uint32_t *hi, uint32_t *lo);
 #endif /* #ifndef __BBAPI_H_ */

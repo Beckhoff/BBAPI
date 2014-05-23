@@ -109,9 +109,6 @@ static const struct watchdog_ops wd_ops = {
 #endif
 	.status = wd_status,
 	.set_timeout = wd_set_timeout,
-#if 0
-	long (*ioctl) (struct watchdog_device *, unsigned int, unsigned long);
-#endif
 };
 
 static const struct watchdog_info wd_info = {
