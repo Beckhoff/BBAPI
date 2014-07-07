@@ -19,7 +19,11 @@ clean:
 	rm -f *.c~ *.h~ *.bin unittest
 
 unittest: test_config.h unittest.cpp TcBaDevDef_gpl.h config_cx5000.h config_cx2030_cx2100-0004.h config_cx2030_cx2100-0904.h
-	g++ unittest.cpp -o $@ -Wall -pedantic -std=c++0x -I../
+	g++ unittest.cpp -lpthread -o $@ -Wall -pedantic -std=c++0x -I../
+	sudo ./$@
+
+example: display_example.cpp
+	g++ display_example.cpp -lpthread -o $@ -Wall -pedantic -std=c++11 -I../
 	sudo ./$@
 
 # indent the source files with the kernels Lindent script

@@ -18,7 +18,6 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include <stdint.h>
 #include <stdio.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -419,6 +418,85 @@ private:
 	}
 };
 
+void RunAtPos(size_t pos)
+{
+	const int fd = open("/dev/cx_display", O_WRONLY);
+	if (-1 == fd) {
+		perror(NULL);
+		return;
+	}
+
+	/** move cursor to our position */
+	for (size_t i = 0; i <= pos; ++i) {
+		static const char tab = '\t';
+		write(fd, &tab, 1);
+	}
+
+	/** print some characters */
+	for (unsigned char c = '~'; c != ('/' + pos % 10); c--) {
+		const unsigned char replace_char[2] = {'\b', c};
+		write(fd, replace_char, sizeof(replace_char));
+		/** sleep a little to let the other threads work, too */
+		std::this_thread::sleep_for(std::chrono::milliseconds(50));
+	}
+	close(fd);
+}
+
+struct TestDisplay : fructose::test_base<TestDisplay>
+{
+	void test_Simple(const std::string& test_name)
+	{
+		(std::cout << "Simple display test running...").flush();
+		const int fd_1 = open("/dev/cx_display", O_WRONLY);
+		const int fd_2 = open("/dev/cx_display", O_WRONLY);
+		const std::string line("\x11\f\bx\n\bxx\t\t\t\t\t\t\t\t\t\t\t\t\t\tx");
+		const std::string line_2("\x11\r\b\r\b\r#\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t#");
+		const std::string line_3("0123456789ABCDEFFEDCBA9876543210XXXXXX");
+		const std::string light_off("\x13");
+		const char *should   = "|x              x|\n|x              x|\n";
+		const char *should_2 = "|#              x|\n|x              #|\n";
+		const char *should_3 = "|0123456789ABCDEF|\n|FEDCBA9876543210|\n";
+		const char *bar_h =  "===================\n";
+		fructose_assert_eq(line.size(), write(fd_1, line.c_str(), line.size()));
+		pr_info("Display should look like this:\n%s%s%s\nhit ENTER to continue", bar_h, should, bar_h);
+		std::cin.get();
+
+		fructose_assert_eq(light_off.size(), write(fd_1, light_off.c_str(), light_off.size()));
+		pr_info("Display backlight should be switched off\nhit ENTER to continue");
+		std::cin.get();
+
+		fructose_assert_eq(line_2.size(), write(fd_1, line_2.c_str(), line_2.size()));
+		pr_info("Display should look like this:\n%s%s%s\nhit ENTER to continue", bar_h, should_2, bar_h);
+		std::cin.get();
+
+		fructose_assert_eq(line_3.size(), write(fd_2, line_3.c_str(), line_3.size()));
+		pr_info("Display should look like this:\n%s%s%s\nhit ENTER to continue", bar_h, should_3, bar_h);
+		std::cin.get();
+
+		fructose_assert_ne(-1, fd_1);
+		fructose_assert_ne(-1, fd_2);
+		fructose_assert_eq(0, close(fd_1));
+		fructose_assert_eq(0, close(fd_2));
+		if (!error()) {
+			std::cout << " done." << std::endl;
+		}
+	}
+
+	void test_SMP(const std::string& test_name)
+	{
+		(std::cout << "Multithreaded display test running...").flush();
+		std::vector<std::thread> threads(32);
+		for (size_t i = 0; i < threads.size(); ++i) {
+			threads[i] = std::thread(&RunAtPos, i);
+		}
+
+		for (auto& t: threads) {
+			t.join();
+		}
+		std::cout << " done." << std::endl;
+	}
+};
+
 
 struct TestWatchdog : fructose::test_base<TestWatchdog>
 {
@@ -543,6 +621,11 @@ struct TestWatchdog : fructose::test_base<TestWatchdog>
 
 int main(int argc, char *argv[])
 {
+	TestDisplay displayTest;
+	displayTest.add_test("test_Simple", &TestDisplay::test_Simple);
+	displayTest.add_test("test_SMP", &TestDisplay::test_SMP);
+	displayTest.run(argc, argv);
+
 	TestBBAPI bbapiTest;
 	bbapiTest.add_test("test_General", &TestBBAPI::test_General);
 	bbapiTest.add_test("test_PwrCtrl", &TestBBAPI::test_PwrCtrl);
