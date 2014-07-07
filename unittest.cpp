@@ -569,7 +569,7 @@ struct TestWatchdog : fructose::test_base<TestWatchdog>
 		fructose_assert_eq(0, ioctl(fd, WDIOC_GETTIMEOUT, &read));
 		fructose_assert_eq(timeout_max_minutes, read);
 
-		const char identity[] = "bbapi_watchdog\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+		const char identity[] = "bbapi_wdt\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
 		const uint32_t options = CONFIG_WATCHDOG_OPTIONS;
 		struct watchdog_info ident;
 		fructose_assert_eq(0, ioctl(fd, WDIOC_GETSUPPORT, &ident));
@@ -642,6 +642,6 @@ int main(int argc, char *argv[])
 	wdTest.add_test("test_IOCTL", &TestWatchdog::test_IOCTL);
 	wdTest.add_test("test_KeepAlive", &TestWatchdog::test_KeepAlive);
 //	wdTest.add_test("test_MagicClose", &TestWatchdog::test_MagicClose);
-//	wdTest.run(argc, argv);
+	wdTest.run(argc, argv);
 	return 0;
 }
