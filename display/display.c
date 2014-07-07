@@ -63,20 +63,20 @@ static int display_release(struct inode *const i, struct file *const f)
 }
 
 static ssize_t display_write(struct file *const f, const char __user * buf,
-				 size_t len, loff_t * off)
+			     size_t len, loff_t * off)
 {
 	struct display_buffer *const db = f->private_data;
 	size_t pos = 0;
 	char next;
-	
+
 	while (pos < len) {
-		get_user(next, buf + pos);		
+		get_user(next, buf + pos);
 		if (isprint(next) && db->row < NUM_ROWS) {
 			g_fb[db->row][db->col] = next;
 			db->col++;
 		} else {
 			switch (next) {
-			case '\b': /* move cursor to previous character */
+			case '\b':	/* move cursor to previous character */
 				if (db->col) {
 					db->col--;
 				} else if (db->row) {
@@ -84,33 +84,35 @@ static ssize_t display_write(struct file *const f, const char __user * buf,
 					db->row--;
 				}
 				break;
-			case '\t': /* move cursor to next character */
+			case '\t':	/* move cursor to next character */
 				db->col++;
 				break;
-			case '\n': /* move cursor to start of next row */
+			case '\n':	/* move cursor to start of next row */
 				db->col = 0;
 				db->row++;
 				break;
-			case '\f': /* clear screen and move cursor to column 0 of row 0 */
+			case '\f':	/* clear screen and move cursor to column 0 of row 0 */
 				db->col = 0;
 				db->row = 0;
 				fb_init();
 				break;
-			case '\r': /* move cursor to first character in row */
+			case '\r':	/* move cursor to first character in row */
 				db->col = 0;
 				break;
-			case '\021': /* enable backlight */
-			{
-				static const u8 enable = 0xff;
-				bbapi_write(0x00009000, 0x00000060, &enable, sizeof(enable));
-				break;
-			}
-			case '023': /* disable backlight */
-			{
-				static const u8 disable = 0;
-				bbapi_write(0x00009000, 0x00000060, &disable, sizeof(disable));
-				break;
-			}
+			case '\021':	/* enable backlight */
+				{
+					static const u8 enable = 0xff;
+					bbapi_write(0x00009000, 0x00000060,
+						    &enable, sizeof(enable));
+					break;
+				}
+			case '023':	/* disable backlight */
+				{
+					static const u8 disable = 0;
+					bbapi_write(0x00009000, 0x00000060,
+						    &disable, sizeof(disable));
+					break;
+				}
 			default:
 				break;
 			}
@@ -137,9 +139,9 @@ static struct file_operations display_ops = {
 };
 
 static struct miscdevice display_device = {
-	.minor  = MISC_DYNAMIC_MINOR,
-	.name   = "cx_display",
-	.fops   = &display_ops,
+	.minor = MISC_DYNAMIC_MINOR,
+	.name = "cx_display",
+	.fops = &display_ops,
 };
 
 static int __init bbapi_display_init_module(void)

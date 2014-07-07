@@ -99,8 +99,8 @@ static unsigned int bbapi_call(const void __kernel * const in,
 #endif
 
 static unsigned int bbapi_rw(uint32_t group, uint32_t offset,
-			 const void __kernel * const in, uint32_t size_in,
-			 void __kernel * const out, const uint32_t size_out)
+			     const void __kernel * const in, uint32_t size_in,
+			     void __kernel * const out, const uint32_t size_out)
 {
 	const struct bbapi_struct cmd = {
 		.nIndexGroup = group,
@@ -119,7 +119,7 @@ static unsigned int bbapi_rw(uint32_t group, uint32_t offset,
 }
 
 unsigned int bbapi_read(uint32_t group, uint32_t offset,
-			 void __kernel * const out, const uint32_t size)
+			void __kernel * const out, const uint32_t size)
 {
 	return bbapi_rw(group, offset, NULL, 0, out, size);
 }
@@ -291,7 +291,7 @@ static struct file_operations file_ops = {
 
 static void update_display(void)
 {
-	char board[16+1] = "                ";
+	char board[16 + 1] = "                ";
 	bbapi_read(0x00000000, 0x00000001, &board, sizeof(board));
 	board[sizeof(board) - 1] = 0;
 	if (0 == strncmp(board, "CX20x0\0\0\0\0\0\0\0\0\0", sizeof(board))) {
@@ -316,7 +316,8 @@ static int __init bbapi_init_module(void)
 		return -1;
 	}
 	update_display();
-	return simple_cdev_init(&g_bbapi.dev, "chardev", KBUILD_MODNAME, &file_ops);
+	return simple_cdev_init(&g_bbapi.dev, "chardev", KBUILD_MODNAME,
+				&file_ops);
 }
 
 static void __exit bbapi_exit(void)

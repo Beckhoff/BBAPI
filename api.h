@@ -29,7 +29,7 @@
 
 #define BBIOSAPI_SIGNATURE_PHYS_START_ADDR 0xFFE00000	// Defining the Physical start address for the search
 #define BBIOSAPI_SIGNATURE_SEARCH_AREA 0x1FFFFF	// Defining the Memory search area size
-#define BBAPI_BUFFER_SIZE 256 // maximum size of a buffer shared between user and kernel space
+#define BBAPI_BUFFER_SIZE 256	// maximum size of a buffer shared between user and kernel space
 
 /**
  * struct bbapi_object - manage access to Beckhoff BIOS functions
@@ -52,7 +52,7 @@ struct bbapi_object {
 };
 
 extern unsigned int bbapi_read(uint32_t group, uint32_t offset,
-			 void __kernel * out, uint32_t size);
+			       void __kernel * out, uint32_t size);
 
 extern unsigned int bbapi_write(uint32_t group, uint32_t offset,
 				const void __kernel * in, uint32_t size);
