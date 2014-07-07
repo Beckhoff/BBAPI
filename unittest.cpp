@@ -446,6 +446,10 @@ struct TestDisplay : fructose::test_base<TestDisplay>
 {
 	void test_Simple(const std::string& test_name)
 	{
+		if (CONFIG_CXPWRSUPP_DISABLED) {
+			pr_info("CX2100 text display test disabled\n");
+			return;
+		}
 		(std::cout << "Simple display test running...").flush();
 		const int fd_1 = open("/dev/cx_display", O_WRONLY);
 		const int fd_2 = open("/dev/cx_display", O_WRONLY);
@@ -484,6 +488,10 @@ struct TestDisplay : fructose::test_base<TestDisplay>
 
 	void test_SMP(const std::string& test_name)
 	{
+		if (CONFIG_CXPWRSUPP_DISABLED) {
+			pr_info("CX2100 text display test disabled\n");
+			return;
+		}
 		(std::cout << "Multithreaded display test running...").flush();
 		std::vector<std::thread> threads(32);
 		for (size_t i = 0; i < threads.size(); ++i) {
@@ -641,7 +649,7 @@ int main(int argc, char *argv[])
 	wdTest.add_test("test_Simple", &TestWatchdog::test_Simple);
 	wdTest.add_test("test_IOCTL", &TestWatchdog::test_IOCTL);
 	wdTest.add_test("test_KeepAlive", &TestWatchdog::test_KeepAlive);
-	wdTest.add_test("test_MagicClose", &TestWatchdog::test_MagicClose);
+//	wdTest.add_test("test_MagicClose", &TestWatchdog::test_MagicClose);
 	wdTest.run(argc, argv);
 	return 0;
 }
