@@ -649,7 +649,7 @@ int main(int argc, char *argv[])
 	wdTest.add_test("test_Simple", &TestWatchdog::test_Simple);
 	wdTest.add_test("test_IOCTL", &TestWatchdog::test_IOCTL);
 	wdTest.add_test("test_KeepAlive", &TestWatchdog::test_KeepAlive);
-//	wdTest.add_test("test_MagicClose", &TestWatchdog::test_MagicClose);
+	wdTest.add_test("test_MagicClose", &TestWatchdog::test_MagicClose);
 	wdTest.run(argc, argv);
 	return 0;
 }

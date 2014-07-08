@@ -106,7 +106,7 @@ static ssize_t display_write(struct file *const f, const char __user * buf,
 						    &enable, sizeof(enable));
 					break;
 				}
-			case '023':	/* disable backlight */
+			case '\023':	/* disable backlight */
 				{
 					static const u8 disable = 0;
 					bbapi_write(0x00009000, 0x00000060,
