@@ -29,7 +29,7 @@
 /** reused ranges */
 #define BOOTCOUNTER_RANGE 1, 1500
 #define OPERATION_TIME_RANGE  1, 200000
-#define _24VOLT_RANGE 23600, 28000
+#define _24VOLT_RANGE 23500, 28000
 #define CONFIG_CXPWRSUPP_TEMP_RANGE -35, 85
 
 #if defined(__i386__)

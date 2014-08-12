@@ -315,7 +315,9 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 	{
 		bbapi.setGroupOffset(BIOSIGRP_LED);
 		pr_info("\nLED test:\n==============\n");
-		test_LED(test_name, "TwinCAT LED", BIOSIOFFS_LED_SET_TC);
+		if (CONFIG_LED_TC_ENABLED) {
+			test_LED(test_name, "TwinCAT LED", BIOSIOFFS_LED_SET_TC);
+		}
 		if (CONFIG_LED_USER_ENABLED) {
 			test_LED(test_name, "User LED", BIOSIOFFS_LED_SET_USER);
 		}
