@@ -10,7 +10,8 @@ Test log:
   Kernel  | arch |        device        |  os   |result (bbapi, watchdog)
 ==========|======|======================|=======|=====================================
 3.4.69    |x86_64| CX2030 + CX2100-0904 | 14.04 | no error
-3.15.0-rc7| i386 |        CX5020        | 14.04 | no error
+3.16.0    | i386 | CX2030 + CX2100-0004 | 14.04 | no error
+3.12.18   | i386 |        CX5020        | 14.04 | no error
 
 * os/14.04 means Ubuntu 14.04 LTS
 
