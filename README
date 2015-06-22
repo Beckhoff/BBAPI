@@ -35,5 +35,5 @@ How to access the bbapi:
 "/dev/cx_display" is the device file to access the CX2100 text display.
 -- see display_example.cpp for detailed information
 
-"/dev/watchdog" is the device file to acces the CX hardware watchdog.
+"/dev/watchdog" is the device file to access the CX hardware watchdog.
 -- See https://www.kernel.org/doc/Documentation/watchdog/watchdog-api.txt
