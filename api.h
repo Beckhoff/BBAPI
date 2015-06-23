@@ -27,8 +27,8 @@
 #include <linux/mutex.h>
 #include "simple_cdev.h"
 
-#define BBIOSAPI_SIGNATURE_PHYS_START_ADDR 0xFFF00000 // Defining the Physical start address for the search
-#define BBIOSAPI_SIGNATURE_SEARCH_AREA     0x000FFFFF // Defining the Memory search area size
+#define BBIOSAPI_SIGNATURE_PHYS_START_ADDR 0xFFF00000	// Defining the Physical start address for the search
+#define BBIOSAPI_SIGNATURE_SEARCH_AREA     0x000FFFFF	// Defining the Memory search area size
 #define BBAPI_BUFFER_SIZE 256	// maximum size of a buffer shared between user and kernel space
 
 /**
