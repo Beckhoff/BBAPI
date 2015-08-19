@@ -4,7 +4,7 @@
     Some ASCII control characters are used to control the display behavior:
     '\021': switch the backlight on
     '\023': switch the backlight off
-    '\f': clear screen and move cursor to the first charachter of the first row
+    '\f': clear screen and move cursor to the first character of the first row
     '\b': move cursor to previous character
     '\n': move cursor to start of next row
     '\r': move cursor to first character in row
