@@ -176,29 +176,36 @@ static int bbapi_copy_bios(struct bbapi_object *bbapi, void __iomem * pos)
  */
 static int bbapi_find_bios(struct bbapi_object *bbapi)
 {
-	int result = -EFAULT;
+	static const size_t STEP_SIZE = 0x10;
+
 	// Try to remap IO Memory to search the BIOS API in the memory
 	void __iomem *const start = ioremap(BBIOSAPI_SIGNATURE_PHYS_START_ADDR,
 					    BBIOSAPI_SIGNATURE_SEARCH_AREA);
-	void __iomem *pos = start;
-	const void __iomem *const end = pos + BBIOSAPI_SIGNATURE_SEARCH_AREA;
+	const void __iomem *const end = start + BBIOSAPI_SIGNATURE_SEARCH_AREA;
+	int result = -EFAULT;
+	void __iomem *pos;
+	size_t off;
+
 	if (start == NULL) {
-		pr_warn("Mapping Memory Search area for BIOS API failed\n");
-		return -1;
+		pr_warn("Mapping memory search area for BIOS API failed\n");
+		return -ENOMEM;
 	}
 	// Search through the remapped memory and look for the BIOS API String
-	for (; pos < end; pos += 0x10)	//Aligned Search 0x10
-	{
-		const uint32_t low = ioread32(pos);
-		const uint32_t high = ioread32(pos + 4);
-		const uint64_t lword = ((uint64_t) high << 32 | low);
-		if (BBIOSAPI_SIGNATURE == lword) {
-			result = bbapi_copy_bios(bbapi, pos);
-			pr_info("BIOS found and copied from: %p + 0x%zx\n",
-				start, pos - start);
-			break;
+	for (off = 0; off < STEP_SIZE; ++off) {
+		for (pos = start + off; pos < end; pos += STEP_SIZE) {
+			const uint32_t low = ioread32(pos);
+			const uint32_t high = ioread32(pos + 4);
+			const uint64_t lword = ((uint64_t) high << 32 | low);
+			if (BBIOSAPI_SIGNATURE == lword) {
+				result = bbapi_copy_bios(bbapi, pos);
+				pr_info
+				    ("BIOS found and copied from: %p + 0x%zx | %zu\n",
+				     start, pos - start, off);
+				goto cleanup;
+			}
 		}
 	}
+cleanup:
 	iounmap(start);
 	return result;
 }
