@@ -1,6 +1,6 @@
 
 
-NEXT:
+1.3:
 ====
 - fix bbapi_find_bios() to work on platforms without 16 byte BBAPI alignment
 
