@@ -42,6 +42,10 @@
  */
 #include "test_config.h"
 
+#ifndef TEST_DEVICE
+#error "no test configuration is enabled in test_config.h"
+#else
+
 #define pr_info printf
 
 using namespace fructose;
@@ -670,3 +674,4 @@ int main(int argc, char *argv[])
 //	oneTimeTest.run(argc, argv);
 	return 0;
 }
+#endif /* #ifndef TEST_DEVICE */

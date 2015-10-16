@@ -31,9 +31,6 @@
 #define _TCBADEVDEF_GPL_H_
 
 #ifndef WINDOWS
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
-
 typedef char TCHAR;
 #define _T(x) x
 #pragma GCC diagnostic ignored "-Wwrite-strings"
@@ -43,6 +40,8 @@ typedef char TCHAR;
 
 #ifndef __KERNEL__
 #define __user
+#define __STDC_FORMAT_MACROS
+#include <cinttypes>
 #endif
 
 /* BBAPI specific constants */
