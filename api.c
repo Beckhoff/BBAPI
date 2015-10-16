@@ -2,7 +2,7 @@
     Character Driver for Beckhoff BIOS API
     Author: 	Heiko Wilke <h.wilke@beckhoff.com>
     Author: 	Patrick Brünn <p.bruenn@beckhoff.com>
-    Copyright (C) 2013 - 2014  Beckhoff Automation GmbH
+    Copyright (C) 2013 - 2015  Beckhoff Automation GmbH
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@
 #include "api.h"
 #include "TcBaDevDef_gpl.h"
 
-#define DRV_VERSION      "1.3"
+#define DRV_VERSION      "1.4"
 #define DRV_DESCRIPTION  "Beckhoff BIOS API Driver"
 
 /* Global Variables */
@@ -134,6 +134,17 @@ unsigned int bbapi_write(uint32_t group, uint32_t offset,
 
 EXPORT_SYMBOL_GPL(bbapi_write);
 
+int bbapi_board_is(const char *const boardname)
+{
+	char board[CXPWRSUPP_MAX_DISPLAY_LINE] = { 0 };
+
+	bbapi_read(BIOSIGRP_GENERAL, BIOSIOFFS_GENERAL_GETBOARDNAME, &board,
+		   sizeof(board) - 1);
+	return 0 == strncmp(board, boardname, sizeof(board));
+}
+
+EXPORT_SYMBOL_GPL(bbapi_board_is);
+
 /**
  * bbapi_copy_bios() - Copy BIOS from SPI flash into RAM
  * @bbapi: pointer to a not initialized bbapi_object
@@ -152,7 +163,8 @@ EXPORT_SYMBOL_GPL(bbapi_write);
  *
  * Return: 0 for success, -ENOMEM if the allocation of kernel memory fails
  */
-static int bbapi_copy_bios(struct bbapi_object *bbapi, void __iomem * pos)
+static int __init bbapi_copy_bios(struct bbapi_object *bbapi,
+				  void __iomem * pos)
 {
 	const uint32_t offset = ioread32(pos + 8);
 	const size_t size = offset + 4096;
@@ -174,7 +186,7 @@ static int bbapi_copy_bios(struct bbapi_object *bbapi, void __iomem * pos)
  *
  * Return: 0 if the bios was successfully copied into RAM
  */
-static int bbapi_find_bios(struct bbapi_object *bbapi)
+static int __init bbapi_find_bios(struct bbapi_object *bbapi)
 {
 	static const size_t STEP_SIZE = 0x10;
 
@@ -296,18 +308,25 @@ static struct file_operations file_ops = {
 #endif
 };
 
-static void update_display(void)
+static void __init update_display(void)
 {
-	char board[16 + 1] = "                ";
-	bbapi_read(0x00000000, 0x00000001, &board, sizeof(board));
-	board[sizeof(board) - 1] = 0;
-	if (0 == strncmp(board, "CX20x0\0\0\0\0\0\0\0\0\0", sizeof(board))) {
-		uint8_t enable = 0xff;
+	static const char CX20x0[CXPWRSUPP_MAX_DISPLAY_LINE] =
+	    "CX20x0\0\0\0\0\0\0\0\0\0";
+
+	if (bbapi_board_is(CX20x0)) {
 		char line1[CXPWRSUPP_MAX_DISPLAY_LINE] = "Linux 7890123456";
+		static const uint8_t enable = 0xff;
+
 		strncpy(line1 + 6, UTS_RELEASE, sizeof(line1) - 1 - 6);
-		bbapi_write(0x00009000, 0x00000060, &enable, sizeof(enable));
-		bbapi_write(0x00009000, 0x00000062, &line1, sizeof(line1));
-		bbapi_write(0x00009000, 0x00000061, &board, sizeof(board));
+		bbapi_write(BIOSIGRP_CXPWRSUPP,
+			    BIOSIOFFS_CXPWRSUPP_ENABLEBACKLIGHT, &enable,
+			    sizeof(enable));
+		bbapi_write(BIOSIGRP_CXPWRSUPP,
+			    BIOSIOFFS_CXPWRSUPP_DISPLAYLINE2, &line1,
+			    sizeof(line1));
+		bbapi_write(BIOSIGRP_CXPWRSUPP,
+			    BIOSIOFFS_CXPWRSUPP_DISPLAYLINE1, &CX20x0,
+			    sizeof(CX20x0));
 	} else {
 		pr_info("platform has no display or is not supported\n");
 	}
@@ -315,12 +334,15 @@ static void update_display(void)
 
 static int __init bbapi_init_module(void)
 {
+	int result;
+
 	pr_info("%s, %s\n", DRV_DESCRIPTION, DRV_VERSION);
-	memset(&g_bbapi, 0, sizeof(g_bbapi));
 	mutex_init(&g_bbapi.mutex);
-	if (bbapi_find_bios(&g_bbapi)) {
+
+	result = bbapi_find_bios(&g_bbapi);
+	if (result) {
 		pr_info("BIOS API not available on this System\n");
-		return -1;
+		return result;
 	}
 	update_display();
 	return simple_cdev_init(&g_bbapi.dev, "chardev", KBUILD_MODNAME,

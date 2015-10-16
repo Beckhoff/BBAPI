@@ -1,7 +1,7 @@
 /**
     Character Driver for Beckhoff BIOS API
     Author: 	Patrick Brünn <p.bruenn@beckhoff.com>
-    Copyright (C) 2013 - 2014  Beckhoff Automation GmbH
+    Copyright (C) 2013 - 2015  Beckhoff Automation GmbH
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -56,4 +56,6 @@ extern unsigned int bbapi_read(uint32_t group, uint32_t offset,
 
 extern unsigned int bbapi_write(uint32_t group, uint32_t offset,
 				const void __kernel * in, uint32_t size);
+
+extern int bbapi_board_is(const char *boardname);
 #endif /* #ifndef __API_H_ */
