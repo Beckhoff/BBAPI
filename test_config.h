@@ -43,7 +43,7 @@
 
 /** select test device */
 //#include "config_cx5000.h"
-#include "config_cx5130.h"
+//#include "config_cx5130.h"
 //#include "config_cx2030_cx2100-0004.h"
 //#include "config_cx2030_cx2100-0904.h"
 

@@ -31,6 +31,9 @@
 #define _TCBADEVDEF_GPL_H_
 
 #ifndef WINDOWS
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
 typedef char TCHAR;
 #define _T(x) x
 #pragma GCC diagnostic ignored "-Wwrite-strings"
@@ -305,7 +308,7 @@ typedef struct Bapi_GpioInfoEx
 	}
 
 	int snprintf(char* buffer, size_t len) const {
-		return ::snprintf(buffer, len, "0x%x, 0x%x, 0x%x, 0x%lx, 0x%lx [type, length, flags, address, bitmask]", type, length, flags, address, bitmask);
+		return ::snprintf(buffer, len, "0x%x, 0x%x, 0x%x, 0x%" PRIu64 "x, 0x%" PRIu64 "x [type, length, flags, address, bitmask]", type, length, flags, address, bitmask);
 	};
 #endif /* #ifdef __cplusplus */
 }BAPI_GPIO_INFO_EX;
