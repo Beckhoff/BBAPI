@@ -1,6 +1,6 @@
 /**
     Beckhoff BIOS API driver to access hwmon sensors for Beckhoff IPCs
-    Copyright (C) 2014  Beckhoff Automation GmbH
+    Copyright (C) 2015  Beckhoff Automation GmbH
     Author: Patrick Bruenn <p.bruenn@beckhoff.com>
 
     This program is free software; you can redistribute it and/or modify

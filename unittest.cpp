@@ -1,6 +1,6 @@
 /**
     Beckhoff BIOS API driver to access hwmon sensors for Beckhoff IPCs
-    Copyright (C) 2014  Beckhoff Automation GmbH
+    Copyright (C) 2014-2015  Beckhoff Automation GmbH
     Author: Patrick Bruenn <p.bruenn@beckhoff.com>
 
     This program is free software; you can redistribute it and/or modify
@@ -35,21 +35,14 @@
 
 #include "TcBaDevDef_gpl.h"
 
-#pragma GCC diagnostic ignored "-Wsign-compare"
 #include <fructose/fructose.h>
-#pragma GCC diagnostic warning "-Wsign-compare"
 
 /**
  * Unittest configuration
  */
 #include "test_config.h"
 
-#define DEBUG 1
-#if DEBUG
 #define pr_info printf
-#else
-#define pr_info(...)
-#endif
 
 using namespace fructose;
 

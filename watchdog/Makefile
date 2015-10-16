@@ -4,7 +4,6 @@ obj-m += $(TARGET).o
 $(TARGET)-objs := watchdog.o
 # enable for CX20x0 devices
 #ccflags-y += -DENABLE_KEEPALIVEPING
-ccflags-y += -DDEBUG
 KBUILD_EXTRA_SYMBOLS := $(src)/../Module.symvers
 
 all:

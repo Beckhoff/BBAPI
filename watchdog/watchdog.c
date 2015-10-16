@@ -1,7 +1,7 @@
 /**
     Watchdog driver using the Beckhoff BIOS API
     Author: 	Patrick Brünn <p.bruenn@beckhoff.com>
-    Copyright (C) 2014  Beckhoff Automation GmbH
+    Copyright (C) 2014-2015  Beckhoff Automation GmbH
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,7 +26,6 @@
 #include "../api.h"
 #include "../TcBaDevDef_gpl.h"
 #include "watchdog.h"
-static int wd_start(struct watchdog_device *const wd);
 
 static int bbapi_wd_write(uint32_t offset, const void *in, uint32_t size)
 {
@@ -40,23 +39,6 @@ static int wd_ping(struct watchdog_device *wd)
 	return bbapi_wd_write(BIOSIOFFS_WATCHDOG_IORETRIGGER, NULL, 0);
 }
 #endif
-
-/**
- * Linux watchdog API uses seconds in a range of unsigned int, Beckhoff
- * BIOS API uses minutes or seconds as a timebase together with an
- * uint8_t timeout value. This function converts Linux watchdog seconds
- * into BBAPI timebase + timeout
- * As long as sec fits into a uint8_t we use seconds as a time base
- */
-static int wd_set_timeout(struct watchdog_device *wd, unsigned int sec)
-{
-	if (sec > 255) {
-		wd->timeout = sec - (sec % 60);
-	} else {
-		wd->timeout = sec;
-	}
-	return wd_start(wd);
-}
 
 static int wd_start(struct watchdog_device *const wd)
 {
@@ -90,6 +72,23 @@ static int wd_start(struct watchdog_device *const wd)
 		pr_warn("enable watchdog failed with: 0x%x\n", result);
 	}
 	return result;
+}
+
+/**
+ * Linux watchdog API uses seconds in a range of unsigned int, Beckhoff
+ * BIOS API uses minutes or seconds as a timebase together with an
+ * uint8_t timeout value. This function converts Linux watchdog seconds
+ * into BBAPI timebase + timeout
+ * As long as sec fits into a uint8_t we use seconds as a time base
+ */
+static int wd_set_timeout(struct watchdog_device *wd, unsigned int sec)
+{
+	if (sec > 255) {
+		wd->timeout = sec - (sec % 60);
+	} else {
+		wd->timeout = sec;
+	}
+	return wd_start(wd);
 }
 
 static unsigned int wd_status(struct watchdog_device *const wd)
