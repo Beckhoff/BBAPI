@@ -281,6 +281,35 @@ typedef struct TSUps_GpioInfo
 #endif /* #ifdef __cplusplus */
 }SUPS_GPIO_INFO, *PSUPS_GPIO_INFO, WATCHDOG_GPIO_INFO, *PWATCHDOG_GPIO_INFO;
 
+typedef struct Bapi_GpioInfoEx
+{
+	uint16_t type; //0=Port access, 1=MemoryMappedIo,...
+	uint16_t length;
+	uint16_t flags; //Bit0-1: 00 Not valid, 01=RO, 10=WO, 11=RW;Bit2-3: 00=lowActive, 01=highActive,11=Toggle;Bit4-15:TBD
+	uint16_t reserved;
+	uint64_t address;
+	uint64_t bitmask;
+#ifdef __cplusplus
+	Bapi_GpioInfoEx(uint16_t t = 0, uint16_t len = 0, uint16_t f = 0, uint64_t addr = 0, uint64_t mask = 0)
+		: type(t),
+		length(len),
+		flags(f),
+		reserved(0),
+		address(addr),
+		bitmask(mask)
+	{
+	}
+
+	bool operator==(const Bapi_GpioInfoEx& ref) const {
+		return !memcmp(this, &ref, sizeof(*this));
+	}
+
+	int snprintf(char* buffer, size_t len) const {
+		return ::snprintf(buffer, len, "0x%x, 0x%x, 0x%x, 0x%lx, 0x%lx [type, length, flags, address, bitmask]", type, length, flags, address, bitmask);
+	};
+#endif /* #ifdef __cplusplus */
+}BAPI_GPIO_INFO_EX;
+
 ///////////////////////////////////////////////////////////
 // Index-Group/Index-Offset specification
 ///////////////////////////////////////////////////////////
@@ -323,6 +352,7 @@ typedef struct TSUps_GpioInfo
 	#define BIOSIOFFS_SUPS_CAPACITY_TEST					0x00000009	// Capacitator test, W:0, R:0
 	#define BIOSIOFFS_SUPS_TEST_RESULT						0x0000000a	// Get SUPS test result, W:0, R:1
 	#define BIOSIOFFS_SUPS_GPIO_PIN							0x000000a0	// Get the Address and the GPIO-Pin from PWR-Fail PIN, W:0, R:4
+	#define BIOSIOFFS_SUPS_GPIO_PIN_EX						0x000000a1	// Get the Address and the GPIO-Pin from PWR-Fail PIN, W:0, R:24
 
 #define BIOSIGRP_WATCHDOG	0x00006000	// Watchdog functions
 	#define BIOSIOFFS_WATCHDOG_ENABLE_TRIGGER				0x00000000	// Enable/trigger watchdog, W:1 (0 == Disable, 1..255 == Enable + set internal, R:0
@@ -333,6 +363,7 @@ typedef struct TSUps_GpioInfo
 	#define BIOSIOFFS_WATCHDOG_TRIGGER_TIMESPAN			0x00000005	// Enables/trigger the watchdog with TimeSpan, W:2, R:0
 	#define BIOSIOFFS_WATCHDOG_IORETRIGGER					0x00000006	// IO-Retrigger, W:0, R:0
 	#define BIOSIOFFS_WATCHDOG_GPIO_PIN						0x00000007	// Get IO Addr for direct retrigger, W:0, R:4 
+	#define BIOSIOFFS_WATCHDOG_GPIO_PIN_EX					0x00000008	// Get IO Addr for direct retrigger, W:0, R:24
 
 #define BIOSIGRP_LED			0x00008000	// TwinCAT and user LED functions
 	#define BIOSIOFFS_LED_SET_TC								0x00000000	// Sets TwinCAT LED, W:1, R:0 (write value 0=off, 1=red, 2=blue, 3=green)
@@ -400,6 +431,9 @@ typedef struct TSUps_GpioInfo
 	#define BIOSIOFFS_CXUPS_SETLASTBATTCHANGEDATE		0x00000098	// Sets last battery change date W:4, R:0
 	#define BIOSIOFFS_CXUPS_GETBATTRATEDCAPACITY			0x00000099	// Get rated capacity W:0, R:4 [mAh]
 	#define BIOSIOFFS_CXUPS_GETSMBUSADDRESS				0x000000F0	// Get SMBus address W:0, R:2 (hHost, address)
+
+#define BIOSAPIERR_NOERR 0x0
+#define BIOSAPI_SRVNOTSUPP 0x701
 
 #ifndef WINDOWS
 #pragma GCC diagnostic warning "-Wwrite-strings"

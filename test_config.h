@@ -25,6 +25,7 @@
 #define DEVICE_CX2030_CX2100_0004 0x21000004
 #define DEVICE_CX2030_CX2100_0904 0x21000904
 #define DEVICE_CX5000 0x5000
+#define DEVICE_CX5130 0x5130
 
 /** reused ranges */
 #define BOOTCOUNTER_RANGE 1, 1500
@@ -42,7 +43,8 @@
 
 /** select test device */
 //#include "config_cx5000.h"
+#include "config_cx5130.h"
 //#include "config_cx2030_cx2100-0004.h"
-#include "config_cx2030_cx2100-0904.h"
+//#include "config_cx2030_cx2100-0904.h"
 
 #endif /* #ifndef _TEST_CONFIG_H_ */

@@ -60,25 +60,36 @@ static int wd_set_timeout(struct watchdog_device *wd, unsigned int sec)
 
 static int wd_start(struct watchdog_device *const wd)
 {
-	const uint8_t enable = 1;
+	static const uint32_t offset_enable = BIOSIOFFS_WATCHDOG_ACTIVATE_PWRCTRL;
+	static const uint32_t offset_timeout = BIOSIOFFS_WATCHDOG_ENABLE_TRIGGER;
+	static const uint32_t offset_timebase = BIOSIOFFS_WATCHDOG_CONFIG;
+	static const uint8_t enable = 1;
 	const uint8_t timebase = wd->timeout > 255;
 	const uint8_t timeout = timebase ? wd->timeout / 60 : wd->timeout;
-	const uint32_t offset_enable = BIOSIOFFS_WATCHDOG_ACTIVATE_PWRCTRL;
-	const uint32_t offset_timebase = BIOSIOFFS_WATCHDOG_CONFIG;
-	const uint32_t offset_timeout = BIOSIOFFS_WATCHDOG_ENABLE_TRIGGER;
-	if (bbapi_wd_write(offset_enable, &enable, sizeof(enable))) {
-		pr_warn("%s(): select PwrCtrl IO failed\n", __FUNCTION__);
-		return -1;
+
+	int result = bbapi_wd_write(offset_enable, &enable, sizeof(enable));
+
+	switch (result) {
+		case BIOSAPI_SRVNOTSUPP:
+			pr_info("change watchdog mode not supported\n");
+		case BIOSAPIERR_NOERR:
+			break;
+		default:
+			pr_warn("select PwrCtrl IO failed with: 0x%x\n", result);
+			return result;
 	}
-	if (bbapi_wd_write(offset_timebase, &timebase, sizeof(timebase))) {
-		pr_warn("%s(): set timebase failed\n", __FUNCTION__);
-		return -1;
+
+	result = bbapi_wd_write(offset_timebase, &timebase, sizeof(timebase));
+	if (result) {
+		pr_warn("set timebase failed with: 0x%x\n", result);
+		return result;
 	}
-	if (bbapi_wd_write(offset_timeout, &timeout, sizeof(timeout))) {
-		pr_warn("%s(): enable watchdog failed\n", __FUNCTION__);
-		return -1;
+
+	result = bbapi_wd_write(offset_timeout, &timeout, sizeof(timeout));
+	if (result) {
+		pr_warn("enable watchdog failed with: 0x%x\n", result);
 	}
-	return 0;
+	return result;
 }
 
 static unsigned int wd_status(struct watchdog_device *const wd)

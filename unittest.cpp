@@ -39,7 +39,6 @@
 #include <fructose/fructose.h>
 #pragma GCC diagnostic warning "-Wsign-compare"
 
-
 /**
  * Unittest configuration
  */
@@ -317,9 +316,14 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 		pr_info("\nLED test:\n==============\n");
 		if (CONFIG_LED_TC_ENABLED) {
 			test_LED(test_name, "TwinCAT LED", BIOSIOFFS_LED_SET_TC);
+		} else {
+			pr_info("TwinCAT LED test case disabled\n");
 		}
+
 		if (CONFIG_LED_USER_ENABLED) {
 			test_LED(test_name, "User LED", BIOSIOFFS_LED_SET_USER);
+		} else {
+			pr_info("User LED test case disabled\n");
 		}
 	}
 
@@ -373,10 +377,12 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 
 		CHECK_VALUE("S-UPS active:     %9d #\n",       BIOSIOFFS_SUPS_ACTIVE_COUNT, CONFIG_SUPS_ACTIVE_COUNT, uint8_t);
 		CHECK_VALUE("S-UPS Power fail: %9d #\n",       BIOSIOFFS_SUPS_INTERNAL_PWRF_STATUS, CONFIG_SUPS_INTERNAL_PWRF_STATUS, uint8_t);
-
-		fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_SUPS_CAPACITY_TEST, NULL, 0));
 		CHECK_VALUE("Capacitor test:   %9d #\n",       BIOSIOFFS_SUPS_TEST_RESULT, CONFIG_SUPS_TEST_RESULT, uint8_t);
+#ifdef CONFIG_SUPS_GPIO_PIN_EX
+		CHECK_CLASS("GPIO:    %s\n", BIOSIOFFS_SUPS_GPIO_PIN_EX, CONFIG_SUPS_GPIO_PIN_EX, Bapi_GpioInfoEx);
+#else
 		CHECK_CLASS("GPIO:    %s\n", BIOSIOFFS_SUPS_GPIO_PIN, CONFIG_SUPS_GPIO_PIN, TSUps_GpioInfo);
+#endif
 	}
 
 	void test_System(const std::string& test_name)
@@ -507,7 +513,6 @@ struct TestDisplay : fructose::test_base<TestDisplay>
 	}
 };
 
-
 struct TestWatchdog : fructose::test_base<TestWatchdog>
 {
 	static const int SHORT_TIMEOUT = 2;
@@ -527,24 +532,6 @@ struct TestWatchdog : fructose::test_base<TestWatchdog>
 		if (!error()) {
 			std::cout << " done." << std::endl;
 		}
-	}
-
-	void test_MagicClose(const std::string& test_name)
-	{
-		(std::cout << "MagicClose watchdog test running...").flush();
-		const int timeout = SHORT_TIMEOUT;
-		const int fd = open("/dev/watchdog", O_WRONLY);
-		fructose_assert_ne(-1, fd);
-		fructose_assert_eq(0, ioctl(fd, WDIOC_SETTIMEOUT, &timeout));
-		for (int i = 0; i < 2 * timeout; ++i) {
-			std::this_thread::sleep_for(std::chrono::seconds(1));
-			fructose_assert_eq(1, write(fd, "V", 1));
-		}
-		fructose_assert_eq(1, write(fd, "\0", 1));
-		fructose_assert_eq(0, close(fd));
-		(std::cout << "WARNING watchdog will fire soon...").flush();
-		std::this_thread::sleep_for(std::chrono::seconds(timeout + 2));
-		fructose_fail("You shouldn't see, if the watchdog would work as expected!");
 	}
 
 	void test_IOCTL(const std::string& test_name)
@@ -629,6 +616,35 @@ struct TestWatchdog : fructose::test_base<TestWatchdog>
 	}
 };
 
+struct TestOneTime : fructose::test_base<TestOneTime>
+{
+
+	void test_SUPS(const std::string& test_name)
+	{
+		fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_SUPS_CAPACITY_TEST, NULL, 0));
+	}
+
+	void test_MagicClose(const std::string& test_name)
+	{
+		(std::cout << "MagicClose watchdog test running...").flush();
+		const int timeout = TestWatchdog::SHORT_TIMEOUT;
+		const int fd = open("/dev/watchdog", O_WRONLY);
+		fructose_assert_ne(-1, fd);
+		fructose_assert_eq(0, ioctl(fd, WDIOC_SETTIMEOUT, &timeout));
+		for (int i = 0; i < 2 * timeout; ++i) {
+			std::this_thread::sleep_for(std::chrono::seconds(1));
+			fructose_assert_eq(1, write(fd, "V", 1));
+		}
+		fructose_assert_eq(1, write(fd, "\0", 1));
+		fructose_assert_eq(0, close(fd));
+		(std::cout << "WARNING watchdog will fire soon...").flush();
+		std::this_thread::sleep_for(std::chrono::seconds(timeout + 2));
+		fructose_fail("You shouldn't see, if the watchdog would work as expected!");
+	}
+private:
+	BiosApi bbapi;
+};
+
 int main(int argc, char *argv[])
 {
 	TestDisplay displayTest;
@@ -647,11 +663,17 @@ int main(int argc, char *argv[])
 	bbapiTest.add_test("test_manual_LEDs", &TestBBAPI::test_manual_LEDs);
 	bbapiTest.run(argc, argv);
 
+#if CONFIG_WATCHDOG_ENABLED
 	TestWatchdog wdTest;
 	wdTest.add_test("test_Simple", &TestWatchdog::test_Simple);
 	wdTest.add_test("test_IOCTL", &TestWatchdog::test_IOCTL);
 	wdTest.add_test("test_KeepAlive", &TestWatchdog::test_KeepAlive);
-	wdTest.add_test("test_MagicClose", &TestWatchdog::test_MagicClose);
 	wdTest.run(argc, argv);
+#endif /* #if CONFIG_WATCHDOG_ENABLED */
+
+	TestOneTime oneTimeTest;
+	oneTimeTest.add_test("test_SUPS", &TestOneTime::test_SUPS);
+	oneTimeTest.add_test("test_MagicClose", &TestOneTime::test_MagicClose);
+//	oneTimeTest.run(argc, argv);
 	return 0;
 }
