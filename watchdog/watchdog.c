@@ -140,6 +140,9 @@ static struct watchdog_device g_wd = {
 static int __init bbapi_watchdog_init_module(void)
 {
 	BUILD_BUG_ON(BIT_MASK(WDOG_KEEPALIVE) != WDIOF_KEEPALIVEPING);
+#ifdef ENABLE_KEEPALIVEPING
+	BUG_ON(bbapi_board_is("CBxx53\0\0\0\0\0\0\0\0\0"));
+#endif
 	pr_info("%s, %s\n", DRV_DESCRIPTION, DRV_VERSION);
 	return watchdog_register_device(&g_wd);
 }
