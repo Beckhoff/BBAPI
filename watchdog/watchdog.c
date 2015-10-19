@@ -141,7 +141,14 @@ static int __init bbapi_watchdog_init_module(void)
 {
 	BUILD_BUG_ON(BIT_MASK(WDOG_KEEPALIVE) != WDIOF_KEEPALIVEPING);
 #ifdef ENABLE_KEEPALIVEPING
-	BUG_ON(bbapi_board_is("CBxx53\0\0\0\0\0\0\0\0\0"));
+	if (bbapi_board_is("CBxx53\0\0\0\0\0\0\0\0\0")) {
+		pr_err("Your platform doesn't support ENABLE_KEEPALIVEPING\n");
+		return -EFAULT;
+	}
+#else
+	if (bbapi_board_is("CX20x0\0\0\0\0\0\0\0\0\0")) {
+		pr_warn("Your platform supports ENABLE_KEEPALIVEPING, but this driver was build without it.\n");
+	}
 #endif
 	pr_info("%s, %s\n", DRV_DESCRIPTION, DRV_VERSION);
 	return watchdog_register_device(&g_wd);

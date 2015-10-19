@@ -310,22 +310,22 @@ static struct file_operations file_ops = {
 
 static void __init update_display(void)
 {
-	static const char CX20x0[CXPWRSUPP_MAX_DISPLAY_LINE] =
+	char CX20x0[CXPWRSUPP_MAX_DISPLAY_LINE] =
 	    "CX20x0\0\0\0\0\0\0\0\0\0";
 
 	if (bbapi_board_is(CX20x0)) {
-		char line1[CXPWRSUPP_MAX_DISPLAY_LINE] = "Linux 7890123456";
+		char os_line[CXPWRSUPP_MAX_DISPLAY_LINE] = "Linux 7890123456";
 		static const uint8_t enable = 0xff;
 
-		strncpy(line1 + 6, UTS_RELEASE, sizeof(line1) - 1 - 6);
+		strncpy(os_line + 6, UTS_RELEASE, sizeof(os_line) - 1 - 6);
 		bbapi_write(BIOSIGRP_CXPWRSUPP,
 			    BIOSIOFFS_CXPWRSUPP_ENABLEBACKLIGHT, &enable,
 			    sizeof(enable));
 		bbapi_write(BIOSIGRP_CXPWRSUPP,
-			    BIOSIOFFS_CXPWRSUPP_DISPLAYLINE2, &line1,
-			    sizeof(line1));
+			    BIOSIOFFS_CXPWRSUPP_DISPLAYLINE2, os_line,
+			    sizeof(os_line));
 		bbapi_write(BIOSIGRP_CXPWRSUPP,
-			    BIOSIOFFS_CXPWRSUPP_DISPLAYLINE1, &CX20x0,
+			    BIOSIOFFS_CXPWRSUPP_DISPLAYLINE1, CX20x0,
 			    sizeof(CX20x0));
 	} else {
 		pr_info("platform has no display or is not supported\n");

@@ -28,3 +28,5 @@ example: display_example.cpp
 # indent the source files with the kernels Lindent script
 indent: api.c api.h simple_cdev.c simple_cdev.h
 	./Lindent $?
+
+.PHONY: clean unittest

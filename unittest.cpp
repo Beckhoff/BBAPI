@@ -458,27 +458,27 @@ struct TestDisplay : fructose::test_base<TestDisplay>
 		(std::cout << "Simple display test running...").flush();
 		const int fd_1 = open("/dev/cx_display", O_WRONLY);
 		const int fd_2 = open("/dev/cx_display", O_WRONLY);
-		const std::string line("\x11\f\bx\n\bxx\t\t\t\t\t\t\t\t\t\t\t\t\t\tx");
-		const std::string line_2("\x11\r\b\r\b\r#\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t#");
-		const std::string line_3("0123456789ABCDEFFEDCBA9876543210XXXXXX");
-		const std::string light_off("\x13");
-		const char *should   = "|x              x|\n|x              x|\n";
-		const char *should_2 = "|#              x|\n|x              #|\n";
-		const char *should_3 = "|0123456789ABCDEF|\n|FEDCBA9876543210|\n";
-		const char *bar_h =  "===================\n";
-		fructose_assert_eq(line.size(), write(fd_1, line.c_str(), line.size()));
+		static const std::string line("\x11\f\bx\n\bxx\t\t\t\t\t\t\t\t\t\t\t\t\t\tx");
+		static const std::string line_2("\x11\r\b\r\b\r#\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t#");
+		static const std::string line_3("0123456789ABCDEFFEDCBA9876543210XXXXXX");
+		static const std::string light_off("\x13");
+		static const char *should   = "|x              x|\n|x              x|\n";
+		static const char *should_2 = "|#              x|\n|x              #|\n";
+		static const char *should_3 = "|0123456789ABCDEF|\n|FEDCBA9876543210|\n";
+		static const char *bar_h =  "===================\n";
+		fructose_assert_eq((ssize_t)line.size(), write(fd_1, line.c_str(), line.size()));
 		pr_info("Display should look like this:\n%s%s%s\nhit ENTER to continue", bar_h, should, bar_h);
 		std::cin.get();
 
-		fructose_assert_eq(light_off.size(), write(fd_1, light_off.c_str(), light_off.size()));
+		fructose_assert_eq((ssize_t)light_off.size(), write(fd_1, light_off.c_str(), light_off.size()));
 		pr_info("Display backlight should be switched off\nhit ENTER to continue");
 		std::cin.get();
 
-		fructose_assert_eq(line_2.size(), write(fd_1, line_2.c_str(), line_2.size()));
+		fructose_assert_eq((ssize_t)line_2.size(), write(fd_1, line_2.c_str(), line_2.size()));
 		pr_info("Display should look like this:\n%s%s%s\nhit ENTER to continue", bar_h, should_2, bar_h);
 		std::cin.get();
 
-		fructose_assert_eq(line_3.size(), write(fd_2, line_3.c_str(), line_3.size()));
+		fructose_assert_eq((ssize_t)line_3.size(), write(fd_2, line_3.c_str(), line_3.size()));
 		pr_info("Display should look like this:\n%s%s%s\nhit ENTER to continue", bar_h, should_3, bar_h);
 		std::cin.get();
 
@@ -568,7 +568,7 @@ struct TestWatchdog : fructose::test_base<TestWatchdog>
 		struct watchdog_info ident;
 		fructose_assert_eq(0, ioctl(fd, WDIOC_GETSUPPORT, &ident));
 		fructose_assert_eq(0, memcmp(identity, ident.identity, sizeof(ident.identity)));
-		fructose_assert_eq(0, ident.firmware_version);
+		fructose_assert_eq(0U, ident.firmware_version);
 		fructose_assert_eq(options, ident.options);
 
 		// pretimeout is not supported by BBAPI watchdog
@@ -660,13 +660,13 @@ int main(int argc, char *argv[])
 	bbapiTest.add_test("test_manual_LEDs", &TestBBAPI::test_manual_LEDs);
 	bbapiTest.run(argc, argv);
 
-#if CONFIG_WATCHDOG_ENABLED
+#ifndef CONFIG_WATCHDOG_DISABLED
 	TestWatchdog wdTest;
 	wdTest.add_test("test_Simple", &TestWatchdog::test_Simple);
 	wdTest.add_test("test_IOCTL", &TestWatchdog::test_IOCTL);
 	wdTest.add_test("test_KeepAlive", &TestWatchdog::test_KeepAlive);
 	wdTest.run(argc, argv);
-#endif /* #if CONFIG_WATCHDOG_ENABLED */
+#endif /* #ifndef CONFIG_WATCHDOG_DISABLED */
 
 	TestOneTime oneTimeTest;
 	oneTimeTest.add_test("test_SUPS", &TestOneTime::test_SUPS);
