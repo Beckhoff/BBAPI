@@ -623,7 +623,7 @@ struct TestOneTime : fructose::test_base<TestOneTime>
 
 	void test_MagicClose(const std::string& test_name)
 	{
-		if (CONFIG_WATCHDOG_DISABLED) {
+		if (!CONFIG_WATCHDOG_ENABLED) {
 			pr_info("Watchdog test disabled\n");
 			return;
 		}
@@ -664,13 +664,13 @@ int main(int argc, char *argv[])
 	bbapiTest.add_test("test_manual_LEDs", &TestBBAPI::test_manual_LEDs);
 	bbapiTest.run(argc, argv);
 
-#ifndef CONFIG_WATCHDOG_DISABLED
+#if CONFIG_WATCHDOG_ENABLED
 	TestWatchdog wdTest;
 	wdTest.add_test("test_Simple", &TestWatchdog::test_Simple);
 	wdTest.add_test("test_IOCTL", &TestWatchdog::test_IOCTL);
 	wdTest.add_test("test_KeepAlive", &TestWatchdog::test_KeepAlive);
 	wdTest.run(argc, argv);
-#endif /* #ifndef CONFIG_WATCHDOG_DISABLED */
+#endif /* #if CONFIG_WATCHDOG_ENABLED */
 
 	TestOneTime oneTimeTest;
 	oneTimeTest.add_test("test_SUPS", &TestOneTime::test_SUPS);
