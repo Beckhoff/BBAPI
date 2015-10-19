@@ -20,7 +20,6 @@
 */
 
 #include <linux/module.h>
-#include <linux/version.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/fs.h>
@@ -288,24 +287,9 @@ static long bbapi_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 	return result;
 }
 
-// This function remains for compatibility only.
-// TODO test it with an old kernel!
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,35))
-static int bbapi_ioctl_old(struct inode *i, struct file *f, unsigned int cmd,
-			   unsigned long arg)
-{
-	bbapi_ioctl(f, cmd, arg);
-}
-#endif
-
-/* Declare file operation function in struct */
 static struct file_operations file_ops = {
 	.owner = THIS_MODULE,
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,35))
-	.ioctl = bbapi_ioctl_old
-#else
 	.unlocked_ioctl = bbapi_ioctl
-#endif
 };
 
 static void __init update_display(void)
