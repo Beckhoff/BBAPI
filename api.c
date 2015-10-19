@@ -34,7 +34,7 @@
 #include "api.h"
 #include "TcBaDevDef_gpl.h"
 
-#define DRV_VERSION      "1.4"
+#define DRV_VERSION      "1.5"
 #define DRV_DESCRIPTION  "Beckhoff BIOS API Driver"
 
 /* Global Variables */
