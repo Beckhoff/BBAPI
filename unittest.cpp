@@ -623,6 +623,10 @@ struct TestOneTime : fructose::test_base<TestOneTime>
 
 	void test_MagicClose(const std::string& test_name)
 	{
+		if (CONFIG_WATCHDOG_DISABLED) {
+			pr_info("Watchdog test disabled\n");
+			return;
+		}
 		(std::cout << "MagicClose watchdog test running...").flush();
 		const int timeout = TestWatchdog::SHORT_TIMEOUT;
 		const int fd = open("/dev/watchdog", O_WRONLY);

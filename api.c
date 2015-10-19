@@ -294,8 +294,7 @@ static struct file_operations file_ops = {
 
 static void __init update_display(void)
 {
-	char CX20x0[CXPWRSUPP_MAX_DISPLAY_LINE] =
-	    "CX20x0\0\0\0\0\0\0\0\0\0";
+	char CX20x0[CXPWRSUPP_MAX_DISPLAY_LINE] = "CX20x0\0\0\0\0\0\0\0\0\0";
 
 	if (bbapi_board_is(CX20x0)) {
 		char os_line[CXPWRSUPP_MAX_DISPLAY_LINE] = "Linux 7890123456";
