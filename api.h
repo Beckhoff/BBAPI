@@ -55,7 +55,7 @@ extern unsigned int bbapi_read(uint32_t group, uint32_t offset,
 			       void __kernel * out, uint32_t size);
 
 extern unsigned int bbapi_write(uint32_t group, uint32_t offset,
-				const void __kernel * in, uint32_t size);
+				void __kernel * in, uint32_t size);
 
 extern int bbapi_board_is(const char *boardname);
 #endif /* #ifndef __API_H_ */

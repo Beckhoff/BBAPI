@@ -79,13 +79,13 @@ static const uint64_t BBIOSAPI_SIGNATURE = 0x3436584950414242LL;	// API-String "
 typedef
     __attribute__ ((ms_abi)) uint32_t(*PFN_BBIOSAPI_CALL) (uint32_t group,
 							   uint32_t offset,
-							   const void *in,
+							   void *in,
 							   uint32_t inSize,
 							   void *out,
 							   uint32_t outSize,
 							   uint32_t * bytes);
 
-static unsigned int bbapi_call(const void __kernel * const in,
+static unsigned int bbapi_call(void __kernel * const in,
 			       void __kernel * const out,
 			       PFN_BBIOSAPI_CALL entry,
 			       const struct bbapi_struct *const cmd,
@@ -98,7 +98,7 @@ static unsigned int bbapi_call(const void __kernel * const in,
 #endif
 
 static unsigned int bbapi_rw(uint32_t group, uint32_t offset,
-			     const void __kernel * const in, uint32_t size_in,
+			     void __kernel * const in, uint32_t size_in,
 			     void __kernel * const out, const uint32_t size_out)
 {
 	const struct bbapi_struct cmd = {
@@ -126,7 +126,7 @@ unsigned int bbapi_read(uint32_t group, uint32_t offset,
 EXPORT_SYMBOL_GPL(bbapi_read);
 
 unsigned int bbapi_write(uint32_t group, uint32_t offset,
-			 const void __kernel * const in, uint32_t size)
+			 void __kernel * const in, uint32_t size)
 {
 	return bbapi_rw(group, offset, in, size, NULL, 0);
 }
@@ -299,7 +299,7 @@ static void __init update_display(void)
 
 	if (bbapi_board_is(CX20x0)) {
 		char os_line[CXPWRSUPP_MAX_DISPLAY_LINE] = "Linux 7890123456";
-		static const uint8_t enable = 0xff;
+		uint8_t enable = 0xff;
 
 		strncpy(os_line + 6, UTS_RELEASE, sizeof(os_line) - 1 - 6);
 		bbapi_write(BIOSIGRP_CXPWRSUPP,

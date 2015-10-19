@@ -1,7 +1,7 @@
 /**
     Text display driver using the Beckhoff BIOS API
     Author: 	Patrick Brünn <p.bruenn@beckhoff.com>
-    Copyright (C) 2014  Beckhoff Automation GmbH
+    Copyright (C) 2014-2015  Beckhoff Automation GmbH
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -101,14 +101,14 @@ static ssize_t display_write(struct file *const f, const char __user * buf,
 				break;
 			case '\021':	/* enable backlight */
 				{
-					static const u8 enable = 0xff;
+					u8 enable = 0xff;
 					bbapi_write(0x00009000, 0x00000060,
 						    &enable, sizeof(enable));
 					break;
 				}
 			case '\023':	/* disable backlight */
 				{
-					static const u8 disable = 0;
+					u8 disable = 0;
 					bbapi_write(0x00009000, 0x00000060,
 						    &disable, sizeof(disable));
 					break;

@@ -1,7 +1,7 @@
 /**
     Text display driver using the Beckhoff BIOS API
     Author: 	Patrick Brünn <p.bruenn@beckhoff.com>
-    Copyright (C) 2014  Beckhoff Automation GmbH
+    Copyright (C) 2014-2015  Beckhoff Automation GmbH
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 #ifndef __DISPLAY_H_
 #define __DISPLAY_H_
 
-#define DRV_VERSION      "0.1"
+#define DRV_VERSION      "0.2"
 #define DRV_DESCRIPTION  "Beckhoff BIOS API text display driver"
 
 #undef pr_fmt

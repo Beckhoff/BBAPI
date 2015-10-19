@@ -27,7 +27,7 @@
 #include "../TcBaDevDef_gpl.h"
 #include "watchdog.h"
 
-static int bbapi_wd_write(uint32_t offset, const void *in, uint32_t size)
+static int bbapi_wd_write(uint32_t offset, void *in, uint32_t size)
 {
 	return bbapi_write(BIOSIGRP_WATCHDOG, offset, in, size);
 }
@@ -45,9 +45,9 @@ static int wd_start(struct watchdog_device *const wd)
 	static const uint32_t offset_enable = BIOSIOFFS_WATCHDOG_ACTIVATE_PWRCTRL;
 	static const uint32_t offset_timeout = BIOSIOFFS_WATCHDOG_ENABLE_TRIGGER;
 	static const uint32_t offset_timebase = BIOSIOFFS_WATCHDOG_CONFIG;
-	static const uint8_t enable = 1;
-	const uint8_t timebase = wd->timeout > 255;
-	const uint8_t timeout = timebase ? wd->timeout / 60 : wd->timeout;
+	uint8_t enable = 1;
+	uint8_t timebase = wd->timeout > 255;
+	uint8_t timeout = timebase ? wd->timeout / 60 : wd->timeout;
 
 	int result = bbapi_wd_write(offset_enable, &enable, sizeof(enable));
 
@@ -101,7 +101,7 @@ static unsigned int wd_status(struct watchdog_device *const wd)
 static int wd_stop(struct watchdog_device *wd)
 {
 	const uint32_t offset = BIOSIOFFS_WATCHDOG_ENABLE_TRIGGER;
-	const uint8_t disable = 0;
+	uint8_t disable = 0;
 	if (bbapi_wd_write(offset, &disable, sizeof(disable))) {
 		pr_warn("%s(): disable watchdog failed\n", __FUNCTION__);
 		return -1;
