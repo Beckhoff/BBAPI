@@ -312,7 +312,7 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 	void test_manual_LEDs(const std::string& test_name)
 	{
 		bbapi.setGroupOffset(BIOSIGRP_LED);
-		pr_info("\nLED test:\n==============\n");
+		pr_info("\nLED test:\n=========\n");
 		if (CONFIG_LED_TC_ENABLED) {
 			test_LED(test_name, "TwinCAT LED", BIOSIOFFS_LED_SET_TC);
 		} else {
@@ -354,7 +354,7 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 		return;
 #else
 		bbapi.setGroupOffset(BIOSIGRP_SUPS);
-		pr_info("\nSUPS test results:\n====================\n");
+		pr_info("\nSUPS test results:\n==================\n");
 		uint8_t enable = 0;
 		fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_SUPS_ENABLE, &enable, sizeof(enable)));
 		std::this_thread::sleep_for(std::chrono::milliseconds(1500));
@@ -520,6 +520,10 @@ struct TestWatchdog : fructose::test_base<TestWatchdog>
 	static const int SHORT_TIMEOUT = 2;
 	void test_Simple(const std::string& test_name)
 	{
+#if CONFIG_WATCHDOG_DISABLED
+		pr_info("Simple watchdog test disabled\n");
+		return;
+#else
 		(std::cout << "Simple watchdog test running...").flush();
 		const int timeout_sec = SHORT_TIMEOUT;
 		const int fd = open("/dev/watchdog", O_WRONLY);
@@ -534,10 +538,16 @@ struct TestWatchdog : fructose::test_base<TestWatchdog>
 		if (!error()) {
 			std::cout << " done." << std::endl;
 		}
+#endif
 	}
 
 	void test_IOCTL(const std::string& test_name)
 	{
+		pr_info("\nWatchdog test:\n==============\n");
+#if CONFIG_WATCHDOG_DISABLED
+		pr_info("IOCTL watchdog test disabled\n");
+		return;
+#else
 		(std::cout << "IOCTL watchdog test running...").flush();
 
 		const int fd = open("/dev/watchdog", O_WRONLY);
@@ -588,10 +598,15 @@ struct TestWatchdog : fructose::test_base<TestWatchdog>
 		fructose_assert_eq(1, write(fd, "V", 1));
 		fructose_assert_eq(0, close(fd));
 		std::cout << "\nBBAPI watchdog feature 'to early trigger' not supported\n";
+#endif
 	}
 
 	void test_KeepAlive(const std::string& test_name)
 	{
+#if CONFIG_WATCHDOG_DISABLED
+		pr_info("Watchdog keepalive test disabled\n");
+		return;
+#else
 		(std::cout << "Watchdog keep alive ping test running...").flush();
 		const int timeout = SHORT_TIMEOUT;
 		const int fd = open("/dev/watchdog", O_WRONLY);
@@ -611,6 +626,7 @@ struct TestWatchdog : fructose::test_base<TestWatchdog>
 		if (!error()) {
 			std::cout << " done." << std::endl;
 		}
+#endif
 	}
 };
 
@@ -624,6 +640,10 @@ struct TestOneTime : fructose::test_base<TestOneTime>
 
 	void test_MagicClose(const std::string& test_name)
 	{
+#if CONFIG_WATCHDOG_DISABLED
+		pr_info("Watchdog magic close test disabled\n");
+		return;
+#else
 		(std::cout << "MagicClose watchdog test running...").flush();
 		const int timeout = TestWatchdog::SHORT_TIMEOUT;
 		const int fd = open("/dev/watchdog", O_WRONLY);
@@ -638,6 +658,7 @@ struct TestOneTime : fructose::test_base<TestOneTime>
 		(std::cout << "WARNING watchdog will fire soon...").flush();
 		std::this_thread::sleep_for(std::chrono::seconds(timeout + 2));
 		fructose_fail("You shouldn't see, if the watchdog would work as expected!");
+#endif
 	}
 private:
 	BiosApi bbapi;

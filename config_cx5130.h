@@ -48,6 +48,9 @@
 #define CONFIG_LED_TC_ENABLED 0
 #define CONFIG_LED_USER_ENABLED 0
 
+/** Watchdog configuration */
+#define CONFIG_WATCHDOG_DISABLED 1
+
 #else
 #define TEST_DEVICE /* redefine to get a nice warning from gcc */
 #error "TEST_DEVICE was already defined"
