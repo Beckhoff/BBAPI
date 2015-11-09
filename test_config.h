@@ -83,7 +83,7 @@
 #define CONFIG_CXPWRSUPP_BUTTON_STATE 0x00
 
 /** CX UPS configuration */
-#define CONFIG_CXUPS_ENABLED (904 == CONFIG_CXPWRSUPP_TYPE)
+#define CONFIG_CXUPS_ENABLED 0
 #define CONFIG_CXUPS_FIRMWAREVER {1, 0}
 #define CONFIG_CXUPS_POWERSTATUS 1 // (BYTE) (0 := Unknown, 1 := Online, 2 := OnBatteries)
 #define CONFIG_CXUPS_BATTERYSTATUS 1 // (BYTE) (0 := Unknown, 1 := Ok, 2 := Change batteries)
