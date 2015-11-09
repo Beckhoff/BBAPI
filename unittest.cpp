@@ -179,10 +179,10 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 
 	void test_CXPowerSupply(const std::string& test_name)
 	{
-		if(CONFIG_CXPWRSUPP_DISABLED) {
-			pr_info("\nCX power supply test case disabled\n");
-			return;
-		}
+#if CONFIG_CXPWRSUPP_DISABLED
+		pr_info("\nCX power supply test case disabled\n");
+		return;
+#else
 		bbapi.setGroupOffset(BIOSIGRP_CXPWRSUPP);
 		pr_info("\nCX power supply test results:\n=============================\n");
 		CHECK_VALUE("Type:                  %04d\n", BIOSIOFFS_CXPWRSUPP_GETTYPE, CONFIG_CXPWRSUPP_TYPE, uint32_t);
@@ -204,17 +204,18 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 		CHECK_RANGE("act. power:           %5d mW\n",   BIOSIOFFS_CXPWRSUPP_GETPOWER,         CONFIG_CXPWRSUPP_POWER_RANGE,   uint32_t);
 		CHECK_RANGE("max. power:           %5d mW\n",   BIOSIOFFS_CXPWRSUPP_GETMAXPOWER,      CONFIG_CXPWRSUPP_POWER_RANGE,   uint32_t);
 		CHECK_VALUE("button state:          0x%02x\n",   BIOSIOFFS_CXPWRSUPP_GETBUTTONSTATE,   CONFIG_CXPWRSUPP_BUTTON_STATE, uint8_t);
+#endif
 	}
 
 	void test_CXPowerSupply_display(const std::string& test_name)
 	{
-		const char empty[16+1] = "                ";
-		const char line1[16+1] = "1234567890123456";
-		const char line2[16+1] = "6543210987654321";
-		if(CONFIG_CXPWRSUPP_DISABLED) {
+#if CONFIG_CXPWRSUPP_DISABLED
 			pr_info("\nCX power supply write test case disabled\n");
 			return;
-		}
+#else
+		static const char empty[16+1] = "                ";
+		static const char line1[16+1] = "1234567890123456";
+		static const char line2[16+1] = "6543210987654321";
 		bbapi.setGroupOffset(BIOSIGRP_CXPWRSUPP);
 		pr_info("\nCX power supply display test:\n=============================\n");
 		uint8_t backlight = 0;
@@ -231,6 +232,7 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 		fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_CXPWRSUPP_DISPLAYLINE1, &line1, sizeof(line1)));
 		fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_CXPWRSUPP_DISPLAYLINE2, &line2, sizeof(line2)));
 		pr_info("Display should show:\n%s\n%s\n\n", line1, line2);
+#endif
 	}
 
 	void test_CXUPS(const std::string& test_name)
@@ -347,10 +349,10 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 
 	void test_SUPS(const std::string& test_name)
 	{
-		if(CONFIG_SUPS_DISABLED) {
-			pr_info("S-UPS test case disabled\n");
-			return;
-		}
+#if CONFIG_SUPS_DISABLED
+		pr_info("S-UPS test case disabled\n");
+		return;
+#else
 		bbapi.setGroupOffset(BIOSIGRP_SUPS);
 		pr_info("\nSUPS test results:\n====================\n");
 		uint8_t enable = 0;
@@ -379,6 +381,7 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 		CHECK_CLASS("GPIO:    %s\n", BIOSIOFFS_SUPS_GPIO_PIN_EX, CONFIG_SUPS_GPIO_PIN_EX, Bapi_GpioInfoEx);
 #else
 		CHECK_CLASS("GPIO:    %s\n", BIOSIOFFS_SUPS_GPIO_PIN, CONFIG_SUPS_GPIO_PIN, TSUps_GpioInfo);
+#endif
 #endif
 	}
 
@@ -451,10 +454,10 @@ struct TestDisplay : fructose::test_base<TestDisplay>
 {
 	void test_Simple(const std::string& test_name)
 	{
-		if (CONFIG_CXPWRSUPP_DISABLED) {
-			pr_info("CX2100 text display test disabled\n");
-			return;
-		}
+#if CONFIG_CXPWRSUPP_DISABLED
+		pr_info("CX2100 text display test disabled\n");
+		return;
+#else
 		(std::cout << "Simple display test running...").flush();
 		const int fd_1 = open("/dev/cx_display", O_WRONLY);
 		const int fd_2 = open("/dev/cx_display", O_WRONLY);
@@ -489,14 +492,15 @@ struct TestDisplay : fructose::test_base<TestDisplay>
 		if (!error()) {
 			std::cout << " done." << std::endl;
 		}
+#endif
 	}
 
 	void test_SMP(const std::string& test_name)
 	{
-		if (CONFIG_CXPWRSUPP_DISABLED) {
-			pr_info("CX2100 text display test disabled\n");
-			return;
-		}
+#if CONFIG_CXPWRSUPP_DISABLED
+		pr_info("CX2100 text display test disabled\n");
+		return;
+#else
 		(std::cout << "Multithreaded display test running...").flush();
 		std::vector<std::thread> threads(32);
 		for (size_t i = 0; i < threads.size(); ++i) {
@@ -507,6 +511,7 @@ struct TestDisplay : fructose::test_base<TestDisplay>
 			t.join();
 		}
 		std::cout << " done." << std::endl;
+#endif
 	}
 };
 
@@ -582,15 +587,11 @@ struct TestWatchdog : fructose::test_base<TestWatchdog>
 		fructose_assert_eq(-1, ioctl(fd, WDIOC_GETTIMELEFT, &timeleft));
 		fructose_assert_eq(1, write(fd, "V", 1));
 		fructose_assert_eq(0, close(fd));
-		std::cout << "\nBBAPI watchdog feature 'to early trigger' not supported (indexOffset 0x5)\n";
+		std::cout << "\nBBAPI watchdog feature 'to early trigger' not supported\n";
 	}
 
 	void test_KeepAlive(const std::string& test_name)
 	{
-		if(CONFIG_WATCHDOG_PING_DISABLED) {
-			pr_info("Watchdog keep alive ping test case disabled\n");
-			return;
-		}
 		(std::cout << "Watchdog keep alive ping test running...").flush();
 		const int timeout = SHORT_TIMEOUT;
 		const int fd = open("/dev/watchdog", O_WRONLY);
@@ -623,10 +624,6 @@ struct TestOneTime : fructose::test_base<TestOneTime>
 
 	void test_MagicClose(const std::string& test_name)
 	{
-		if (!CONFIG_WATCHDOG_ENABLED) {
-			pr_info("Watchdog test disabled\n");
-			return;
-		}
 		(std::cout << "MagicClose watchdog test running...").flush();
 		const int timeout = TestWatchdog::SHORT_TIMEOUT;
 		const int fd = open("/dev/watchdog", O_WRONLY);
@@ -664,13 +661,11 @@ int main(int argc, char *argv[])
 	bbapiTest.add_test("test_manual_LEDs", &TestBBAPI::test_manual_LEDs);
 	bbapiTest.run(argc, argv);
 
-#if CONFIG_WATCHDOG_ENABLED
 	TestWatchdog wdTest;
 	wdTest.add_test("test_Simple", &TestWatchdog::test_Simple);
 	wdTest.add_test("test_IOCTL", &TestWatchdog::test_IOCTL);
 	wdTest.add_test("test_KeepAlive", &TestWatchdog::test_KeepAlive);
 	wdTest.run(argc, argv);
-#endif /* #if CONFIG_WATCHDOG_ENABLED */
 
 	TestOneTime oneTimeTest;
 	oneTimeTest.add_test("test_SUPS", &TestOneTime::test_SUPS);
