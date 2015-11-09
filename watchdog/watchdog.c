@@ -32,14 +32,6 @@ static int bbapi_wd_write(uint32_t offset, void *in, uint32_t size)
 	return bbapi_write(BIOSIGRP_WATCHDOG, offset, in, size);
 }
 
-#ifdef ENABLE_KEEPALIVEPING
-static int wd_ping(struct watchdog_device *wd)
-{
-	set_bit(WDOG_KEEPALIVE, &wd->status);
-	return bbapi_wd_write(BIOSIOFFS_WATCHDOG_IORETRIGGER, NULL, 0);
-}
-#endif
-
 static int wd_start(struct watchdog_device *const wd)
 {
 	static const uint32_t offset_enable = BIOSIOFFS_WATCHDOG_ACTIVATE_PWRCTRL;
@@ -50,7 +42,6 @@ static int wd_start(struct watchdog_device *const wd)
 	uint8_t timeout = timebase ? wd->timeout / 60 : wd->timeout;
 
 	int result = bbapi_wd_write(offset_enable, &enable, sizeof(enable));
-
 	switch (result) {
 		case BIOSAPI_SRVNOTSUPP:
 			pr_info("change watchdog mode not supported\n");
@@ -70,6 +61,20 @@ static int wd_start(struct watchdog_device *const wd)
 	result = bbapi_wd_write(offset_timeout, &timeout, sizeof(timeout));
 	if (result) {
 		pr_warn("enable watchdog failed with: 0x%x\n", result);
+	}
+	return result;
+}
+
+static int wd_ping(struct watchdog_device *wd)
+{
+	int result;
+
+	set_bit(WDOG_KEEPALIVE, &wd->status);
+
+	result = bbapi_wd_write(BIOSIOFFS_WATCHDOG_IORETRIGGER, NULL, 0);
+	if (BIOSAPI_SRVNOTSUPP == result) {
+		pr_info("watchdog io retrigger not supported\n");
+		return wd_start(wd);
 	}
 	return result;
 }
@@ -102,6 +107,7 @@ static int wd_stop(struct watchdog_device *wd)
 {
 	const uint32_t offset = BIOSIOFFS_WATCHDOG_ENABLE_TRIGGER;
 	uint8_t disable = 0;
+
 	if (bbapi_wd_write(offset, &disable, sizeof(disable))) {
 		pr_warn("%s(): disable watchdog failed\n", __FUNCTION__);
 		return -1;
@@ -113,19 +119,13 @@ static const struct watchdog_ops wd_ops = {
 	.owner = THIS_MODULE,
 	.start = wd_start,
 	.stop = wd_stop,
-#ifdef ENABLE_KEEPALIVEPING
 	.ping = wd_ping,
-#endif
 	.status = wd_status,
 	.set_timeout = wd_set_timeout,
 };
 
 static const struct watchdog_info wd_info = {
-#ifdef ENABLE_KEEPALIVEPING
 	.options = WDIOF_SETTIMEOUT | WDIOF_MAGICCLOSE | WDIOF_KEEPALIVEPING,
-#else
-	.options = WDIOF_SETTIMEOUT | WDIOF_MAGICCLOSE,
-#endif
 	.firmware_version = 0,
 	.identity = KBUILD_MODNAME,
 };
@@ -139,17 +139,6 @@ static struct watchdog_device g_wd = {
 
 static int __init bbapi_watchdog_init_module(void)
 {
-	BUILD_BUG_ON(BIT_MASK(WDOG_KEEPALIVE) != WDIOF_KEEPALIVEPING);
-#ifdef ENABLE_KEEPALIVEPING
-	if (bbapi_board_is("CBxx53\0\0\0\0\0\0\0\0\0")) {
-		pr_err("Your platform doesn't support ENABLE_KEEPALIVEPING\n");
-		return -EFAULT;
-	}
-#else
-	if (bbapi_board_is("CX20x0\0\0\0\0\0\0\0\0\0")) {
-		pr_warn("Your platform supports ENABLE_KEEPALIVEPING, but this driver was build without it.\n");
-	}
-#endif
 	pr_info("%s, %s\n", DRV_DESCRIPTION, DRV_VERSION);
 	return watchdog_register_device(&g_wd);
 }
