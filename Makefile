@@ -7,6 +7,8 @@ all:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
 
 install:
+	- sudo rmmod $(TARGET)_disp
+	- sudo rmmod $(TARGET)_wdt
 	- sudo rmmod $(TARGET)
 	sudo mkdir -p $(EXTRA_DIR)
 	sudo cp ./$(TARGET).ko $(EXTRA_DIR)
