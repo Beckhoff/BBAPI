@@ -1,4 +1,23 @@
 
+
+1.5:
+====
+- replace ENABLE_KEEPALIVEPING with runtime code
+- fix watchdog api to always support WDIOF_KEEPALIVEPING
+- refactor test_config and config_*.h
+
+Test log:
+----------|      |
+  Kernel  | arch |        device        |  os   |result (bbapi, display, watchdog)
+==========|======|======================|=======|=====================================
+4.1.7-rt8 |x86_64| CX2030 + CX2100-0904 | 14.04 | no error
+4.1.7-rt8 |x86_64| CX5130               | 14.04 | no error
+4.1.7-rt8 | i386 | CX5020               | 14.04 | no error
+
+* os/14.04 means Ubuntu 14.04 LTS
+
+
+
 1.4:
 ====
 - add support for platforms without legacy watchdog
