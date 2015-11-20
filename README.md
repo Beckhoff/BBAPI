@@ -23,7 +23,7 @@ layer. Both depend on an installed 'bbapi' module.
 'bbapi_wdt' implements a common watchdog interface to the CX hw watchdog
 
 
-###How to build and install the kernel modules:
+###How to build and install the kernel modules
 ####Install 'bbapi'
 
 1. cd into bbapi <src_dir>
@@ -42,18 +42,15 @@ layer. Both depend on an installed 'bbapi' module.
 3. make && make install
 
 
-###How to access the bbapi:
-"/dev/bbapi" is the device file to access the low level BBAPI
+###How to access the bbapi
+"/dev/bbapi" is the device file to access the low level BBAPI<br/>
+see "Beckhoff BIOS-API manual" and unittest.cpp for more details.
 
--- see "Beckhoff BIOS-API manual" and unittest.cpp for more details.
+"/dev/cx_display" is the device file to access the CX2100 text display.<br/>
+see display_example.cpp for detailed information
 
-"/dev/cx_display" is the device file to access the CX2100 text display.
-
--- see display_example.cpp for detailed information
-
-"/dev/watchdog" is the device file to access the CX hardware watchdog.
-
--- See https://www.kernel.org/doc/Documentation/watchdog/watchdog-api.txt
+"/dev/watchdog" is the device file to access the CX hardware watchdog.<br/>
+See https://www.kernel.org/doc/Documentation/watchdog/watchdog-api.txt
 
 ###History
 TODO: Write history
