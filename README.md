@@ -1,7 +1,7 @@
 #Beckhoff BIOS API
 
 ##General information about BBAPI
-The “BIOS-API” is a piece of software which is part of the BIOS in our industrial motherboards. 
+The “BIOS-API” is a piece of software which is part of the BIOS in Beckhoff industrial motherboards. 
 It offers a one-stop solution for communicating with several components on the board, 
 such as temperature and voltage sensors, the S-USV microcontroller, the PWRCTRL microcontroller, 
 the Watchdog and other components (if installed). 
