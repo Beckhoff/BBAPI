@@ -35,14 +35,6 @@
 #undef pr_fmt
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-static const char *status_to_string[] = {
-	"POWER_SUPPLY_STATUS_UNKNOWN",
-	"POWER_SUPPLY_STATUS_CHARGING",
-	"POWER_SUPPLY_STATUS_DISCHARGING",
-	"POWER_SUPPLY_STATUS_NOT_CHARGING",
-	"POWER_SUPPLY_STATUS_FULL",
-};
-
 struct bbapi_cx2100_info {
 	const char *manufacturer;
 	char serial[16];
@@ -86,17 +78,6 @@ static int ups_get_status(const struct bbapi_cx2100_info *pbi)
 	return POWER_SUPPLY_STATUS_NOT_CHARGING;
 }
 
-static void bbapi_cx2100_print(struct bbapi_cx2100_info *pbi)
-{
-	pr_info
-	    ("%s %s\nstatus: %s\nbattery%spresent\npower status: 0x%x\ntemp: %d degrees (celsius)\ncapacity: %u %%\nruntime: %u s\ncharging: %u mA\n",
-	     pbi->manufacturer, pbi->serial,
-	     status_to_string[ups_get_status(pbi)],
-	     pbi->battery_present ? " " : " not ", (int)pbi->power_status,
-	     (int)pbi->temp_C, pbi->capacity_percent, pbi->battery_runtime_s,
-	     pbi->charging_current_mA);
-}
-
 static void bbapi_cx2100_read_status(struct bbapi_cx2100_info *pbi)
 {
 	bbapi_read(BIOSIGRP_CXPWRSUPP, BIOSIOFFS_CXPWRSUPP_GETTEMP,
@@ -111,8 +92,6 @@ static void bbapi_cx2100_read_status(struct bbapi_cx2100_info *pbi)
 		   &pbi->battery_runtime_s, sizeof(pbi->battery_runtime_s));
 	bbapi_read(BIOSIGRP_CXUPS, BIOSIOFFS_CXUPS_GETCHARGINGCURRENT,
 		   &pbi->charging_current_mA, sizeof(pbi->charging_current_mA));
-
-	bbapi_cx2100_print(pbi);
 }
 
 static void bbapi_power_monitor(struct work_struct *work)
