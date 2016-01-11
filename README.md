@@ -62,4 +62,4 @@ See https://www.kernel.org/doc/Documentation/watchdog/watchdog-api.txt
 See scripts/poll_pwrfail.sh for detailed information
 
 ###History
-See CHANGES
+See [CHANGES](CHANGES)
