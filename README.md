@@ -35,6 +35,12 @@ layer. Both depend on an installed 'bbapi' module.
 2. cd into <src_dir>/display
 3. make && make install
 
+####Install 'bbapi_power'
+
+1. make sure 'bbapi' is already installed
+2. cd into <src_dir>/power
+3. make && make install
+
 ####Install 'bbapi_wdt'
 
 1. make sure 'bbapi' is already installed
@@ -52,5 +58,8 @@ see display_example.cpp for detailed information
 "/dev/watchdog" is the device file to access the CX hardware watchdog.<br/>
 See https://www.kernel.org/doc/Documentation/watchdog/watchdog-api.txt
 
+"/sys/class/gpio/sups_pwrfail/value" shows the power fail state on devices with S-UPS.<br/>
+See scripts/poll_pwrfail.sh for detailed information
+
 ###History
-TODO: Write history
+See CHANGES

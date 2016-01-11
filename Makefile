@@ -8,6 +8,7 @@ all:
 
 install:
 	- sudo rmmod $(TARGET)_disp
+	- sudo rmmod $(TARGET)_power
 	- sudo rmmod $(TARGET)_wdt
 	- sudo rmmod $(TARGET)
 	sudo mkdir -p $(EXTRA_DIR)

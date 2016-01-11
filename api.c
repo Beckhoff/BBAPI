@@ -2,7 +2,7 @@
     Character Driver for Beckhoff BIOS API
     Author: 	Heiko Wilke <h.wilke@beckhoff.com>
     Author: 	Patrick Brünn <p.bruenn@beckhoff.com>
-    Copyright (C) 2013 - 2015  Beckhoff Automation GmbH
+    Copyright (C) 2013 - 2016  Beckhoff Automation GmbH
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@
 #include <linux/types.h>
 #include <linux/fs.h>
 #include <linux/kdev_t.h>
+#include <linux/platform_device.h>
 #include <linux/slab.h>
 #include <linux/vmalloc.h>
 #include <generated/utsrelease.h>
@@ -34,7 +35,7 @@
 #include "api.h"
 #include "TcBaDevDef_gpl.h"
 
-#define DRV_VERSION      "1.5"
+#define DRV_VERSION      "1.6"
 #define DRV_DESCRIPTION  "Beckhoff BIOS API Driver"
 
 /* Global Variables */
@@ -315,6 +316,16 @@ static void __init update_display(void)
 	}
 }
 
+static void bbapi_power_release(struct device *dev)
+{
+}
+
+static struct platform_device bbapi_power = {
+	.name = "bbapi_power",
+	.id = -1,
+	.dev = {.release = bbapi_power_release},
+};
+
 static int __init bbapi_init_module(void)
 {
 	int result;
@@ -327,6 +338,14 @@ static int __init bbapi_init_module(void)
 		pr_info("BIOS API not available on this System\n");
 		return result;
 	}
+
+	result = platform_device_register(&bbapi_power);
+	if (result) {
+		pr_info("register %s platform device failed\n",
+			bbapi_power.name);
+		return result;
+	}
+
 	update_display();
 	return simple_cdev_init(&g_bbapi.dev, "chardev", KBUILD_MODNAME,
 				&file_ops);
@@ -336,6 +355,7 @@ static void __exit bbapi_exit(void)
 {
 	vfree(g_bbapi.memory);
 	simple_cdev_remove(&g_bbapi.dev);
+	platform_device_unregister(&bbapi_power);
 	pr_info("unregistered\n");
 }
 
