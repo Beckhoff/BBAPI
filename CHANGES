@@ -1,5 +1,25 @@
 
 
+1.6:
+====
+- add bbapi_power driver with support for:
+    - CX2100-0904
+    - CX5000 S-UPS
+    - CX5100 S-UPS
+- make bbapi_wdt less verbose
+
+Test log:
+----------|      |
+  Kernel  | arch |        device        |  os   |result (bbapi, display, power, watchdog)
+==========|======|======================|=======|========================================
+4.1.7-rt8 |x86_64| CX2030 + CX2100-0904 | 14.04 |
+4.1.7-rt8 |x86_64| CX5130               | 14.04 |
+4.1.7-rt8 | i386 | CX5020               | 14.04 |
+
+* os/14.04 means Ubuntu 14.04 LTS
+
+
+
 1.5:
 ====
 - replace ENABLE_KEEPALIVEPING with runtime code

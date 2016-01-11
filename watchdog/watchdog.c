@@ -1,7 +1,7 @@
 /**
     Watchdog driver using the Beckhoff BIOS API
     Author: 	Patrick Brünn <p.bruenn@beckhoff.com>
-    Copyright (C) 2014-2015  Beckhoff Automation GmbH
+    Copyright (C) 2014 - 2016  Beckhoff Automation GmbH
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,7 +25,15 @@
 
 #include "../api.h"
 #include "../TcBaDevDef_gpl.h"
-#include "watchdog.h"
+
+#define DRV_VERSION      "0.4"
+#define DRV_DESCRIPTION  "Beckhoff BIOS API watchdog driver"
+
+#undef pr_fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+
+#define WDOG_KEEPALIVE 15	/* == BIT_NUMBER(WDIOF_KEEPALIVEPING) */
+#define BBAPI_WATCHDOG_TIMEOUT_SEC 60	/* default timeout for watchdog */
 
 static int bbapi_wd_write(uint32_t offset, void *in, uint32_t size)
 {
@@ -34,8 +42,10 @@ static int bbapi_wd_write(uint32_t offset, void *in, uint32_t size)
 
 static int wd_start(struct watchdog_device *const wd)
 {
-	static const uint32_t offset_enable = BIOSIOFFS_WATCHDOG_ACTIVATE_PWRCTRL;
-	static const uint32_t offset_timeout = BIOSIOFFS_WATCHDOG_ENABLE_TRIGGER;
+	static const uint32_t offset_enable =
+	    BIOSIOFFS_WATCHDOG_ACTIVATE_PWRCTRL;
+	static const uint32_t offset_timeout =
+	    BIOSIOFFS_WATCHDOG_ENABLE_TRIGGER;
 	static const uint32_t offset_timebase = BIOSIOFFS_WATCHDOG_CONFIG;
 	uint8_t enable = 1;
 	uint8_t timebase = wd->timeout > 255;
@@ -43,13 +53,13 @@ static int wd_start(struct watchdog_device *const wd)
 
 	int result = bbapi_wd_write(offset_enable, &enable, sizeof(enable));
 	switch (result) {
-		case BIOSAPI_SRVNOTSUPP:
-			pr_info("change watchdog mode not supported\n");
-		case BIOSAPIERR_NOERR:
-			break;
-		default:
-			pr_warn("select PwrCtrl IO failed with: 0x%x\n", result);
-			return result;
+	case BIOSAPI_SRVNOTSUPP:
+		pr_info("change watchdog mode not supported\n");
+	case BIOSAPIERR_NOERR:
+		break;
+	default:
+		pr_warn("select PwrCtrl IO failed with: 0x%x\n", result);
+		return result;
 	}
 
 	result = bbapi_wd_write(offset_timebase, &timebase, sizeof(timebase));
@@ -73,7 +83,7 @@ static int wd_ping(struct watchdog_device *wd)
 
 	result = bbapi_wd_write(BIOSIOFFS_WATCHDOG_IORETRIGGER, NULL, 0);
 	if (BIOSAPI_SRVNOTSUPP == result) {
-		pr_info("watchdog io retrigger not supported\n");
+		pr_info_once("this platform doesn't support io retrigger\n");
 		return wd_start(wd);
 	}
 	return result;

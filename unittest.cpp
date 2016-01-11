@@ -683,8 +683,8 @@ int main(int argc, char *argv[])
 	bbapiTest.run(argc, argv);
 
 	TestWatchdog wdTest;
-	wdTest.add_test("test_Simple", &TestWatchdog::test_Simple);
 	wdTest.add_test("test_IOCTL", &TestWatchdog::test_IOCTL);
+	wdTest.add_test("test_Simple", &TestWatchdog::test_Simple);
 	wdTest.add_test("test_KeepAlive", &TestWatchdog::test_KeepAlive);
 	wdTest.run(argc, argv);
 
