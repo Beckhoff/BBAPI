@@ -1,7 +1,7 @@
 /**
     Character Driver for Beckhoff BIOS API
     Author: 	Patrick Brünn <p.bruenn@beckhoff.com>
-    Copyright (C) 2013 - 2014  Beckhoff Automation GmbH
+    Copyright (C) 2013 - 2016  Beckhoff Automation GmbH
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,9 +23,6 @@
 
 #include <linux/cdev.h>
 #include <linux/device.h>
-
-#undef pr_fmt
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
 struct simple_cdev {
 	dev_t dev;		// First device number

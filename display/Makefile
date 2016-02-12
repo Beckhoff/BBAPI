@@ -19,5 +19,5 @@ clean:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
 
 # indent the source files with the kernels Lindent script
-indent: display.c display.h
+indent: display.c
 	../Lindent $?
