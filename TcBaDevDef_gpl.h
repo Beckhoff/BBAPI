@@ -436,5 +436,6 @@ typedef struct Bapi_GpioInfoEx
 
 #define BIOSAPIERR_NOERR 0x0
 #define BIOSAPI_SRVNOTSUPP 0x701
+#define BIOSAPI_INVALIDPARM 0x70B
 
 #endif /* #ifndef _TCBADEVDEF_GPL_H_ */
