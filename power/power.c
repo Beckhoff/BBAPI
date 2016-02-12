@@ -19,7 +19,6 @@
 */
 
 #include <linux/module.h>
-#include <linux/gpio.h>
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <linux/platform_device.h>
@@ -29,11 +28,8 @@
 #include "../api.h"
 #include "../TcBaDevDef_gpl.h"
 
-#define DRV_VERSION      "0.1"
+#define DRV_VERSION      "0.2"
 #define DRV_DESCRIPTION  "Beckhoff BIOS API power supply driver"
-
-#undef pr_fmt
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
 struct bbapi_cx2100_info {
 	const char *manufacturer;
@@ -42,7 +38,6 @@ struct bbapi_cx2100_info {
 	struct workqueue_struct *monitor_wqueue;
 	struct delayed_work monitor;
 	struct power_supply *psy;
-	const struct power_supply_desc *psy_desc;
 
 	uint16_t charging_current_mA;
 	uint8_t capacity_percent;
@@ -50,9 +45,6 @@ struct bbapi_cx2100_info {
 	uint8_t battery_present;
 	uint32_t battery_runtime_s;
 	char temp_C;
-
-	struct gpio_chip gpio_chip;
-	struct Bapi_GpioInfoEx gpio_info;
 };
 
 static int ups_get_status(const struct bbapi_cx2100_info *pbi)
@@ -171,9 +163,6 @@ static const struct power_supply_desc cx2100_0904_desc = {
 #define cx2100_read(offset, buffer) \
 	bbapi_read(BIOSIGRP_CXPWRSUPP, offset, &buffer, sizeof(buffer))
 
-#define sups_read(offset, buffer) \
-	bbapi_read(BIOSIGRP_SUPS, offset, &buffer, sizeof(buffer))
-
 static int init_workqueue(struct bbapi_cx2100_info *pbi, struct device *parent)
 {
 	INIT_DELAYED_WORK(&pbi->monitor, bbapi_power_monitor);
@@ -210,64 +199,6 @@ static int init_cx2100_0904(struct bbapi_cx2100_info *pbi,
 	return init_workqueue(pbi, parent);
 }
 
-static int power_gpio_get(struct gpio_chip *chip, unsigned nr)
-{
-	struct bbapi_cx2100_info *pbi =
-	    container_of(chip, struct bbapi_cx2100_info, gpio_chip);
-
-	return inl(pbi->gpio_info.address) & pbi->gpio_info.bitmask;
-}
-
-static const char *power_gpio_names[] = {
-	"sups_pwrfail",
-};
-
-static const struct gpio_chip power_gpio_chip = {
-	.label = KBUILD_MODNAME,
-	.owner = THIS_MODULE,
-	.get = power_gpio_get,
-	.base = -1,
-	.ngpio = 1,
-	.names = power_gpio_names,
-};
-
-static int init_sups(struct bbapi_cx2100_info *pbi)
-{
-	int status;
-
-	if (sups_read(BIOSIOFFS_SUPS_GPIO_PIN_EX, pbi->gpio_info)) {
-		struct TSUps_GpioInfo legacy;
-
-		if (sups_read(BIOSIOFFS_SUPS_GPIO_PIN, legacy)) {
-			pr_err("BIOSIOFFS_SUPS_GPIO_PIN not supported\n");
-			return -ENODEV;
-		}
-
-		pbi->gpio_info.address = legacy.ioAddr + legacy.offset;
-		pbi->gpio_info.bitmask = legacy.params;
-		pbi->gpio_info.length = 4;
-	}
-
-	if (!request_region
-	    (pbi->gpio_info.address, pbi->gpio_info.length,
-	     power_gpio_names[0])) {
-		pr_err("request_region() failed\n");
-		return -ENODEV;
-	}
-
-	memcpy(&pbi->gpio_chip, &power_gpio_chip, sizeof(pbi->gpio_chip));
-	status = gpiochip_add(&pbi->gpio_chip);
-	if (status) {
-		release_region(pbi->gpio_info.address, pbi->gpio_info.length);
-		return status;
-	}
-
-	pr_info("registered %s as gpiochip%d with #%d GPIOs.\n",
-		pbi->gpio_chip.label, pbi->gpio_chip.base,
-		pbi->gpio_chip.ngpio);
-	return 0;
-}
-
 static int bbapi_power_init(struct bbapi_cx2100_info *pbi,
 			    struct device *parent)
 {
@@ -286,7 +217,7 @@ static int bbapi_power_init(struct bbapi_cx2100_info *pbi,
 			return -ENODEV;
 		}
 	}
-	return init_sups(pbi);
+	return -ENODEV;
 }
 
 static int bbapi_power_probe(struct platform_device *pdev)
@@ -311,10 +242,6 @@ static int bbapi_power_remove(struct platform_device *pdev)
 {
 	struct bbapi_cx2100_info *pbi = platform_get_drvdata(pdev);
 
-	if (pbi->gpio_info.address) {
-		gpiochip_remove(&pbi->gpio_chip);
-		release_region(pbi->gpio_info.address, pbi->gpio_info.length);
-	}
 	if (pbi->psy) {
 		cancel_delayed_work_sync(&pbi->monitor);
 		destroy_workqueue(pbi->monitor_wqueue);
