@@ -41,6 +41,12 @@ layer. Both depend on an installed 'bbapi' module.
 2. cd into <src_dir>/power
 3. make && make install
 
+####Install 'bbapi_sups'
+
+1. make sure 'bbapi' is already installed
+2. cd into <src_dir>/sups
+3. make && make install
+
 ####Install 'bbapi_wdt'
 
 1. make sure 'bbapi' is already installed
