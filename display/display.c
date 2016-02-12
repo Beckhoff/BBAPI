@@ -1,7 +1,7 @@
 /**
     Text display driver using the Beckhoff BIOS API
     Author: 	Patrick Brünn <p.bruenn@beckhoff.com>
-    Copyright (C) 2014-2015  Beckhoff Automation GmbH
+    Copyright (C) 2014-2016  Beckhoff Automation GmbH
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,7 +29,9 @@
 
 #include "../api.h"
 #include "../TcBaDevDef_gpl.h"
-#include "display.h"
+
+#define DRV_VERSION      "0.3"
+#define DRV_DESCRIPTION  "Beckhoff BIOS API text display driver"
 
 struct display_buffer {
 	size_t row;
@@ -102,14 +104,14 @@ static ssize_t display_write(struct file *const f, const char __user * buf,
 			case '\021':	/* enable backlight */
 				{
 					u8 enable = 0xff;
-					bbapi_write(0x00009000, 0x00000060,
+					bbapi_write(BIOSIGRP_CXPWRSUPP, BIOSIOFFS_CXPWRSUPP_ENABLEBACKLIGHT,
 						    &enable, sizeof(enable));
 					break;
 				}
 			case '\023':	/* disable backlight */
 				{
 					u8 disable = 0;
-					bbapi_write(0x00009000, 0x00000060,
+					bbapi_write(BIOSIGRP_CXPWRSUPP, BIOSIOFFS_CXPWRSUPP_ENABLEBACKLIGHT,
 						    &disable, sizeof(disable));
 					break;
 				}
@@ -126,8 +128,8 @@ static ssize_t display_write(struct file *const f, const char __user * buf,
 		++pos;
 	}
 
-	bbapi_write(0x00009000, 0x00000061, g_fb[0], sizeof(g_fb[0]));
-	bbapi_write(0x00009000, 0x00000062, g_fb[1], sizeof(g_fb[0]));
+	bbapi_write(BIOSIGRP_CXPWRSUPP, BIOSIOFFS_CXPWRSUPP_DISPLAYLINE1, g_fb[0], sizeof(g_fb[0]));
+	bbapi_write(BIOSIGRP_CXPWRSUPP, BIOSIOFFS_CXPWRSUPP_DISPLAYLINE2, g_fb[1], sizeof(g_fb[0]));
 	return len;
 }
 
