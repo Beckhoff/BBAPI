@@ -35,7 +35,7 @@
 #include "api.h"
 #include "TcBaDevDef_gpl.h"
 
-#define DRV_VERSION      "1.6"
+#define DRV_VERSION      "1.7"
 #define DRV_DESCRIPTION  "Beckhoff BIOS API Driver"
 
 /* Global Variables */
@@ -295,36 +295,53 @@ static struct file_operations file_ops = {
 
 static void __init update_display(void)
 {
-	char CX20x0[CXPWRSUPP_MAX_DISPLAY_LINE] = "CX20x0\0\0\0\0\0\0\0\0\0";
+	char line[CXPWRSUPP_MAX_DISPLAY_LINE] = "Linux 7890123456";
+	uint8_t enable = 0xff;
 
-	if (bbapi_board_is(CX20x0)) {
-		char os_line[CXPWRSUPP_MAX_DISPLAY_LINE] = "Linux 7890123456";
-		uint8_t enable = 0xff;
+	strncpy(line + 6, UTS_RELEASE, sizeof(line) - 1 - 6);
+	bbapi_write(BIOSIGRP_CXPWRSUPP,
+		    BIOSIOFFS_CXPWRSUPP_DISPLAYLINE2, line, sizeof(line));
 
-		strncpy(os_line + 6, UTS_RELEASE, sizeof(os_line) - 1 - 6);
-		bbapi_write(BIOSIGRP_CXPWRSUPP,
-			    BIOSIOFFS_CXPWRSUPP_ENABLEBACKLIGHT, &enable,
-			    sizeof(enable));
-		bbapi_write(BIOSIGRP_CXPWRSUPP,
-			    BIOSIOFFS_CXPWRSUPP_DISPLAYLINE2, os_line,
-			    sizeof(os_line));
-		bbapi_write(BIOSIGRP_CXPWRSUPP,
-			    BIOSIOFFS_CXPWRSUPP_DISPLAYLINE1, CX20x0,
-			    sizeof(CX20x0));
-	} else {
-		pr_info("platform has no display or is not supported\n");
-	}
+	bbapi_read(BIOSIGRP_GENERAL, BIOSIOFFS_GENERAL_GETBOARDNAME, line,
+		   sizeof(line));
+	bbapi_write(BIOSIGRP_CXPWRSUPP, BIOSIOFFS_CXPWRSUPP_DISPLAYLINE1, line,
+		    sizeof(line));
+
+	bbapi_write(BIOSIGRP_CXPWRSUPP,
+		    BIOSIOFFS_CXPWRSUPP_ENABLEBACKLIGHT, &enable,
+		    sizeof(enable));
 }
 
-static void bbapi_power_release(struct device *dev)
+static void dev_release_nop(struct device *dev)
 {
 }
 
 static struct platform_device bbapi_power = {
 	.name = "bbapi_power",
 	.id = -1,
-	.dev = {.release = bbapi_power_release},
+	.dev = {.release = dev_release_nop},
 };
+
+static struct platform_device bbapi_sups = {
+	.name = "bbapi_sups",
+	.id = -1,
+	.dev = {.release = dev_release_nop},
+};
+
+inline static bool bbapi_supports(uint32_t group, uint32_t offset)
+{
+	return BIOSAPI_INVALIDPARM == bbapi_read(group, offset, NULL, 0);
+}
+
+#define bbapi_supports_display() \
+	bbapi_supports(BIOSIGRP_CXPWRSUPP, BIOSIOFFS_CXPWRSUPP_ENABLEBACKLIGHT)
+
+#define bbapi_supports_power() \
+	bbapi_supports(BIOSIGRP_CXPWRSUPP, BIOSIOFFS_CXPWRSUPP_GETTYPE)
+
+#define bbapi_supports_sups() \
+	(bbapi_supports(BIOSIGRP_SUPS, BIOSIOFFS_SUPS_GPIO_PIN_EX) \
+	 || bbapi_supports(BIOSIGRP_SUPS, BIOSIOFFS_SUPS_GPIO_PIN))
 
 static int __init bbapi_init_module(void)
 {
@@ -339,24 +356,61 @@ static int __init bbapi_init_module(void)
 		return result;
 	}
 
-	result = platform_device_register(&bbapi_power);
-	if (result) {
-		pr_info("register %s platform device failed\n",
-			bbapi_power.name);
-		return result;
+	if (bbapi_supports_power()) {
+		result = platform_device_register(&bbapi_power);
+		if (result) {
+			pr_info("register %s failed\n", bbapi_power.name);
+			goto rollback_memory;
+		}
 	}
 
-	update_display();
-	return simple_cdev_init(&g_bbapi.dev, "chardev", KBUILD_MODNAME,
-				&file_ops);
+	if (bbapi_supports_sups()) {
+		result = platform_device_register(&bbapi_sups);
+		if (result) {
+			pr_info("register %s failed\n", bbapi_sups.name);
+			goto rollback_power;
+		}
+	}
+
+	result =
+	    simple_cdev_init(&g_bbapi.dev, "chardev", KBUILD_MODNAME,
+			     &file_ops);
+	if (result) {
+		goto rollback_sups;
+	}
+
+	if (bbapi_supports_display()) {
+		update_display();
+	}
+	return 0;
+
+rollback_sups:
+	if (bbapi_supports_sups()) {
+		platform_device_unregister(&bbapi_sups);
+	}
+
+rollback_power:
+	if (bbapi_supports_power()) {
+		platform_device_unregister(&bbapi_power);
+	}
+
+rollback_memory:
+	vfree(g_bbapi.memory);
+	return result;
 }
 
 static void __exit bbapi_exit(void)
 {
-	vfree(g_bbapi.memory);
 	simple_cdev_remove(&g_bbapi.dev);
-	platform_device_unregister(&bbapi_power);
-	pr_info("unregistered\n");
+
+	if (bbapi_supports_sups()) {
+		platform_device_unregister(&bbapi_sups);
+	}
+
+	if (bbapi_supports_power()) {
+		platform_device_unregister(&bbapi_power);
+	}
+	vfree(g_bbapi.memory);
 }
 
 module_init(bbapi_init_module);
