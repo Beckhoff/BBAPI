@@ -1,42 +1,38 @@
 #!/bin/bash
 
 JOYSTICK=${1:-/dev/input/js0}
+DISPLAY=/dev/cx_display
+PIPE=test.pipe
+
+page=0
+my_pages=( show_date "show_eth 0" "show_eth 1" show_load show_mem)
 
 show_date() {
-	echo -e "\f`date +"%d.%m.%Y\n%H:%M:%S"`" > /dev/cx_display;
+	echo -e "\f`date +"%d.%m.%Y\n%H:%M:%S"`" > ${DISPLAY}
 }
 
 show_eth() {
-	echo -e "\feth$1:\n`ifconfig eth$1 | grep "inet " | awk -F'[: ]+' '{ print $4 }'`" > /dev/cx_display;
+	echo -e "\feth$1:\n`ifconfig eth$1 | grep "inet " | awk -F'[: ]+' '{ print $4 }'`" > ${DISPLAY}
 }
 
 show_load() {
-	echo -e "\fload:\n`cat /proc/loadavg | awk '{print $1,$2,$3}'`" > /dev/cx_display
+	echo -e "\fload:\n`cat /proc/loadavg | awk '{print $1,$2,$3}'`" > ${DISPLAY}
 }
 
 show_mem() {
-	echo -e "\fmem: used free\n`free -h | awk '{if (NR==2) {print $2,$3,$4}}'`" > /dev/cx_display
+	echo -e "\fmem: used free\n`free -h | awk '{if (NR==2) {print $2,$3,$4}}'`" > ${DISPLAY}
 }
 
-page=0
-num_pages=5
-
 inc_page() {
-	page=$(($(($page + 1)) % $num_pages))
+	page=$(($(($page + 1)) % ${#my_pages[@]}))
 }
 
 dec_page() {
-	page=$(($(($num_pages + $page - 1)) % $num_pages))
+	page=$(($((${#my_pages[@]} + $page - 1)) % ${#my_pages[@]}))
 }
 
 update_page() {
-	case $(($page % $num_pages)) in
-	0)	show_date;;
-	1)	show_eth 0;;
-	2)	show_eth 1;;
-	3)	show_load;;
-	4)	show_mem;;
-	esac
+	${my_pages[$(($page % ${#my_pages[@]}))]}
 }
 
 decode_value() {
@@ -58,25 +54,22 @@ decode_key() {
 	esac
 }
 
-pipe=test.pipe
-
 setup_event_pipe() {
-	if [[ ! -p $pipe ]]; then
-		mkfifo $pipe
+	if [[ ! -p ${PIPE} ]]; then
+		mkfifo ${PIPE}
 	fi
 
-	stdbuf -oL hexdump ${JOYSTICK}> $pipe &
+	stdbuf -oL hexdump ${JOYSTICK}> ${PIPE} &
 	PID=$!
-	trap "{ rm $pipe; kill $PID; exit 255; }" EXIT
+	trap "{ rm ${PIPE}; kill $PID; exit 255; }" EXIT
 }
-
 
 # main() starts here...
 setup_event_pipe
 while true
 do
 	update_page
-	while read -rs -t 0.5 line < $pipe
+	while read -rs -t 0.5 line < ${PIPE}
 	do
 		case $(decode_key "${line}") in
 		"UP")    printf "Up\n";;
