@@ -1,5 +1,7 @@
 #!/bin/bash
 
+JOYSTICK=${1:-/dev/input/js0}
+
 show_date() {
 	echo -e "\f`date +"%d.%m.%Y\n%H:%M:%S"`" > /dev/cx_display;
 }
@@ -27,6 +29,16 @@ dec_page() {
 	page=$(($(($num_pages + $page - 1)) % $num_pages))
 }
 
+update_page() {
+	case $(($page % $num_pages)) in
+	0)	show_date;;
+	1)	show_eth 0;;
+	2)	show_eth 1;;
+	3)	show_load;;
+	4)	show_mem;;
+	esac
+}
+
 decode_value() {
 	case $1 in
 	"8001") echo $2;;
@@ -46,29 +58,33 @@ decode_key() {
 	esac
 }
 
-update_page() {
-	case $(($page % $num_pages)) in
-	0)	show_date;;
-	1)	show_eth 0;;
-	2)	show_eth 1;;
-	3)	show_load;;
-	4)	show_mem;;
-	esac
+pipe=test.pipe
+
+setup_event_pipe() {
+	if [[ ! -p $pipe ]]; then
+		mkfifo $pipe
+	fi
+
+	stdbuf -oL hexdump ${JOYSTICK}> $pipe &
+	PID=$!
+	trap "{ rm $pipe; kill $PID; exit 255; }" EXIT
 }
 
+
+# main() starts here...
+setup_event_pipe
 while true
 do
 	update_page
-	stdbuf -oL hexdump /dev/input/js0 |
-		while IFS= read -r line
-		do
-			case $(decode_key "${line}") in
-			"UP")    printf "Up\n";;
-			"DOWN")  printf "Down\n";;
-			"RIGHT") inc_page; printf "Right\n";;
-			"LEFT")  dec_page; printf "Left\n";;
-			"ENTER") printf "Enter\n";;
-			esac
-			update_page
-		done
+	while read -rs -t 0.5 line < $pipe
+	do
+		case $(decode_key "${line}") in
+		"UP")    printf "Up\n";;
+		"DOWN")  printf "Down\n";;
+		"RIGHT") inc_page; printf "Right\n";;
+		"LEFT")  dec_page; printf "Left\n";;
+		"ENTER") printf "Enter\n";;
+		esac
+		update_page
+	done
 done
