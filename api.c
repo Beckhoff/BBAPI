@@ -332,11 +332,11 @@ inline static bool bbapi_supports(uint32_t group, uint32_t offset)
 {
 
 	switch (bbapi_read(group, offset, NULL, 0)) {
-		case BIOSAPI_INVALIDSIZE:
-		case BIOSAPI_INVALIDPARM:
-		       return true;
-		default:
-		       return false;
+	case BIOSAPI_INVALIDSIZE:
+	case BIOSAPI_INVALIDPARM:
+		return true;
+	default:
+		return false;
 	}
 }
 

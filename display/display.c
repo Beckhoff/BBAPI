@@ -104,14 +104,16 @@ static ssize_t display_write(struct file *const f, const char __user * buf,
 			case '\021':	/* enable backlight */
 				{
 					u8 enable = 0xff;
-					bbapi_write(BIOSIGRP_CXPWRSUPP, BIOSIOFFS_CXPWRSUPP_ENABLEBACKLIGHT,
+					bbapi_write(BIOSIGRP_CXPWRSUPP,
+						    BIOSIOFFS_CXPWRSUPP_ENABLEBACKLIGHT,
 						    &enable, sizeof(enable));
 					break;
 				}
 			case '\023':	/* disable backlight */
 				{
 					u8 disable = 0;
-					bbapi_write(BIOSIGRP_CXPWRSUPP, BIOSIOFFS_CXPWRSUPP_ENABLEBACKLIGHT,
+					bbapi_write(BIOSIGRP_CXPWRSUPP,
+						    BIOSIOFFS_CXPWRSUPP_ENABLEBACKLIGHT,
 						    &disable, sizeof(disable));
 					break;
 				}
@@ -128,8 +130,10 @@ static ssize_t display_write(struct file *const f, const char __user * buf,
 		++pos;
 	}
 
-	bbapi_write(BIOSIGRP_CXPWRSUPP, BIOSIOFFS_CXPWRSUPP_DISPLAYLINE1, g_fb[0], sizeof(g_fb[0]));
-	bbapi_write(BIOSIGRP_CXPWRSUPP, BIOSIOFFS_CXPWRSUPP_DISPLAYLINE2, g_fb[1], sizeof(g_fb[0]));
+	bbapi_write(BIOSIGRP_CXPWRSUPP, BIOSIOFFS_CXPWRSUPP_DISPLAYLINE1,
+		    g_fb[0], sizeof(g_fb[0]));
+	bbapi_write(BIOSIGRP_CXPWRSUPP, BIOSIOFFS_CXPWRSUPP_DISPLAYLINE2,
+		    g_fb[1], sizeof(g_fb[0]));
 	return len;
 }
 
