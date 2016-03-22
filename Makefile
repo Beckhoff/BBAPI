@@ -26,14 +26,18 @@ unittest: test_config.h unittest.cpp TcBaDevDef_gpl.h config_cx5000.h config_cx2
 	g++ unittest.cpp -lpthread -o $@ -Wall -pedantic -std=c++11 -I../
 	sudo ./$@
 
-example: display_example.cpp
+display_example: display_example.cpp
 	g++ display_example.cpp -lpthread -o $@ -Wall -pedantic -std=c++11 -I../
+	sudo ./$@
+
+sensors_example: sensors_example.cpp
+	g++ sensors_example.cpp -o $@ -Wall -pedantic -std=c++11 -I../
 	sudo ./$@
 
 # indent the source files with the kernels Lindent script
 indent: indent_files indent_subdirs
 
-indent_files: api.c api.h simple_cdev.c simple_cdev.h
+indent_files: api.c api.h display_example.cpp sensors_example.cpp simple_cdev.c simple_cdev.h
 	./Lindent $?
 
 indent_subdirs: $(SUBDIRS)

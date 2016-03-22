@@ -44,6 +44,12 @@ typedef char TCHAR;
 #include <cinttypes>
 #endif
 
+#ifdef __cplusplus
+#include <cstdlib>
+#include <cstring>
+#include <cstdio>
+#endif /* #ifdef __cplusplus */
+
 /* BBAPI specific constants */
 
 struct bbapi_struct {
@@ -252,9 +258,9 @@ typedef struct TSensorInfo
 	}
 
 	int snprintf(char* buffer, size_t len) const {
-		return ::snprintf(buffer, len, "%12s %s %s val:%u min:%u max:%u nom:%u",
-			desc, LOCATIONCAPS[eType].name, PROBECAPS[eType].name,
-			readVal.value, minVal.value, maxVal.value, nomVal.value);
+		return ::snprintf(buffer, len, "%23s %14s val:%5u(0x%04x) min:%5u(0x%04x) max:%5u(0x%04x) nom:%5u(0x%04x) %12s",
+			LOCATIONCAPS[eLocation].name, PROBECAPS[eType].name,
+			readVal.value,readVal.status, minVal.value, minVal.status, maxVal.value, maxVal.status, nomVal.value, nomVal.status, desc);
 	};
 #endif /* #ifdef __cplusplus */
 }SENSORINFO, *PSENSORINFO;

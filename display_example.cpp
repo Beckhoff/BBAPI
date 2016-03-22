@@ -54,7 +54,7 @@ void backlight_example()
 		perror(NULL);
 		return;
 	}
-	
+
 	write(fd, off, sizeof(off));
 	std::this_thread::sleep_for(std::chrono::seconds(2));
 	write(fd, on, sizeof(on));
@@ -91,7 +91,7 @@ void complex_example()
 	write(fd, clearscreen, sizeof(clearscreen));
 	std::this_thread::sleep_for(std::chrono::seconds(2));
 
-	static const char overwrite_char[] = "\b\b\b\b\b\bworld!";	
+	static const char overwrite_char[] = "\b\b\b\b\b\bworld!";
 	write(fd, overwrite_char, sizeof(overwrite_char));
 	std::this_thread::sleep_for(std::chrono::seconds(2));
 
@@ -121,7 +121,7 @@ void RunAtPos(size_t pos)
 
 	/** print some characters */
 	for (unsigned char c = '~'; c != ('/' + pos % 10); c--) {
-		const unsigned char replace_char[2] = {'\b', c};
+		const unsigned char replace_char[2] = { '\b', c };
 		write(fd, replace_char, sizeof(replace_char));
 		/** sleep a little to let the other threads work, too */
 		std::this_thread::sleep_for(std::chrono::milliseconds(50));
@@ -131,12 +131,12 @@ void RunAtPos(size_t pos)
 
 void multithreaded_example()
 {
-	std::vector<std::thread> threads(32);
+	std::vector < std::thread > threads(32);
 	for (size_t i = 0; i < threads.size(); ++i) {
 		threads[i] = std::thread(&RunAtPos, i);
 	}
-		
-	for (auto& t: threads) {
+
+	for (auto & t:threads) {
 		t.join();
 	}
 }
@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
 	 * use ASCII code DC1(XON) and DC3(XOFF) to control the backlight
 	 */
 	backlight_example();
-	
+
 	/**
 	 * Only one thread accesses the display
 	 */
