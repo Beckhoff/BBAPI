@@ -26,11 +26,11 @@ unittest: test_config.h unittest.cpp TcBaDevDef_gpl.h config_cx5000.h config_cx2
 	g++ unittest.cpp -lpthread -o $@ -Wall -pedantic -std=c++11 -I../
 	sudo ./$@
 
-display_example: display_example.cpp
+display_example: display_example.cpp TcBaDevDef_gpl.h
 	g++ display_example.cpp -lpthread -o $@ -Wall -pedantic -std=c++11 -I../
 	sudo ./$@
 
-sensors_example: sensors_example.cpp
+sensors_example: sensors_example.cpp TcBaDevDef_gpl.h
 	g++ sensors_example.cpp -o $@ -Wall -pedantic -std=c++11 -I../
 	sudo ./$@
 

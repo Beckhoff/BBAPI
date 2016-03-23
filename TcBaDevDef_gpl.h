@@ -87,11 +87,11 @@ typedef struct TStringResourceCap
 // Version information structure
 typedef struct  TBaDevice_Version
 {
-	unsigned char		version;
-	unsigned char		revision;
-	unsigned short		build;
+	uint8_t version;
+	uint8_t revision;
+	uint16_t build;
 #ifdef __cplusplus
-	TBaDevice_Version(unsigned char v = 0, unsigned char r = 0, unsigned short b = 0)
+	TBaDevice_Version(uint8_t v = 0, uint8_t r = 0, uint16_t b = 0)
 		: version(v), revision(r), build(b)
 	{
 	}
@@ -110,13 +110,13 @@ typedef struct  TBaDevice_Version
 // Mainboard Information structure
 typedef struct  TBaDevice_MBInfo
 {
-	char		MBName[8];//ascii string
-	unsigned char		MBRevision;
-	unsigned char		biosMajVersion;
-	unsigned char		biosMinVersion;
-	unsigned char		reserved;
+	char    MBName[8];//ascii string
+	uint8_t MBRevision;
+	uint8_t biosMajVersion;
+	uint8_t biosMinVersion;
+	uint8_t reserved;
 #ifdef __cplusplus
-	TBaDevice_MBInfo(const char* name = NULL, unsigned char revision = 0, unsigned char major = 0, unsigned char minor = 0)
+	TBaDevice_MBInfo(const char* name = NULL, uint8_t revision = 0, uint8_t major = 0, uint8_t minor = 0)
 		: MBRevision(revision), biosMajVersion(major), biosMinVersion(minor), reserved(0)
 	{
 		if(name) {
@@ -224,9 +224,9 @@ static const LOCATIONCAP LOCATIONCAPS[LOCATION_MAX+1] =
 // Infovalue structure
 typedef struct TInfoValue
 {
-	short					value;	// -32000 .. +32000
-	unsigned short		status;// sensor/probe measure/value status
-	unsigned long		rsv;// reserved for future use
+	int16_t value;	// -32000 .. +32000
+	uint16_t status;// sensor/probe measure/value status
+	uint32_t reserved;
 }INFOVALUE, *PINFOVALUE;
 
 // Info value status bits
@@ -244,7 +244,7 @@ typedef struct TSensorInfo
 	INFOVALUE		nomVal;  	// Nominal value
 	INFOVALUE		minVal;		// Min. value
 	INFOVALUE		maxVal;		// Max. value
-	unsigned long	rsrv;			// Reserved for future use
+	uint32_t reserved;
 	char				desc[12]; 	// description of sensor as ASCII string (inkludes null termination)
 #ifdef __cplusplus
 	TSensorInfo(int status = 0)
@@ -269,13 +269,13 @@ typedef struct TSensorInfo
 // SUPS or watchdog GPIO pin info
 typedef struct TSUps_GpioInfo
 {
-	unsigned short		ioAddr;
-	unsigned char		offset;
-	unsigned char		params;
-	unsigned long		rsv;//reserved
+	uint16_t ioAddr;
+	uint8_t offset;
+	uint8_t params;
+	const uint32_t reserved;
 #ifdef __cplusplus
 	TSUps_GpioInfo(uint16_t addr = 0, uint8_t off = 0, uint8_t param = 0)
-		: ioAddr(addr), offset(off), params(param), rsv(0)
+		: ioAddr(addr), offset(off), params(param), reserved(0)
 	{
 	}
 
