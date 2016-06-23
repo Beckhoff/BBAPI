@@ -26,7 +26,7 @@
 #include "../api.h"
 #include "../TcBaDevDef_gpl.h"
 
-#define DRV_VERSION      "0.4"
+#define DRV_VERSION      "0.5"
 #define DRV_DESCRIPTION  "Beckhoff BIOS API watchdog driver"
 
 #undef pr_fmt
@@ -34,6 +34,12 @@
 
 #define WDOG_KEEPALIVE 15	/* == BIT_NUMBER(WDIOF_KEEPALIVEPING) */
 #define BBAPI_WATCHDOG_TIMEOUT_SEC 60	/* default timeout for watchdog */
+
+static bool nowayout = WATCHDOG_NOWAYOUT;
+module_param(nowayout, bool, 0);
+MODULE_PARM_DESC(nowayout,
+		 "Watchdog cannot be stopped once started (default="
+		 __MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
 static int bbapi_wd_write(uint32_t offset, void *in, uint32_t size)
 {
@@ -149,7 +155,9 @@ static struct watchdog_device g_wd = {
 
 static int __init bbapi_watchdog_init_module(void)
 {
-	pr_info("%s, %s\n", DRV_DESCRIPTION, DRV_VERSION);
+	pr_info("%s, %s (nowayout=%d)\n", DRV_DESCRIPTION, DRV_VERSION,
+		nowayout);
+	watchdog_set_nowayout(&g_wd, nowayout);
 	return watchdog_register_device(&g_wd);
 }
 
