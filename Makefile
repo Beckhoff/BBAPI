@@ -23,7 +23,7 @@ clean:
 	rm -f *.c~ *.h~ *.bin unittest example
 
 unittest: test_config.h unittest.cpp TcBaDevDef_gpl.h config_cx5000.h config_cx2030_cx2100-0004.h config_cx2030_cx2100-0904.h
-	g++ unittest.cpp -lpthread -o $@ -Wall -pedantic -std=c++11 -I../
+	g++ unittest.cpp -lpthread -o $@ -Wall -pedantic -std=c++11 -I../ -Itools/
 	sudo ./$@
 
 display_example: display_example.cpp TcBaDevDef_gpl.h
