@@ -3,6 +3,7 @@ EXTRA_DIR = /lib/modules/$(shell uname -r)/extra/
 obj-m += $(TARGET).o
 $(TARGET)-objs := api.o simple_cdev.o
 SUBDIRS := $(filter-out scripts/., $(wildcard */.))
+KDIR ?= /lib/modules/$(shell uname -r)/build
 
 OS!=uname -s
 SUDO_Linux=sudo
@@ -12,7 +13,7 @@ ccflags-y := -DBIOSAPIERR_OFFSET=0
 ccflags-y := -DUNAME_S=\"${OS}\"
 
 all:
-	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
+	make -C $(KDIR) M=$(PWD) modules
 
 install:
 	- ${SUDO} rmmod $(TARGET)_button
@@ -28,8 +29,7 @@ install:
 
 clean:
 	rm -rf build/
-	rm -f *.c~ *.h~ *.bin unittest example
-	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
+	make -C $(KDIR) M=$(PWD) clean
 
 # indent the source files with the kernels Lindent script
 indent: indent_files indent_subdirs

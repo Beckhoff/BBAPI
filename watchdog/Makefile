@@ -3,9 +3,10 @@ EXTRA_DIR = /lib/modules/$(shell uname -r)/extra/
 obj-m += $(TARGET).o
 $(TARGET)-objs := watchdog.o
 KBUILD_EXTRA_SYMBOLS := $(src)/../Module.symvers
+KDIR ?= /lib/modules/$(shell uname -r)/build
 
 all:
-	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
+	make -C $(KDIR) M=$(PWD) modules
 
 install:
 	- sudo rmmod $(TARGET)
@@ -15,7 +16,7 @@ install:
 	sudo modprobe $(TARGET)
 
 clean:
-	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
+	make -C $(KDIR) M=$(PWD) clean
 
 # indent the source files with the kernels Lindent script
 indent: watchdog.c

@@ -4,9 +4,10 @@ obj-m += $(TARGET).o
 $(TARGET)-objs := display.o
 ccflags-y := -DDEBUG
 KBUILD_EXTRA_SYMBOLS := $(src)/../Module.symvers
+KDIR ?= /lib/modules/$(shell uname -r)/build
 
 all:
-	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
+	make -C $(KDIR) M=$(PWD) modules
 
 install:
 	- sudo rmmod $(TARGET)
@@ -16,7 +17,7 @@ install:
 	sudo modprobe $(TARGET)
 
 clean:
-	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
+	make -C $(KDIR) M=$(PWD) clean
 
 # indent the source files with the kernels Lindent script
 indent: display.c
