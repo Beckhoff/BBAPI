@@ -26,10 +26,15 @@
 #include <linux/kdev_t.h>
 #include <linux/platform_device.h>
 #include <linux/slab.h>
+#include <linux/version.h>
 #include <linux/vmalloc.h>
 #include <generated/utsrelease.h>
 #include <asm/io.h>
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4,12,0))
 #include <asm/uaccess.h>
+#else
+#include <linux/uaccess.h>
+#endif
 #include <asm/msr.h>
 
 #include "api.h"
