@@ -234,6 +234,8 @@ static int bbapi_ioctl_mutexed(struct bbapi_object *const bbapi,
 			       const struct bbapi_struct *const cmd)
 {
 	unsigned int written = 0;
+	unsigned int ret;
+
 	if (cmd->nInBufferSize > sizeof(bbapi->in)) {
 		pr_err("%s(): nInBufferSize invalid\n", __FUNCTION__);
 		return -EINVAL;
@@ -249,9 +251,11 @@ static int bbapi_ioctl_mutexed(struct bbapi_object *const bbapi,
 		return -EFAULT;
 	}
 	// Call the BIOS API
-	if (bbapi_call(bbapi->in, bbapi->out, bbapi->entry, cmd, &written)) {
-		pr_err("%s(): call to BIOS failed\n", __FUNCTION__);
-		return -EIO;
+
+	ret = bbapi_call(bbapi->in, bbapi->out, bbapi->entry, cmd, &written);
+	if (ret) {
+		pr_err("%s(): call to BIOS failed with: 0x%x\n", __func__, ret);
+		return ret;
 	}
 	// Copy the BIOS output to the output buffer in user space
 	if (copy_to_user(cmd->pOutBuffer, bbapi->out, written)) {

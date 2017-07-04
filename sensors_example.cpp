@@ -33,6 +33,7 @@
 int main()
 {
 	int bbapi_dev = open("/dev/bbapi", O_RDWR);
+	int status;
 
 	if (-1 == bbapi_dev) {
 		printf("Open '/dev/bbapi' failed\n");
@@ -42,12 +43,13 @@ int main()
 	uint32_t num_sensors;
 	struct bbapi_struct cmd_num_sensors {
 		BIOSIGRP_SYSTEM, BIOSIOFFS_SYSTEM_COUNT_SENSORS,
-		nullptr, 0, &num_sensors, sizeof(num_sensors)
+		    nullptr, 0, &num_sensors, sizeof(num_sensors)
 	};
 
-	if (-1 == ioctl(bbapi_dev, BBAPI_CMD, &cmd_num_sensors)) {
+	status = ioctl(bbapi_dev, BBAPI_CMD, &cmd_num_sensors);
+	if (status) {
 		printf("Read number of sensors failed\n");
-		return -1;
+		return status;
 	}
 
 	while (num_sensors > 0) {
@@ -55,12 +57,14 @@ int main()
 		SENSORINFO info;
 		struct bbapi_struct cmd_read_sensor {
 			BIOSIGRP_SYSTEM, num_sensors,
-			nullptr, 0, &info, sizeof(info)
+			    nullptr, 0, &info, sizeof(info)
 		};
 
-		if (-1 == ioctl(bbapi_dev, BBAPI_CMD, &cmd_read_sensor)) {
-			printf("Read sensor #%u failed\n", num_sensors);
-			return -1;
+		status = ioctl(bbapi_dev, BBAPI_CMD, &cmd_read_sensor);
+		if (status) {
+			printf("Read sensor #%u failed with 0x%x\n",
+			       num_sensors, status);
+			return status;
 		}
 		info.snprintf(text, sizeof(text));
 		printf("%02d: %s\n", num_sensors, text);
