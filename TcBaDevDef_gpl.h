@@ -376,6 +376,7 @@ typedef struct Bapi_GpioInfoEx
 #define BIOSIGRP_LED			0x00008000	// TwinCAT and user LED functions
 	#define BIOSIOFFS_LED_SET_TC								0x00000000	// Sets TwinCAT LED, W:1, R:0 (write value 0=off, 1=red, 2=blue, 3=green)
 	#define BIOSIOFFS_LED_SET_USER							0x00000001	// Sets user LED, W:1, R:0 (write value 0=off, 1=red, 2=blue, 3=green)
+	#define BIOSIOFFS_LED_SET_PWR                                                    0x00000002   //Sets Pwr LED, W:1, R:0 (write value 0=off, 1=red, 2=blue, 3=green, 4=yellow, 5=magenta, 6=cyan, 7=white)
 
 #define BIOSIGRP_CXPWRSUPP		0x00009000	// CX Power Supply functions
 	#define BIOSIOFFS_CXPWRSUPP_GETTYPE						0x00000010	// Get type, W:0, R:4 (DWORD)
