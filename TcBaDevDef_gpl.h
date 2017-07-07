@@ -80,7 +80,7 @@ struct bbapi_struct {
 // String description
 typedef struct TStringResourceCap
 {
-	TCHAR* name;
+	const TCHAR* name;
 }PROBECAP, LOCATIONCAP, BOOTLOADER_FWUPDATE_ERRORSTRING, *PBOOTLOADER_FWUPDATE_ERRORSTRING;
 
 ////////////////////////////////////////////////////////////////
