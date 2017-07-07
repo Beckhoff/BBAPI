@@ -22,9 +22,11 @@ clean:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
 	rm -f *.c~ *.h~ *.bin unittest example
 
-unittest: test_config.h unittest.cpp TcBaDevDef_gpl.h config_cx5000.h config_cx2030_cx2100-0004.h config_cx2030_cx2100-0904.h
+unittest.bin: test_config.h unittest.cpp TcBaDevDef_gpl.h config_cx5000.h config_cx2030_cx2100-0004.h config_cx2030_cx2100-0904.h
 	g++ unittest.cpp -lpthread -o $@ -Wall -pedantic -std=c++11 -I../ -Itools/
-	sudo ./$@
+
+unittest: unittest.bin
+	sudo ./$@.bin
 
 display_example: display_example.cpp TcBaDevDef_gpl.h
 	g++ display_example.cpp -lpthread -o $@ -Wall -pedantic -std=c++11 -I../
