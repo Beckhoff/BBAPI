@@ -590,7 +590,8 @@ struct TestWatchdog : fructose::test_base<TestWatchdog>
 		const int pretimeout = 10;
 		int pre;
 		fructose_assert_eq(-1, ioctl(fd, WDIOC_SETPRETIMEOUT, &pretimeout));
-		fructose_assert_eq(-1, ioctl(fd, WDIOC_GETPRETIMEOUT, &pre));
+		fructose_assert_eq(0, ioctl(fd, WDIOC_GETPRETIMEOUT, &pre));
+		fructose_assert_eq(0, pre);
 
 		// timeleft is not supported by BBAPI watchdog
 		int timeleft;
