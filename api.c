@@ -121,8 +121,8 @@ static unsigned int bbapi_rw(uint32_t group, uint32_t offset,
 	result = bbapi_call(in, out, g_bbapi.entry, &cmd, &bytes_written);
 	mutex_unlock(&g_bbapi.mutex);
 	if (result) {
-		pr_err("%s(0x%x:0x%x) failed with: 0x%x\n", __func__,
-		       cmd.nIndexGroup, cmd.nIndexOffset, result);
+		pr_debug("%s(0x%x:0x%x) failed with: 0x%x\n", __func__,
+		         cmd.nIndexGroup, cmd.nIndexOffset, result);
 	}
 	return result;
 }
@@ -257,8 +257,8 @@ static int bbapi_ioctl_mutexed(struct bbapi_object *const bbapi,
 	// Call the BIOS API
 	ret = bbapi_call(bbapi->in, bbapi->out, bbapi->entry, cmd, &written);
 	if (ret) {
-		pr_err("%s(0x%x:0x%x) failed with: 0x%x\n", __func__,
-		       cmd->nIndexGroup, cmd->nIndexOffset, ret);
+		pr_debug("%s(0x%x:0x%x) failed with: 0x%x\n", __func__,
+		         cmd->nIndexGroup, cmd->nIndexOffset, ret);
 		return ret;
 	}
 	// Copy the BIOS output to the output buffer in user space
