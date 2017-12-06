@@ -57,7 +57,7 @@ static const uint64_t BBIOSAPI_SIGNATURE = 0x495041534F494242LL;	// API-String "
  * with optimization level "-O1". As long as ms_abi is not supported
  * on 32 bit x86 we stick with inline assembly...
  */
-static unsigned int bbapi_call(const void __kernel * const in,
+static unsigned int noinline bbapi_call(const void __kernel * const in,
 			       void __kernel * const out, void *const entry,
 			       const struct bbapi_struct *const cmd,
 			       unsigned int *bytes_written)
