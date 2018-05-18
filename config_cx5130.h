@@ -38,7 +38,7 @@
 #define CONFIG_PWRCTRL_TEST_NUMBER "151020"
 
 /** S-UPS configuration */
-#define CONFIG_SUPS_PWRFAIL_TIMES {33060, 9437, 33060}
+#define CONFIG_SUPS_PWRFAIL_TIMES {344781, 344807, 344636}
 #define CONFIG_SUPS_GPIO_PIN_EX {0, 0x4, 0x5, 0x588, 0x00400000}
 
 /** CX Power Supply configuration */
