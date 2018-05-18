@@ -113,7 +113,7 @@ int ioctl_read(int file, uint32_t group, uint32_t offset, void* out, uint32_t si
 {
 	struct bbapi_struct data {group, offset, NULL, 0, out, size};
 	if (-1 == ioctl(file, BBAPI_CMD, &data)) {
-		pr_info("%s(): failed for group: 0x%x offset: 0x%x\n", __FUNCTION__, group, offset);
+		pr_info("%s(): failed for group: 0x%x offset: 0x%x with errno: %s\n", __FUNCTION__, group, offset, strerror(errno));
 		return -1;
 	}
 	return 0;
@@ -123,7 +123,7 @@ int ioctl_write(int file, uint32_t group, uint32_t offset, const void* in, uint3
 {
 	struct bbapi_struct data {group, offset, in, size, NULL, 0};
 	if (-1 == ioctl(file, BBAPI_CMD, &data)) {
-		pr_info("%s(): failed for group: 0x%x offset: 0x%x\n", __FUNCTION__, group, offset);
+		pr_info("%s(): failed for group: 0x%x offset: 0x%x with errno: %s\n", __FUNCTION__, group, offset, strerror(errno));
 		return -1;
 	}
 	return 0;
