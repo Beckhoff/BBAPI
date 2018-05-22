@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 
-SCRIPT_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+SCRIPT_PATH="$( cd "$( dirname "$0" )" && pwd )"
 NAME=fructose-1.3.0
 
 pushd ${SCRIPT_PATH}
