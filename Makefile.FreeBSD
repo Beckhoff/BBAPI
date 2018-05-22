@@ -1,0 +1,31 @@
+KMOD=bbapi
+SRCS+= api.c
+SRCS+= simple_cdev.c
+SRCS+= bus_if.h
+SRCS+= device_if.h
+SRCS+= vnode_if.h
+CFLAGS+= -DKBUILD_MODNAME='"bbapi"'
+CFLAGS+= -DPAGE_KERNEL_EXEC=0
+CFLAGS+= -D__KERNEL__
+CFLAGS+= -I${SRCTOP}/sys/compat/linuxkpi/common/include
+UTS_RELEASE != uname -r
+
+all: prepare_linux
+
+.PHONY: prepare_linux
+prepare_linux:
+	echo '#define LINUX_VERSION_CODE 0' > ${SRCTOP}/sys/compat/linuxkpi/common/include/linux/version.h
+	echo '#define KERNEL_VERSION(a, b, c) 0xffffffff' >> ${SRCTOP}/sys/compat/linuxkpi/common/include/linux/version.h
+	mkdir -p ${SRCTOP}/sys/compat/linuxkpi/common/include/generated/
+	echo "#define UTS_RELEASE \"${UTS_RELEASE}\"" > ${SRCTOP}/sys/compat/linuxkpi/common/include/generated/utsrelease.h
+	echo '#define platform_device_register(x) 0' > ${SRCTOP}/sys/compat/linuxkpi/common/include/linux/platform_device.h
+	echo '#define platform_device_unregister(x) 0' >> ${SRCTOP}/sys/compat/linuxkpi/common/include/linux/platform_device.h
+	echo 'struct platform_device { ' >> ${SRCTOP}/sys/compat/linuxkpi/common/include/linux/platform_device.h
+	echo -e "\tconst char *const name;" >> ${SRCTOP}/sys/compat/linuxkpi/common/include/linux/platform_device.h
+	echo -e "\tconst int id;" >> ${SRCTOP}/sys/compat/linuxkpi/common/include/linux/platform_device.h
+	echo -e "\tconst struct {" >> ${SRCTOP}/sys/compat/linuxkpi/common/include/linux/platform_device.h
+	echo -e "\t\tvoid(*release)(struct device*);" >> ${SRCTOP}/sys/compat/linuxkpi/common/include/linux/platform_device.h
+	echo -e "\t} dev;" >> ${SRCTOP}/sys/compat/linuxkpi/common/include/linux/platform_device.h
+	echo '};' >> ${SRCTOP}/sys/compat/linuxkpi/common/include/linux/platform_device.h
+
+.include <bsd.kmod.mk>

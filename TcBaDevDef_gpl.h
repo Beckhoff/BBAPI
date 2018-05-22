@@ -35,7 +35,12 @@ typedef char TCHAR;
 #define _T(x) x
 #pragma GCC diagnostic ignored "-Wwrite-strings"
 
+#ifdef __FreeBSD__
+#include <sys/ioccom.h>
+#define BBAPI_CMD _IOWR('B', 0x5000, struct bbapi_struct)
+#else
 #define BBAPI_CMD							0x5000	// BIOS API Command number for IOCTL call
+#endif
 #define BBAPI_WATCHDOG_MAX_TIMEOUT_SEC (255 * 60) // BBAPI maximum timeout is 255 minutes
 
 #ifndef __KERNEL__

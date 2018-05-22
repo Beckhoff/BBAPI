@@ -4,7 +4,10 @@ obj-m += $(TARGET).o
 $(TARGET)-objs := api.o simple_cdev.o
 SUBDIRS := $(filter-out scripts/., $(wildcard */.))
 
-SUDO=sudo
+OS!=uname -s
+SUDO_Linux=sudo
+SUDO_FreeBSD=
+SUDO := ${SUDO_${OS}}
 
 all:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
@@ -47,5 +50,15 @@ sensors_example: binaries
 
 unittest: binaries
 	${SUDO} ./build/$@.bin
+
+
+${TARGET}.ko: api.c
+	make -f Makefile.$(OS)
+
+load: ${TARGET}.ko
+	make -f Makefile.$(OS) $@
+
+unload:
+	make -f Makefile.$(OS) $@
 
 .PHONY: clean display_example sensors_example unittest $(SUBDIRS)

@@ -444,4 +444,9 @@ module_exit(bbapi_exit);
 MODULE_DESCRIPTION(DRV_DESCRIPTION);
 MODULE_AUTHOR("Patrick Bruenn <p.bruenn@beckhoff.com>");
 MODULE_LICENSE("GPL");
+#ifndef __FreeBSD__
 MODULE_VERSION(DRV_VERSION);
+#else
+MODULE_VERSION(bbapi, 1);
+MODULE_DEPEND(bbapi, linuxkpi, 1, 1, 1);
+#endif
