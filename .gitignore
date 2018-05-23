@@ -1,3 +1,4 @@
+*.bin
 *.o
 *.ko
 *.o.cmd
@@ -5,4 +6,9 @@
 *.mod.c
 *.order
 *.symvers
+*.c~
+*.cpp~
+*.h~
 .tmp_versions/
+tools/fructose/
+tools/fructose-*.tar.gz
