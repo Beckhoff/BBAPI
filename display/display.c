@@ -18,7 +18,6 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include <asm/uaccess.h>
 #include <linux/ctype.h>
 #include <linux/fs.h>
 #include <linux/miscdevice.h>
@@ -26,6 +25,11 @@
 #include <linux/slab.h>
 #include <linux/version.h>
 #include <linux/kernel.h>
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4,12,0))
+#include <asm/uaccess.h>
+#else
+#include <linux/uaccess.h>
+#endif
 
 #include "../api.h"
 #include "../TcBaDevDef_gpl.h"
