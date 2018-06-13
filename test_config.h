@@ -29,7 +29,7 @@
 
 /** reused ranges */
 #define BOOTCOUNTER_RANGE 1, 1500
-#define OPERATION_TIME_RANGE  1, 500000
+#define OPERATION_TIME_RANGE  1, 1500000
 #define _24VOLT_RANGE 23500, 28000
 
 #if defined(__i386__)
