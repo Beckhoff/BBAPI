@@ -300,9 +300,15 @@ static long bbapi_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 	return result;
 }
 
+static int bbapi_release(struct inode *i, struct file *f)
+{
+	return 0;
+}
+
 static struct file_operations file_ops = {
 	.owner = THIS_MODULE,
-	.unlocked_ioctl = bbapi_ioctl
+	.unlocked_ioctl = bbapi_ioctl,
+	.release = bbapi_release,
 };
 
 static void __init update_display(void)
