@@ -2,7 +2,7 @@
     Character Driver for Beckhoff BIOS API
     Author: 	Heiko Wilke <h.wilke@beckhoff.com>
     Author: 	Patrick Brünn <p.bruenn@beckhoff.com>
-    Copyright (C) 2013 - 2016  Beckhoff Automation GmbH
+    Copyright (C) 2013 - 2018  Beckhoff Automation GmbH & Co. KG
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@
 #include "api.h"
 #include "TcBaDevDef_gpl.h"
 
-#define DRV_VERSION      "1.7"
+#define DRV_VERSION      "1.8"
 #define DRV_DESCRIPTION  "Beckhoff BIOS API Driver"
 
 /* Global Variables */
@@ -173,7 +173,7 @@ EXPORT_SYMBOL_GPL(bbapi_board_is);
  * Return: 0 for success, -ENOMEM if the allocation of kernel memory fails
  */
 static int __init bbapi_copy_bios(struct bbapi_object *bbapi,
-				  void __iomem * pos)
+				  uint8_t __iomem * pos)
 {
 	const uint32_t offset = ioread32(pos + 8);
 	const size_t size = offset + 4096;
@@ -200,11 +200,11 @@ static int __init bbapi_find_bios(struct bbapi_object *bbapi)
 	static const size_t STEP_SIZE = 0x10;
 
 	// Try to remap IO Memory to search the BIOS API in the memory
-	void __iomem *const start = ioremap(BBIOSAPI_SIGNATURE_PHYS_START_ADDR,
+	uint8_t __iomem *const start = ioremap(BBIOSAPI_SIGNATURE_PHYS_START_ADDR,
 					    BBIOSAPI_SIGNATURE_SEARCH_AREA);
-	const void __iomem *const end = start + BBIOSAPI_SIGNATURE_SEARCH_AREA;
+	const uint8_t __iomem *const end = start + BBIOSAPI_SIGNATURE_SEARCH_AREA;
 	int result = -EFAULT;
-	void __iomem *pos;
+	uint8_t __iomem *pos;
 	size_t off;
 
 	if (start == NULL) {

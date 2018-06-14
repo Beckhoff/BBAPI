@@ -43,7 +43,7 @@
  * largest BIOS command. Right now this is: BIOSIOFFS_UEEPROM_READ.
  */
 struct bbapi_object {
-	void *memory;
+	uint8_t *memory;
 	void *entry;
 	char in[BBAPI_BUFFER_SIZE];
 	char out[BBAPI_BUFFER_SIZE];
