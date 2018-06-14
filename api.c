@@ -35,7 +35,6 @@
 #else
 #include <linux/uaccess.h>
 #endif
-#include <asm/msr.h>
 
 #include "api.h"
 #include "TcBaDevDef_gpl.h"
