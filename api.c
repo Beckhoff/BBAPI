@@ -102,9 +102,9 @@ static unsigned int bbapi_call(void __kernel * const in,
 }
 #endif
 
-static unsigned int bbapi_rw(uint32_t group, uint32_t offset,
+unsigned int bbapi_rw(uint32_t group, uint32_t offset,
 			     void __kernel * const in, uint32_t size_in,
-			     void __kernel * const out, const uint32_t size_out)
+			     void __kernel * const out, const uint32_t size_out, uint32_t *bytes_written)
 {
 	const struct bbapi_struct cmd = {
 		.nIndexGroup = group,
@@ -114,10 +114,9 @@ static unsigned int bbapi_rw(uint32_t group, uint32_t offset,
 		.pOutBuffer = NULL,
 		.nOutBufferSize = size_out
 	};
-	unsigned int bytes_written = 0;
 	volatile unsigned int result = 0;
 	mutex_lock(&g_bbapi.mutex);
-	result = bbapi_call(in, out, g_bbapi.entry, &cmd, &bytes_written);
+	result = bbapi_call(in, out, g_bbapi.entry, &cmd, bytes_written);
 	mutex_unlock(&g_bbapi.mutex);
 	if (result) {
 		pr_debug("%s(0x%x:0x%x) failed with: 0x%x\n", __func__,
@@ -129,7 +128,7 @@ static unsigned int bbapi_rw(uint32_t group, uint32_t offset,
 unsigned int bbapi_read(uint32_t group, uint32_t offset,
 			void __kernel * const out, const uint32_t size)
 {
-	return bbapi_rw(group, offset, NULL, 0, out, size);
+	return bbapi_rw(group, offset, NULL, 0, out, size, NULL);
 }
 
 EXPORT_SYMBOL_GPL(bbapi_read);
@@ -137,7 +136,8 @@ EXPORT_SYMBOL_GPL(bbapi_read);
 unsigned int bbapi_write(uint32_t group, uint32_t offset,
 			 void __kernel * const in, uint32_t size)
 {
-	return bbapi_rw(group, offset, in, size, NULL, 0);
+	uint32_t bytes_written = 0;
+	return bbapi_rw(group, offset, in, size, NULL, 0, &bytes_written);
 }
 
 EXPORT_SYMBOL_GPL(bbapi_write);
