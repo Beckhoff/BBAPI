@@ -9,6 +9,12 @@
 *.c~
 *.cpp~
 *.h~
+*_if.h
+vnode_if_newproto.h
+vnode_if_typedef.h
 .tmp_versions/
 tools/fructose/
 tools/fructose-*.tar.gz
+export_syms
+machine
+x86
