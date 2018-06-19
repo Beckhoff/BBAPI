@@ -15,6 +15,7 @@ vnode_if_typedef.h
 .tmp_versions/
 tools/fructose/
 tools/fructose-*.tar.gz
+build
 export_syms
 machine
 x86
