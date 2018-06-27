@@ -32,7 +32,7 @@ int simple_cdev_init(struct simple_cdev *dev, const char *classname,
 
 	cdev_init(&dev->cdev, file_ops);
 	dev->cdev.owner = THIS_MODULE;
-	kobject_set_name(&dev->cdev.kobj, "bbapi%d", 0);
+	kobject_set_name(&dev->cdev.kobj, "%s", devicename);
 	if (cdev_add(&dev->cdev, dev->dev, 1) == -1) {
 		pr_warn("cdev_add() failed!\n");
 		goto rollback_region;
