@@ -115,12 +115,16 @@ unsigned int bbapi_rw(uint32_t group, uint32_t offset,
 		.nOutBufferSize = size_out
 	};
 	volatile unsigned int result = 0;
+
 	mutex_lock(&g_bbapi.mutex);
-	result = bbapi_call(in, out, g_bbapi.entry, &cmd, bytes_written);
+	if (g_bbapi.entry != 0)
+		result = bbapi_call(in, out, g_bbapi.entry, &cmd, bytes_written);
+	else
+		result = -EINVAL;
 	mutex_unlock(&g_bbapi.mutex);
 	if (result) {
 		pr_debug("%s(0x%x:0x%x) failed with: 0x%x\n", __func__,
-		         cmd.nIndexGroup, cmd.nIndexOffset, result);
+	         cmd.nIndexGroup, cmd.nIndexOffset, result);
 	}
 	return result;
 }
@@ -426,6 +430,9 @@ rollback_memory:
 
 static void __exit bbapi_exit(void)
 {
+	if (g_bbapi.memory == 0)
+		return;
+
 	simple_cdev_remove(&g_bbapi.dev);
 
 	if (bbapi_supports_sups()) {
