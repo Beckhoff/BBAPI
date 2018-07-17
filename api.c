@@ -318,10 +318,10 @@ static struct file_operations file_ops = {
 
 static void __init update_display(void)
 {
-	char line[CXPWRSUPP_MAX_DISPLAY_LINE] = "Linux 7890123456";
+	char line[CXPWRSUPP_MAX_DISPLAY_LINE];
 	uint8_t enable = 0xff;
 
-	strncpy(line + 6, UTS_RELEASE, sizeof(line) - 1 - 6);
+	snprintf(line, sizeof(line), "%s %s", UNAME_S, UTS_RELEASE);
 	bbapi_write(BIOSIGRP_CXPWRSUPP,
 		    BIOSIOFFS_CXPWRSUPP_DISPLAYLINE2, line, sizeof(line));
 

@@ -8,6 +8,7 @@ OS!=uname -s
 SUDO_Linux=sudo
 SUDO_FreeBSD=
 SUDO := ${SUDO_${OS}}
+ccflags-y := -DUNAME_S=\"${OS}\"
 
 all:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
