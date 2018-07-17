@@ -116,11 +116,11 @@ unsigned int bbapi_rw(uint32_t group, uint32_t offset,
 	};
 	volatile unsigned int result = 0;
 
+	if (!g_bbapi.entry)
+		return BIOSAPI_SRVNOTSUPP;
+
 	mutex_lock(&g_bbapi.mutex);
-	if (g_bbapi.entry != 0)
-		result = bbapi_call(in, out, g_bbapi.entry, &cmd, bytes_written);
-	else
-		result = -EINVAL;
+	result = bbapi_call(in, out, g_bbapi.entry, &cmd, bytes_written);
 	mutex_unlock(&g_bbapi.mutex);
 	if (result) {
 		pr_debug("%s(0x%x:0x%x) failed with: 0x%x\n", __func__,
@@ -431,7 +431,7 @@ rollback_memory:
 
 static void __exit bbapi_exit(void)
 {
-	if (g_bbapi.memory == 0)
+	if (!g_bbapi.memory)
 		return;
 
 	simple_cdev_remove(&g_bbapi.dev);
