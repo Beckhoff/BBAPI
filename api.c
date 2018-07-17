@@ -132,7 +132,8 @@ unsigned int bbapi_rw(uint32_t group, uint32_t offset,
 unsigned int bbapi_read(uint32_t group, uint32_t offset,
 			void __kernel * const out, const uint32_t size)
 {
-	return bbapi_rw(group, offset, NULL, 0, out, size, NULL);
+	uint32_t bytes_written = 0;
+	return bbapi_rw(group, offset, NULL, 0, out, size, &bytes_written);
 }
 
 EXPORT_SYMBOL_GPL(bbapi_read);
