@@ -26,8 +26,10 @@
 #include <fcntl.h>
 #include <stdint.h>
 #include <sys/ioctl.h>
+#ifndef __FreeBSD__
 #include <linux/types.h>
 #include <linux/watchdog.h>
+#endif /* #ifndef __FreeBSD__ */
 
 #include <chrono>
 #include <iostream>

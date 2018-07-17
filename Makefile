@@ -6,7 +6,7 @@ SUBDIRS := $(filter-out scripts/., $(wildcard */.))
 
 OS!=uname -s
 SUDO_Linux=sudo
-SUDO_FreeBSD=
+SUDO_FreeBSD=doas
 SUDO := ${SUDO_${OS}}
 ccflags-y := -DUNAME_S=\"${OS}\"
 
@@ -57,9 +57,9 @@ ${TARGET}.ko: api.c
 	make -f Makefile.$(OS)
 
 load: ${TARGET}.ko
-	make -f Makefile.$(OS) $@
+	${SUDO} make -f Makefile.$(OS) $@
 
 unload:
-	make -f Makefile.$(OS) $@
+	${SUDO} make -f Makefile.$(OS) $@
 
 .PHONY: clean display_example sensors_example unittest $(SUBDIRS)
