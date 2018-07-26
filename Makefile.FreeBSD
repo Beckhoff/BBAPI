@@ -6,7 +6,7 @@ SRCS+= device_if.h
 SRCS+= vnode_if.h
 CFLAGS+= -DKBUILD_MODNAME='"bbapi"'
 CFLAGS+= -DUNAME_S='"FreeBSD"'
-CFLAGS+= -DPAGE_KERNEL_EXEC=0
+CFLAGS+= -DPAGE_KERNEL_EXEC=M_EXEC
 CFLAGS+= -D__KERNEL__
 CFLAGS+= -I${SRCTOP}/sys/compat/linuxkpi/common/include
 UTS_RELEASE != uname -r
