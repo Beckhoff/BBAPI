@@ -1,21 +1,8 @@
+// SPDX-License-Identifier: MIT
 /**
     CX power supply driver using the Beckhoff BIOS API
     Author: 	Patrick Brünn <p.bruenn@beckhoff.com>
-    Copyright (C) 2015 - 2016  Beckhoff Automation GmbH
-
-    This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License along
-    with this program; if not, write to the Free Software Foundation, Inc.,
-    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+    Copyright (C) 2015 - 2018 Beckhoff Automation GmbH & Co. KG
 */
 
 #include <linux/module.h>
@@ -26,7 +13,7 @@
 #include <linux/workqueue.h>
 
 #include "../api.h"
-#include "../TcBaDevDef_gpl.h"
+#include "../TcBaDevDef.h"
 
 #define DRV_VERSION      "0.2"
 #define DRV_DESCRIPTION  "Beckhoff BIOS API power supply driver"
@@ -262,5 +249,5 @@ static struct platform_driver bbapi_power_driver = {
 module_platform_driver(bbapi_power_driver);
 MODULE_DESCRIPTION(DRV_DESCRIPTION);
 MODULE_AUTHOR("Patrick Bruenn <p.bruenn@beckhoff.com>");
-MODULE_LICENSE("GPL");
+MODULE_LICENSE("GPL and additional rights");
 MODULE_VERSION(DRV_VERSION);

@@ -1,22 +1,9 @@
+// SPDX-License-Identifier: MIT
 /**
     Character Driver for Beckhoff BIOS API
     Author: 	Heiko Wilke <h.wilke@beckhoff.com>
     Author: 	Patrick Brünn <p.bruenn@beckhoff.com>
     Copyright (C) 2013 - 2018  Beckhoff Automation GmbH & Co. KG
-
-    This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License along
-    with this program; if not, write to the Free Software Foundation, Inc.,
-    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #include <linux/module.h>
@@ -37,7 +24,7 @@
 #endif
 
 #include "api.h"
-#include "TcBaDevDef_gpl.h"
+#include "TcBaDevDef.h"
 
 #define DRV_VERSION      "1.8"
 #define DRV_DESCRIPTION  "Beckhoff BIOS API Driver"
@@ -136,7 +123,7 @@ unsigned int bbapi_read(uint32_t group, uint32_t offset,
 	return bbapi_rw(group, offset, NULL, 0, out, size, &bytes_written);
 }
 
-EXPORT_SYMBOL_GPL(bbapi_read);
+EXPORT_SYMBOL(bbapi_read);
 
 unsigned int bbapi_write(uint32_t group, uint32_t offset,
 			 void __kernel * const in, uint32_t size)
@@ -145,7 +132,7 @@ unsigned int bbapi_write(uint32_t group, uint32_t offset,
 	return bbapi_rw(group, offset, in, size, NULL, 0, &bytes_written);
 }
 
-EXPORT_SYMBOL_GPL(bbapi_write);
+EXPORT_SYMBOL(bbapi_write);
 
 int bbapi_board_is(const char *const boardname)
 {
@@ -156,7 +143,7 @@ int bbapi_board_is(const char *const boardname)
 	return 0 == strncmp(board, boardname, sizeof(board));
 }
 
-EXPORT_SYMBOL_GPL(bbapi_board_is);
+EXPORT_SYMBOL(bbapi_board_is);
 
 /**
  * bbapi_copy_bios() - Copy BIOS from SPI flash into RAM
@@ -451,7 +438,7 @@ module_exit(bbapi_exit);
 
 MODULE_DESCRIPTION(DRV_DESCRIPTION);
 MODULE_AUTHOR("Patrick Bruenn <p.bruenn@beckhoff.com>");
-MODULE_LICENSE("GPL");
+MODULE_LICENSE("GPL and additional rights");
 #ifndef __FreeBSD__
 MODULE_VERSION(DRV_VERSION);
 #else
