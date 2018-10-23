@@ -2,7 +2,7 @@
 /**
     Character Driver for Beckhoff BIOS API
     Author: 	Heiko Wilke <h.wilke@beckhoff.com>
-    Author: 	Patrick Brünn <p.bruenn@beckhoff.com>
+    Author: 	Patrick Bruenn <p.bruenn@beckhoff.com>
     Copyright (C) 2013 - 2018  Beckhoff Automation GmbH & Co. KG
 */
 
@@ -26,7 +26,7 @@
 #include "api.h"
 #include "TcBaDevDef.h"
 
-#define DRV_VERSION      "1.8"
+#define DRV_VERSION      "1.9"
 #define DRV_DESCRIPTION  "Beckhoff BIOS API Driver"
 
 /* Global Variables */
@@ -204,7 +204,7 @@ static int __init bbapi_find_bios(struct bbapi_object *bbapi)
 	}
 	// Search through the remapped memory and look for the BIOS API String
 	for (off = 0; off < STEP_SIZE; ++off) {
-		for (pos = start + off; pos < end; pos += STEP_SIZE) {
+		for (pos = start + off; pos <= end - STEP_SIZE; pos += STEP_SIZE) {
 			const uint32_t low = ioread32(pos);
 			const uint32_t high = ioread32(pos + 4);
 			const uint64_t lword = ((uint64_t) high << 32 | low);
