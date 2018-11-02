@@ -15,8 +15,10 @@ typedef char TCHAR;
 #ifdef __FreeBSD__
 #include <sys/ioccom.h>
 #define BBAPI_CMD _IOWR('B', 0x5000, struct bbapi_struct)
+#define BIOSAPIERR_OFFSET 0x20000000
 #else
 #define BBAPI_CMD							0x5000	// BIOS API Command number for IOCTL call
+#define BIOSAPIERR_OFFSET 0
 #endif
 #define BBAPI_WATCHDOG_MAX_TIMEOUT_SEC (255 * 60) // BBAPI maximum timeout is 255 minutes
 
@@ -424,8 +426,8 @@ typedef struct Bapi_GpioInfoEx
 	#define BIOSIOFFS_CXUPS_GETSMBUSADDRESS				0x000000F0	// Get SMBus address W:0, R:2 (hHost, address)
 
 #define BIOSAPIERR_NOERR 0x0
-#define BIOSAPI_SRVNOTSUPP 0x701
-#define BIOSAPI_INVALIDSIZE 0x705
-#define BIOSAPI_INVALIDPARM 0x70B
+#define BIOSAPI_SRVNOTSUPP (BIOSAPIERR_OFFSET + 0x701)
+#define BIOSAPI_INVALIDSIZE (BIOSAPIERR_OFFSET + 0x705)
+#define BIOSAPI_INVALIDPARM (BIOSAPIERR_OFFSET + 0x70B)
 
 #endif /* #ifndef _TCBADEVDEF_H_ */
