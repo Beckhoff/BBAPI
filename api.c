@@ -342,7 +342,7 @@ static struct platform_device bbapi_sups = {
 inline static bool bbapi_supports(uint32_t group, uint32_t offset)
 {
 
-	switch (bbapi_read(group, offset, NULL, 0)) {
+	switch (~BIOSAPIERR_OFFSET & bbapi_read(group, offset, NULL, 0)) {
 	case BIOSAPI_INVALIDSIZE:
 	case BIOSAPI_INVALIDPARM:
 		return true;
