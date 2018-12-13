@@ -35,6 +35,11 @@
 #error "no test configuration is enabled in test_config.h"
 #else
 
+#ifdef __FreeBSD__
+#undef CONFIG_WATCHDOG_DISABLED
+#define CONFIG_WATCHDOG_DISABLED 1
+#endif /* #ifdef __FreeBSD__ */
+
 #define pr_info printf
 
 using namespace fructose;
