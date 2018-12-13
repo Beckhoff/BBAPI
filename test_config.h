@@ -9,6 +9,7 @@
 #define _TEST_CONFIG_H_
 
 /** device definitions */
+#define DEVICE_C6015 0xC6015
 #define DEVICE_CX2030_CX2100_0004 0x21000004
 #define DEVICE_CX2030_CX2100_0904 0x21000904
 #define DEVICE_CX5000 0x5000
@@ -28,6 +29,7 @@
 #define FILE_PATH	"/dev/bbapi" 	// Path to character Device
 
 /** select test device */
+//#include "config_c6015.h"
 //#include "config_cx5000.h"
 //#include "config_cx5130.h"
 //#include "config_cx2030_cx2100-0004.h"
