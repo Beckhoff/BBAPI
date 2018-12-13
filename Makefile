@@ -25,8 +25,9 @@ install:
 	${SUDO} modprobe $(TARGET)
 
 clean:
-	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
+	rm -rf build/
 	rm -f *.c~ *.h~ *.bin unittest example
+	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
 
 # indent the source files with the kernels Lindent script
 indent: indent_files indent_subdirs
