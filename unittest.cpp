@@ -103,7 +103,7 @@ struct BiosPair
 	};
 };
 
-int ioctl_read(int file, uint32_t group, uint32_t offset, void* out, uint32_t size)
+int ioctl_read(int file, uint32_t group, uint32_t offset, void* out, uint32_t size, uint32_t *pBytesReturned)
 {
 	struct bbapi_struct data {group, offset, NULL, 0, out, size};
 	if (-1 == ioctl(file, BBAPI_CMD, &data)) {
@@ -145,9 +145,9 @@ struct BiosApi
 		m_Group = group;
 	}
 
-	int ioctl_read(uint32_t offset, void* out, unsigned long size) const
+	int ioctl_read(uint32_t offset, void* out, unsigned long size, uint32_t *pBytesReturned) const
 	{
-		return ::ioctl_read(m_File, m_Group, offset, out, size);
+		return ::ioctl_read(m_File, m_Group, offset, out, size, pBytesReturned);
 	}
 
 	int ioctl_write(uint32_t offset, const void* in, unsigned long size) const
@@ -383,7 +383,8 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 	{
 		bbapi.setGroupOffset(BIOSIGRP_SYSTEM);
 		uint32_t num_sensors;
-		bbapi.ioctl_read(BIOSIOFFS_SYSTEM_COUNT_SENSORS, &num_sensors, sizeof(num_sensors));
+		uint32_t bytesReturned;
+		bbapi.ioctl_read(BIOSIOFFS_SYSTEM_COUNT_SENSORS, &num_sensors, sizeof(num_sensors), &bytesReturned);
 		pr_info("\nSystem test results:\n====================\n");
 		while (num_sensors > 0) {
 			SENSORINFO info;
@@ -399,9 +400,10 @@ private:
 	template<typename T>
 	void test_object(const std::string& nIndexOffset, const unsigned long offset, const T expectedValue, const std::string& msg, const bool doCompare = true)
 	{
+		uint32_t bytesReturned;
 		char text[256];
 		T value {0};
-		fructose_loop_assert(nIndexOffset, -1 != bbapi.ioctl_read(offset, &value, sizeof(value)));
+		fructose_loop_assert(nIndexOffset, -1 != bbapi.ioctl_read(offset, &value, sizeof(value), &bytesReturned));
 		if (doCompare) {
 			fructose_loop_assert(nIndexOffset, value == expectedValue);
 		}
@@ -412,8 +414,9 @@ private:
 	template<typename T>
 	void test_range(const std::string& nIndexOffset, const unsigned long offset, const T lower, const T upper, const std::string& msg)
 	{
+		uint32_t bytesReturned;
 		T value {0};
-		fructose_loop_assert(nIndexOffset, -1 != bbapi.ioctl_read(offset, &value, sizeof(value)));
+		fructose_loop_assert(nIndexOffset, -1 != bbapi.ioctl_read(offset, &value, sizeof(value), &bytesReturned));
 		fructose_loop2_assert(nIndexOffset, lower, value, lower <= value);
 		fructose_loop2_assert(nIndexOffset, upper, value, upper >= value);
 		pr_info(msg.c_str(), value);
