@@ -15,6 +15,7 @@ all:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
 
 install:
+	- ${SUDO} rmmod $(TARGET)_button
 	- ${SUDO} rmmod $(TARGET)_disp
 	- ${SUDO} rmmod $(TARGET)_power
 	- ${SUDO} rmmod $(TARGET)_sups
