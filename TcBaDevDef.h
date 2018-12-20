@@ -12,13 +12,20 @@ typedef char TCHAR;
 #define _T(x) x
 #pragma GCC diagnostic ignored "-Wwrite-strings"
 
+/** legacy mode can be enabled by predefining BIOSAPIERR_OFFSET to 0 */
+#ifdef BIOSAPIERR_OFFSET
+#pragma message "legacy mode is deprecated"
+#define BBAPI_CMD							0x5000	// BIOS API Command number for IOCTL call
+#else
+#define BIOSAPIERR_OFFSET 0x20000000
+
 #ifdef __FreeBSD__
 #include <sys/ioccom.h>
-#define BBAPI_CMD _IOWR('B', 0x5000, struct bbapi_struct)
-#define BIOSAPIERR_OFFSET 0x20000000
+#define BBAPI_CMD _IOWR('B', 0x5001, struct bbapi_struct)
 #else
-#define BBAPI_CMD							0x5000	// BIOS API Command number for IOCTL call
-#define BIOSAPIERR_OFFSET 0
+#define BBAPI_CMD_LEGACY						0x5000	// BIOS API Command number for IOCTL call
+#define BBAPI_CMD							0x5001	// BIOS API Command number for IOCTL call
+#endif
 #endif
 #define BBAPI_WATCHDOG_MAX_TIMEOUT_SEC (255 * 60) // BBAPI maximum timeout is 255 minutes
 
@@ -43,14 +50,23 @@ struct bbapi_struct {
 	uint32_t nInBufferSize;
 	void __user *pOutBuffer;
 	uint32_t nOutBufferSize;
+#if BIOSAPIERR_OFFSET > 0
+	uint32_t __user *pBytesReturned;
+	void __user *pMode;
+#endif
 #ifdef __cplusplus
-	bbapi_struct(uint32_t group, uint32_t offset, const void __user *pIn, uint32_t inSize, void __user *pOut, uint32_t outSize)
+	bbapi_struct(uint32_t group, uint32_t offset, const void __user *pIn, uint32_t inSize, void __user *pOut, uint32_t outSize, uint32_t *bytesReturned = nullptr, void *mode = nullptr)
 	: nIndexGroup(group),
 	nIndexOffset(offset),
 	pInBuffer(pIn),
 	nInBufferSize(inSize),
 	pOutBuffer(pOut),
-	nOutBufferSize(outSize) {};
+	nOutBufferSize(outSize)
+#if BIOSAPIERR_OFFSET > 0
+	,pBytesReturned(bytesReturned),
+	pMode(mode)
+#endif
+	{};
 #endif /* #ifdef __cplusplus */
 };
 #endif

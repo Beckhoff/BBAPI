@@ -8,6 +8,7 @@ OS!=uname -s
 SUDO_Linux=sudo
 SUDO_FreeBSD=doas
 SUDO := ${SUDO_${OS}}
+ccflags-y := -DBIOSAPIERR_OFFSET=0
 ccflags-y := -DUNAME_S=\"${OS}\"
 
 all:

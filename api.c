@@ -26,8 +26,12 @@
 #include "api.h"
 #include "TcBaDevDef.h"
 
-#define DRV_VERSION      "1.9"
-#define DRV_DESCRIPTION  "Beckhoff BIOS API Driver"
+#define DRV_VERSION "2.0"
+#if BIOSAPIERR_OFFSET > 0
+#define DRV_DESCRIPTION "Beckhoff BIOS API Driver"
+#else
+#define DRV_DESCRIPTION "Beckhoff BIOS API Driver (legacy mode)"
+#endif
 
 /* Global Variables */
 static struct bbapi_object g_bbapi;
@@ -258,26 +262,43 @@ static int bbapi_ioctl_mutexed(struct bbapi_object *const bbapi,
 		pr_err("%s(): copy_to_user() failed\n", __FUNCTION__);
 		return -EFAULT;
 	}
+
+	if (cmd->pBytesReturned) {
+		put_user(written, cmd->pBytesReturned);
+	}
 	return 0;
 }
 
 static long bbapi_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 {
 	struct bbapi_struct bbstruct;
+	size_t size = sizeof(bbstruct);
 	int result = -EINVAL;
 	if (!g_bbapi.entry) {
 		pr_warn("%s(): not initialized.\n", __FUNCTION__);
 		return -EINVAL;
 	}
 	// Check if IOCTL CMD matches BBAPI Driver Command
+#ifdef BBAPI_CMD_LEGACY
+	if (cmd == BBAPI_CMD_LEGACY) {
+		size -= sizeof(bbstruct.pBytesReturned) + sizeof(bbstruct.pMode);
+		bbstruct.pBytesReturned = NULL;
+		bbstruct.pMode = NULL;
+	} else
+#endif
 	if (cmd != BBAPI_CMD) {
 		pr_info("Wrong Command\n");
 		return -EINVAL;
 	}
 	// Copy data (BBAPI struct) from User Space to Kernel Module - if it fails, return error
 	if (copy_from_user
-	    (&bbstruct, (const void __user *)arg, sizeof(bbstruct))) {
+	    (&bbstruct, (const void __user *)arg, size)) {
 		pr_err("copy_from_user failed\n");
+		return -EINVAL;
+	}
+	// pMode is reserved for future use
+	if (bbstruct.pMode) {
+		pr_info("Setting pMode to nullptr is mandatory!\n");
 		return -EINVAL;
 	}
 
