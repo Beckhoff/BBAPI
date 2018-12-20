@@ -105,7 +105,11 @@ struct BiosPair
 
 int ioctl_read(int file, uint32_t group, uint32_t offset, void* out, uint32_t size, uint32_t *pBytesReturned)
 {
-	struct bbapi_struct data {group, offset, NULL, 0, out, size};
+	struct bbapi_struct data {group, offset, NULL, 0, out, size
+#if BIOSAPIERR_OFFSET > 0
+		, pBytesReturned
+#endif
+	};
 	if (-1 == ioctl(file, BBAPI_CMD, &data)) {
 		pr_info("%s(): failed for group: 0x%x offset: 0x%x with errno: %s\n", __FUNCTION__, group, offset, strerror(errno));
 		return -1;
