@@ -23,9 +23,13 @@ int main()
 	}
 
 	uint32_t num_sensors;
-	struct bbapi_struct cmd_num_sensors {
-		BIOSIGRP_SYSTEM, BIOSIOFFS_SYSTEM_COUNT_SENSORS,
-		    nullptr, 0, &num_sensors, sizeof(num_sensors)
+	struct bbapi_struct cmd_num_sensors = {
+		BIOSIGRP_SYSTEM,
+		BIOSIOFFS_SYSTEM_COUNT_SENSORS,
+		NULL,
+		0,
+		&num_sensors,
+		sizeof(num_sensors)
 	};
 
 	status = ioctl(bbapi_dev, BBAPI_CMD, &cmd_num_sensors);
@@ -37,9 +41,13 @@ int main()
 	while (num_sensors > 0) {
 		char text[256];
 		SENSORINFO info;
-		struct bbapi_struct cmd_read_sensor {
-			BIOSIGRP_SYSTEM, num_sensors,
-			    nullptr, 0, &info, sizeof(info)
+		struct bbapi_struct cmd_read_sensor = {
+			BIOSIGRP_SYSTEM,
+			num_sensors,
+			NULL,
+			0,
+			&info,
+			sizeof(info)
 		};
 
 		status = ioctl(bbapi_dev, BBAPI_CMD, &cmd_read_sensor);
