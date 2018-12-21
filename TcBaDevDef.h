@@ -32,16 +32,11 @@ typedef char TCHAR;
 #ifndef __KERNEL__
 #define __user
 #define __STDC_FORMAT_MACROS
-#include <cinttypes>
-#endif
-
-#ifdef __cplusplus
-#include <cstdlib>
-#include <cstring>
-#include <cstdio>
-#endif /* #ifdef __cplusplus */
-
-/* BBAPI specific constants */
+#include <inttypes.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#endif /* #ifndef __KERNEL__ */
 
 struct bbapi_struct {
 	uint32_t nIndexGroup;
@@ -69,7 +64,7 @@ struct bbapi_struct {
 	{};
 #endif /* #ifdef __cplusplus */
 };
-#endif
+#endif /* #ifndef WINDOWS */
 
 ///////////////////////////////////////////////////////////
 // Max. CX power supply display line length
@@ -85,7 +80,7 @@ typedef struct TStringResourceCap
 
 ////////////////////////////////////////////////////////////////
 // Version information structure
-typedef struct  TBaDevice_Version
+typedef struct TBaDevice_Version
 {
 	uint8_t version;
 	uint8_t revision;
@@ -101,10 +96,18 @@ typedef struct  TBaDevice_Version
 	}
 
 	int snprintf(char* buffer, size_t len) const {
-		return ::snprintf(buffer, len, "ver.: %d rev.: %d build: %d", version, revision, build);
+		return BADEVICE_VERSION_snprintf(this, buffer, len);
 	};
+	friend int BADEVICE_VERSION_snprintf(const struct TBaDevice_Version *const p, char *const buffer, const size_t len);
 #endif /* #ifdef __cplusplus */
 }BADEVICE_VERSION, *PBADEVICE_VERSION;
+
+#ifndef __KERNEL__
+int BADEVICE_VERSION_snprintf(const struct TBaDevice_Version *const p, char *const buffer, const size_t len)
+{
+	return snprintf(buffer, len, "ver.: %d rev.: %d build: %d", p->version, p->revision, p->build);
+}
+#endif /* #ifndef __KERNEL__ */
 
 ////////////////////////////////////////////////////////////////
 // Mainboard Information structure
@@ -131,10 +134,18 @@ typedef struct  TBaDevice_MBInfo
 	}
 
 	int snprintf(char* buffer, size_t len) const {
-		return ::snprintf(buffer, len, "%.8s hw: %d v%d.%d", MBName, MBRevision, biosMajVersion, biosMinVersion);
+		return BADEVICE_MBINFO_snprintf(this, buffer, len);
 	};
+	friend int BADEVICE_MBINFO_snprintf(const struct TBaDevice_MBInfo *const p, char *const buffer, const size_t len);
 #endif /* #ifdef __cplusplus */
 }BADEVICE_MBINFO, *PBADEVICE_MBINFO;
+
+#ifndef __KERNEL__
+int BADEVICE_MBINFO_snprintf(const struct TBaDevice_MBInfo *const p, char *const buffer, const size_t len)
+{
+	return snprintf(buffer, len, "%.8s hw: %d v%d.%d", p->MBName, p->MBRevision, p->biosMajVersion, p->biosMinVersion);
+}
+#endif /* #ifndef __KERNEL__ */
 
 ////////////////////////////////////////////////////////////////
 // Sensor types
@@ -258,12 +269,20 @@ typedef struct TSensorInfo
 	}
 
 	int snprintf(char* buffer, size_t len) const {
-		return ::snprintf(buffer, len, "%23s %14s val:%5u(0x%04x) min:%5u(0x%04x) max:%5u(0x%04x) nom:%5u(0x%04x) %12s",
-			LOCATIONCAPS[eLocation].name, PROBECAPS[eType].name,
-			readVal.value,readVal.status, minVal.value, minVal.status, maxVal.value, maxVal.status, nomVal.value, nomVal.status, desc);
+		return SENSORINFO_snprintf(this, buffer, len);
 	};
-#endif /* #ifdef __cplusplus */
+	friend int SENSORINFO_snprintf(const struct TSensorInfo *p, char *const buffer, const size_t len);
+#endif  /* #ifdef __cplusplus */
 }SENSORINFO, *PSENSORINFO;
+
+#ifndef __KERNEL__
+int SENSORINFO_snprintf(const struct TSensorInfo *p, char *const buffer, const size_t len)
+{
+	return snprintf(buffer, len, "%23s %14s val:%5u(0x%04x) min:%5u(0x%04x) max:%5u(0x%04x) nom:%5u(0x%04x) %12s",
+			LOCATIONCAPS[(int)(p->eLocation)].name, PROBECAPS[(int)(p->eType)].name,
+			p->readVal.value,p->readVal.status, p->minVal.value, p->minVal.status, p->maxVal.value, p->maxVal.status, p->nomVal.value, p->nomVal.status, p->desc);
+}
+#endif /* #ifndef __KERNEL__ */
 
 ////////////////////////////////////////////////////////////////
 // SUPS or watchdog GPIO pin info
@@ -284,10 +303,18 @@ typedef struct TSUps_GpioInfo
 	}
 
 	int snprintf(char* buffer, size_t len) const {
-		return ::snprintf(buffer, len, "0x%04x, 0x%02x, 0x%02x [ioAddr, offset, params]", ioAddr, offset, params);
+		return TSUps_GpioInfo_snprintf(this, buffer, len);
 	};
+	friend int TSUps_GpioInfo_snprintf(const struct TSUps_GpioInfo *const p, char *const buffer, const size_t len);
 #endif /* #ifdef __cplusplus */
 }SUPS_GPIO_INFO, *PSUPS_GPIO_INFO, WATCHDOG_GPIO_INFO, *PWATCHDOG_GPIO_INFO;
+
+#ifndef __KERNEL__
+int TSUps_GpioInfo_snprintf(const struct TSUps_GpioInfo *const p, char *const buffer, const size_t len)
+{
+	return snprintf(buffer, len, "0x%04x, 0x%02x, 0x%02x [ioAddr, offset, params]", p->ioAddr, p->offset, p->params);
+}
+#endif /* #ifndef __KERNEL__ */
 
 typedef struct Bapi_GpioInfoEx
 {
@@ -313,10 +340,19 @@ typedef struct Bapi_GpioInfoEx
 	}
 
 	int snprintf(char* buffer, size_t len) const {
-		return ::snprintf(buffer, len, "0x%x, 0x%x, 0x%x, 0x%" PRIu64 "x, 0x%" PRIu64 "x [type, length, flags, address, bitmask]", type, length, flags, address, bitmask);
+		return Bapi_GpioInfoEx_snprintf(this, buffer, len);
 	};
+	friend int Bapi_GpioInfoEx_snprintf(const struct Bapi_GpioInfoEx *const p, char *const buffer, const size_t len);
 #endif /* #ifdef __cplusplus */
 }BAPI_GPIO_INFO_EX;
+
+#ifndef __KERNEL__
+int Bapi_GpioInfoEx_snprintf(const struct Bapi_GpioInfoEx *const p, char *const buffer, const size_t len)
+{
+	return snprintf(buffer, len, "0x%x, 0x%x, 0x%x, 0x%" PRIu64 "x, 0x%" PRIu64 "x [type, length, flags, address, bitmask]",
+		p->type, p->length, p->flags, p->address, p->bitmask);
+}
+#endif /* #ifndef __KERNEL__ */
 
 ///////////////////////////////////////////////////////////
 // Index-Group/Index-Offset specification

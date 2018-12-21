@@ -48,7 +48,7 @@ int main()
 			       num_sensors, status);
 			return status;
 		}
-		info.snprintf(text, sizeof(text));
+		SENSORINFO_snprintf(&info, text, sizeof(text));
 		printf("%02d: %s\n", num_sensors, text);
 		--num_sensors;
 	}
