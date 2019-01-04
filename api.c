@@ -116,7 +116,7 @@ unsigned int bbapi_rw(uint32_t group, uint32_t offset,
 	if (result) {
 		pr_debug("%s(0x%x:0x%x) failed with: 0x%x\n", __func__,
 	         cmd.nIndexGroup, cmd.nIndexOffset, result);
-		result |= BIOSAPIERR_OFFSET;
+		return -(result | BIOSAPIERR_OFFSET);
 	}
 	return result;
 }
@@ -255,7 +255,7 @@ static int bbapi_ioctl_mutexed(struct bbapi_object *const bbapi,
 	if (ret) {
 		pr_debug("%s(0x%x:0x%x) failed with: 0x%x\n", __func__,
 		         cmd->nIndexGroup, cmd->nIndexOffset, ret);
-		return ret | BIOSAPIERR_OFFSET;
+		return -(ret | BIOSAPIERR_OFFSET);
 	}
 	// Copy the BIOS output to the output buffer in user space
 	if (copy_to_user(cmd->pOutBuffer, bbapi->out, written)) {
@@ -363,7 +363,7 @@ static struct platform_device bbapi_sups = {
 inline static bool bbapi_supports(uint32_t group, uint32_t offset)
 {
 
-	switch (~BIOSAPIERR_OFFSET & bbapi_read(group, offset, NULL, 0)) {
+	switch (-bbapi_read(group, offset, NULL, 0)) {
 	case BIOSAPI_INVALIDSIZE:
 	case BIOSAPI_INVALIDPARM:
 		return true;
