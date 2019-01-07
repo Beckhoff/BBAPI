@@ -53,7 +53,7 @@ sensors_example: binaries
 	${SUDO} ./build/$@.bin
 
 sensors_example_with_c: sensors_example.cpp
-	$(CC) -x c --std=c17 -Wall -pedantic $> -o $@.bin
+	$(CC) -x c --std=c17 -Wall -pedantic sensors_example.cpp -o $@.bin
 	${SUDO} ./$@.bin
 
 
