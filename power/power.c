@@ -166,7 +166,8 @@ static int init_workqueue(struct bbapi_cx2100_info *pbi, struct device *parent)
 	return 0;
 }
 
-static int init_cx2100_0904(struct bbapi_cx2100_info *pbi,
+static int init_cx2100_09x4(struct bbapi_cx2100_info *pbi,
+			    const struct power_supply_desc *desc,
 			    struct device *parent)
 {
 	static struct power_supply_config psy_cfg = { };
@@ -178,7 +179,7 @@ static int init_cx2100_0904(struct bbapi_cx2100_info *pbi,
 	pbi->manufacturer = "Beckhoff Automation";
 
 	psy_cfg.drv_data = pbi;
-	pbi->psy = power_supply_register(parent, &cx2100_0904_desc, &psy_cfg);
+	pbi->psy = power_supply_register(parent, desc, &psy_cfg);
 	if (IS_ERR(pbi->psy)) {
 		dev_err(parent, "failed to register power supply\n");
 		return PTR_ERR(pbi->psy);
@@ -196,7 +197,7 @@ static int bbapi_power_init(struct bbapi_cx2100_info *pbi,
 	if (!cx2100_read(BIOSIOFFS_CXPWRSUPP_GETTYPE, type)) {
 		switch (type) {
 		case CXPWRSUPP_TYPE_CX2100_0904:
-			return init_cx2100_0904(pbi, parent);
+			return init_cx2100_09x4(pbi, &cx2100_0904_desc, parent);
 		case CXPWRSUPP_TYPE_CX2100_0004:
 			return -ENODEV;
 		default:
