@@ -140,7 +140,7 @@ static int bbapi_power_get_property(struct power_supply *psy,
 }
 
 static const struct power_supply_desc cx2100_0904_desc = {
-	.name = "cx2100-0904",
+	.name = "cx2100_0904",
 	.type = POWER_SUPPLY_TYPE_BATTERY,
 	.properties = cx2100_0904_props,
 	.num_properties = ARRAY_SIZE(cx2100_0904_props),
