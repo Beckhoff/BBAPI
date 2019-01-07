@@ -139,6 +139,14 @@ static int bbapi_power_get_property(struct power_supply *psy,
 	return ret;
 }
 
+static const struct power_supply_desc cx2100_0914_desc = {
+	.name = "cx2100_0914",
+	.type = POWER_SUPPLY_TYPE_BATTERY,
+	.properties = cx2100_0904_props,
+	.num_properties = ARRAY_SIZE(cx2100_0904_props),
+	.get_property = bbapi_power_get_property,
+};
+
 static const struct power_supply_desc cx2100_0904_desc = {
 	.name = "cx2100_0904",
 	.type = POWER_SUPPLY_TYPE_BATTERY,
@@ -190,12 +198,15 @@ static int init_cx2100_09x4(struct bbapi_cx2100_info *pbi,
 static int bbapi_power_init(struct bbapi_cx2100_info *pbi,
 			    struct device *parent)
 {
+#define CXPWRSUPP_TYPE_CX2100_0914 914u
 #define CXPWRSUPP_TYPE_CX2100_0904 904u
 #define CXPWRSUPP_TYPE_CX2100_0004 4u
 	uint32_t type;
 
 	if (!cx2100_read(BIOSIOFFS_CXPWRSUPP_GETTYPE, type)) {
 		switch (type) {
+		case CXPWRSUPP_TYPE_CX2100_0914:
+			return init_cx2100_09x4(pbi, &cx2100_0914_desc, parent);
 		case CXPWRSUPP_TYPE_CX2100_0904:
 			return init_cx2100_09x4(pbi, &cx2100_0904_desc, parent);
 		case CXPWRSUPP_TYPE_CX2100_0004:
