@@ -15,7 +15,7 @@
 #include "../api.h"
 #include "../TcBaDevDef.h"
 
-#define DRV_VERSION      "0.2"
+#define DRV_VERSION      "0.3"
 #define DRV_DESCRIPTION  "Beckhoff BIOS API power supply driver"
 
 struct bbapi_cx2100_info {
