@@ -119,7 +119,7 @@ static int bbapi_power_get_property(struct power_supply *psy,
 		val->intval = pbi->capacity_percent;
 		break;
 	case POWER_SUPPLY_PROP_TEMP:
-		val->intval = pbi->temp_C;
+		val->intval = 10 * pbi->temp_C;
 		break;
 	case POWER_SUPPLY_PROP_TIME_TO_EMPTY_NOW:
 		val->intval = pbi->battery_runtime_s;
