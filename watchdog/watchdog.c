@@ -30,7 +30,7 @@ MODULE_PARM_DESC(nowayout,
 
 static int bbapi_wd_write(uint32_t offset, void *in, uint32_t size)
 {
-	return bbapi_write(BIOSIGRP_WATCHDOG, offset, in, size);
+	return -bbapi_write(BIOSIGRP_WATCHDOG, offset, in, size);
 }
 
 static int wd_start(struct watchdog_device *const wd)
