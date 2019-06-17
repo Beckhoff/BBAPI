@@ -3,6 +3,38 @@ stages:
   - build
   - test
 
+.build-example: &build-example
+  stage: build
+  before_script:
+    - apk add --update alpine-sdk cmake linux-headers
+    - ./tools/10_get_fructose.sh
+  script:
+    - sed -i "s/define CONFIG_INTERACTIVE 1/define CONFIG_INTERACTIVE 0/" test_config.h
+    - sed -i.bak "s/\/\*\* select test device \*\//#include \"config_CX01-CX5020.h\"/" test_config.h
+    - make binaries
+    - mv ./build/unittest.bin unittest.bin.CX01-CX5020
+    - mv test_config.h.bak test_config.h
+    - sed -i.bak "s/\/\*\* select test device \*\//#include \"config_CX03-CX5140.h\"/" test_config.h
+    - make binaries
+    - mv ./build/unittest.bin unittest.bin.CX03-CX5140
+    - mv test_config.h.bak test_config.h
+    - sed -i.bak "s/\/\*\* select test device \*\//#include \"config_CX05-CX2030.h\"/" test_config.h
+    - make binaries
+    - mv ./build/unittest.bin unittest.bin.CX05-CX2030
+    - mv test_config.h.bak test_config.h
+  artifacts:
+    paths:
+      - ./build/*.bin
+      - unittest.bin.*
+
+build-i386-example:
+  <<: *build-example
+  image: i386/alpine
+
+build-x86_64-example:
+  <<: *build-example
+  image: alpine
+
 .build-module: &build-module
   stage: build
   script:
@@ -37,7 +69,7 @@ build-x86_64-module:
   image: ${REGISTRY_HOST}/beckhoff/test_runner:latest
   stage: test
   script:
-    - tar -czf /root/tests.tar.gz ./unittest bbapi.ko */bbapi_*.ko
+    - tar -czf /root/tests.tar.gz ./unittest bbapi.ko */bbapi_*.ko ./build/*.bin unittest.bin.*
     - cd /root
     - ./50_power.sh ${DEVICE_ID}-${DEVICE} 0
     - source ./09_init.sh
@@ -51,7 +83,7 @@ build-x86_64-module:
     - scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ./tests.tar.gz root@${TEST_DEVICE_IP}:~/
     - ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@${TEST_DEVICE_IP} tar -xf ./tests.tar.gz
     - ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@${TEST_DEVICE_IP} ./unittest/load-module.sh
-    - ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@${TEST_DEVICE_IP} ./unittest/test-all.sh
+    - ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@${TEST_DEVICE_IP} ./unittest/test-all.sh .${DEVICE_ID}-${DEVICE}
   after_script:
     - cd /root && ./50_power.sh ${DEVICE_ID}-${DEVICE} 0
 
@@ -66,6 +98,7 @@ test-cx2030:
     ROOTFS_REF: 'stable'
   dependencies:
     - build-x86_64-module
+    - build-x86_64-example
   tags:
     - CX05-CX2030
 
@@ -80,6 +113,7 @@ test-cx5140:
     ROOTFS_REF: 'stable'
   dependencies:
     - build-x86_64-module
+    - build-x86_64-example
   tags:
     - CX03-CX5140
 
@@ -94,5 +128,6 @@ test-cx5020:
     ROOTFS_REF: 'stable'
   dependencies:
     - build-i386-module
+    - build-i386-example
   tags:
     - CX01-CX5020
