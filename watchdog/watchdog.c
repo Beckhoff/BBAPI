@@ -13,7 +13,7 @@
 #include "../api.h"
 #include "../TcBaDevDef.h"
 
-#define DRV_VERSION      "0.5"
+#define DRV_VERSION      "0.6"
 #define DRV_DESCRIPTION  "Beckhoff BIOS API watchdog driver"
 
 #undef pr_fmt
