@@ -4,6 +4,12 @@ obj-m += $(TARGET).o
 $(TARGET)-objs := api.o simple_cdev.o
 SUBDIRS := $(filter-out scripts/., $(wildcard */.))
 KDIR ?= /lib/modules/$(shell uname -r)/build
+ALL_MODULES += bbapi
+ALL_MODULES += button/bbapi_button.ko
+ALL_MODULES += display/bbapi_disp.ko
+ALL_MODULES += power/bbapi_power.ko
+ALL_MODULES += sups/bbapi_sups.ko
+ALL_MODULES += watchdog/bbapi_wdt.ko
 
 OS!=uname -s
 SUDO_Linux=sudo
@@ -12,8 +18,25 @@ SUDO := ${SUDO_${OS}}
 ccflags-y := -DBIOSAPIERR_OFFSET=0
 ccflags-y := -DUNAME_S=\"${OS}\"
 
-all:
+all: $(ALL_MODULES)
+
+bbapi:
 	make -C $(KDIR) M=$(PWD) modules
+
+button/bbapi_button.ko:
+	cd button && KDIR=$(KDIR) make
+
+display/bbapi_disp.ko:
+	cd display && KDIR=$(KDIR) make
+
+power/bbapi_power.ko:
+	cd power && KDIR=$(KDIR) make
+
+sups/bbapi_sups.ko:
+	cd sups && KDIR=$(KDIR) make
+
+watchdog/bbapi_wdt.ko:
+	cd watchdog && KDIR=$(KDIR) make
 
 install:
 	- ${SUDO} rmmod $(TARGET)_button
