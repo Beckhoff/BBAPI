@@ -5,11 +5,11 @@ $(TARGET)-objs := api.o simple_cdev.o
 SUBDIRS := $(filter-out scripts/., $(wildcard */.))
 KDIR ?= /lib/modules/$(shell uname -r)/build
 ALL_MODULES += bbapi
-ALL_MODULES += button/bbapi_button.ko
-ALL_MODULES += display/bbapi_disp.ko
-ALL_MODULES += power/bbapi_power.ko
-ALL_MODULES += sups/bbapi_sups.ko
-ALL_MODULES += watchdog/bbapi_wdt.ko
+ALL_MODULES += button/$(TARGET)_button.ko
+ALL_MODULES += display/$(TARGET)_disp.ko
+ALL_MODULES += power/$(TARGET)_power.ko
+ALL_MODULES += sups/$(TARGET)_sups.ko
+ALL_MODULES += watchdog/$(TARGET)_wdt.ko
 
 OS!=uname -s
 SUDO_Linux=sudo
@@ -23,19 +23,19 @@ all: $(ALL_MODULES)
 bbapi:
 	make -C $(KDIR) M=$(PWD) modules
 
-button/bbapi_button.ko:
+button/$(TARGET)_button.ko:
 	cd button && KDIR=$(KDIR) make
 
-display/bbapi_disp.ko:
+display/$(TARGET)_disp.ko:
 	cd display && KDIR=$(KDIR) make
 
-power/bbapi_power.ko:
+power/$(TARGET)_power.ko:
 	cd power && KDIR=$(KDIR) make
 
-sups/bbapi_sups.ko:
+sups/$(TARGET)_sups.ko:
 	cd sups && KDIR=$(KDIR) make
 
-watchdog/bbapi_wdt.ko:
+watchdog/$(TARGET)_wdt.ko:
 	cd watchdog && KDIR=$(KDIR) make
 
 install:
