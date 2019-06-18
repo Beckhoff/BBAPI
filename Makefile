@@ -38,13 +38,23 @@ sups/$(TARGET)_sups.ko:
 watchdog/$(TARGET)_wdt.ko:
 	cd watchdog && KDIR=$(KDIR) make
 
-install:
+install_all: all install
+	cd button && make install
+	cd display && make install
+	cd power && make install
+	cd sups && make install
+	cd watchdog && make install
+
+.PHONY: unload_all
+unload_all:
 	- ${SUDO} rmmod $(TARGET)_button
 	- ${SUDO} rmmod $(TARGET)_disp
 	- ${SUDO} rmmod $(TARGET)_power
 	- ${SUDO} rmmod $(TARGET)_sups
 	- ${SUDO} rmmod $(TARGET)_wdt
 	- ${SUDO} rmmod $(TARGET)
+
+install: unload_all bbapi.ko
 	${SUDO} mkdir -p $(EXTRA_DIR)
 	${SUDO} cp ./$(TARGET).ko $(EXTRA_DIR)
 	${SUDO} depmod -a
