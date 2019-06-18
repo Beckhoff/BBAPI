@@ -29,6 +29,7 @@
 /** CX Power Supply configuration */
 #define CONFIG_CXPWRSUPP_TYPE 904
 #define CONFIG_CXPWRSUPP_SERIALNO 834
+#define CONFIG_CXPWRSUPP_FWVERSION {5, 0}
 
 /** LED configuration */
 #define CONFIG_LED_TC_ENABLED 0
