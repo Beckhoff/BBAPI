@@ -4,8 +4,9 @@ find_package(Threads)
 add_executable(display_example display_example.cpp)
 add_executable(sensors_example sensors_example.cpp)
 add_executable(unittest unittest.cpp)
-target_link_libraries(display_example ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(unittest ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(display_example -static ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(sensors_example -static)
+target_link_libraries(unittest -static ${CMAKE_THREAD_LIBS_INIT})
 set_target_properties(display_example sensors_example unittest PROPERTIES SUFFIX ".bin")
 
 
