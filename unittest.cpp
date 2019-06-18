@@ -348,7 +348,7 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 		CHECK_CLASS("Production date: %s\n", BIOSIOFFS_PWRCTRL_PRODUCTION_DATE, CONFIG_PWRCTRL_PRODUCTION_DATE, BiosPair);
 		CHECK_VALUE("µC Position:  0x%02x\n", BIOSIOFFS_PWRCTRL_BOARD_POSITION, CONFIG_PWRCTRL_POSITION, uint8_t);
 		if (CONFIG_PWRCTRL_LAST_SHUTDOWN_ENABLED) {
-			CHECK_CLASS("Last shutdown reason: %s\n", BIOSIOFFS_PWRCTRL_SHUTDOWN_REASON, CONFIG_PWRCTRL_LAST_SHUTDOWN, BiosVersion);
+			READ_OBJECT("Last shutdown reason: %s\n", BIOSIOFFS_PWRCTRL_SHUTDOWN_REASON, BiosVersion);
 		}
 		CHECK_VALUE("Test count:   %03d\n", BIOSIOFFS_PWRCTRL_TEST_COUNTER, CONFIG_PWRCTRL_TEST_COUNT, uint8_t);
 		CHECK_CLASS("Test number:  %s\n", BIOSIOFFS_PWRCTRL_TEST_NUMBER, CONFIG_PWRCTRL_TEST_NUMBER, BiosString<7>);
@@ -373,7 +373,7 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 
 		CHECK_CLASS("Revision:               %s\n", BIOSIOFFS_SUPS_REVISION, CONFIG_SUPS_REVISION, BiosPair);
 		CHECK_RANGE("Power fail:       %9d #\n",       BIOSIOFFS_SUPS_PWRFAIL_COUNTER, CONFIG_SUPS_POWERFAILCOUNT_RANGE, uint16_t);
-		READ_OBJECT("Power failed:           %s\n", BIOSIOFFS_SUPS_PWRFAIL_TIMES, 0, BiosTriple<uint32_t>);
+		READ_OBJECT("Power failed:           %s\n", BIOSIOFFS_SUPS_PWRFAIL_TIMES, BiosTriple<uint32_t>);
 
 		uint8_t shutdownType[] {0x01, 0xA1, 0xFF};
 		for(size_t i = 0; i < sizeof(shutdownType); ++i) {
