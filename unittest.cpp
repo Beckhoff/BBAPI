@@ -44,6 +44,15 @@
 
 using namespace fructose;
 
+static void WaitForUserInput(void)
+{
+	if (CONFIG_INTERACTIVE) {
+		std::cin.get();
+	} else {
+		std::cout << '\n';
+	}
+}
+
 template<size_t N>
 struct BiosString
 {
@@ -303,7 +312,7 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 		for (uint8_t color = num_colors - 1; color < num_colors; --color) {
 			fructose_assert(!bbapi.ioctl_write(offset, &color, sizeof(color)));
 			pr_info("%s should be %s, hit ENTER to continue", led_name.c_str(), colors[color]);
-			std::cin.get();
+			WaitForUserInput();
 		}
 	}
 
@@ -472,19 +481,19 @@ struct TestDisplay : fructose::test_base<TestDisplay>
 		static const char *bar_h =  "===================\n";
 		fructose_assert_eq((ssize_t)line.size(), write(fd_1, line.c_str(), line.size()));
 		pr_info("Display should look like this:\n%s%s%s\nhit ENTER to continue", bar_h, should, bar_h);
-		std::cin.get();
+		WaitForUserInput();
 
 		fructose_assert_eq((ssize_t)light_off.size(), write(fd_1, light_off.c_str(), light_off.size()));
 		pr_info("Display backlight should be switched off\nhit ENTER to continue");
-		std::cin.get();
+		WaitForUserInput();
 
 		fructose_assert_eq((ssize_t)line_2.size(), write(fd_1, line_2.c_str(), line_2.size()));
 		pr_info("Display should look like this:\n%s%s%s\nhit ENTER to continue", bar_h, should_2, bar_h);
-		std::cin.get();
+		WaitForUserInput();
 
 		fructose_assert_eq((ssize_t)line_3.size(), write(fd_2, line_3.c_str(), line_3.size()));
 		pr_info("Display should look like this:\n%s%s%s\nhit ENTER to continue", bar_h, should_3, bar_h);
-		std::cin.get();
+		WaitForUserInput();
 
 		fructose_assert_ne(-1, fd_1);
 		fructose_assert_ne(-1, fd_2);

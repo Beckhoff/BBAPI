@@ -8,6 +8,9 @@
 #ifndef _TEST_CONFIG_H_
 #define _TEST_CONFIG_H_
 
+/** test mode selection */
+#define CONFIG_INTERACTIVE 1
+
 /** device definitions */
 #define DEVICE_C6015 0xC6015
 #define DEVICE_CX2030_CX2100_0004 0x21000004
