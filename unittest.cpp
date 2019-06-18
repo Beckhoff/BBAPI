@@ -677,10 +677,12 @@ private:
 
 int main(int argc, char *argv[])
 {
+	int failures = 0;
+
 	TestDisplay displayTest;
 	displayTest.add_test("test_Simple", &TestDisplay::test_Simple);
 	displayTest.add_test("test_SMP", &TestDisplay::test_SMP);
-	displayTest.run(argc, argv);
+	failures += displayTest.run(argc, argv);
 
 	TestBBAPI bbapiTest;
 	bbapiTest.add_test("test_General", &TestBBAPI::test_General);
@@ -691,18 +693,18 @@ int main(int argc, char *argv[])
 	bbapiTest.add_test("test_CXUPS", &TestBBAPI::test_CXUPS);
 	bbapiTest.add_test("test_CXPowerSupply_display", &TestBBAPI::test_CXPowerSupply_display);
 	bbapiTest.add_test("test_manual_LEDs", &TestBBAPI::test_manual_LEDs);
-	bbapiTest.run(argc, argv);
+	failures += bbapiTest.run(argc, argv);
 
 	TestWatchdog wdTest;
 	wdTest.add_test("test_IOCTL", &TestWatchdog::test_IOCTL);
 	wdTest.add_test("test_Simple", &TestWatchdog::test_Simple);
 	wdTest.add_test("test_KeepAlive", &TestWatchdog::test_KeepAlive);
-	wdTest.run(argc, argv);
+	failures += wdTest.run(argc, argv);
 
 	TestOneTime oneTimeTest;
 	oneTimeTest.add_test("test_SUPS", &TestOneTime::test_SUPS);
 	oneTimeTest.add_test("test_MagicClose", &TestOneTime::test_MagicClose);
-//	oneTimeTest.run(argc, argv);
-	return 0;
+//	failures += oneTimeTest.run(argc, argv);
+	return failures;
 }
 #endif /* #ifndef TEST_DEVICE */
