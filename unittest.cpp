@@ -373,7 +373,7 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 
 		CHECK_CLASS("Revision:               %s\n", BIOSIOFFS_SUPS_REVISION, CONFIG_SUPS_REVISION, BiosPair);
 		CHECK_RANGE("Power fail:       %9d #\n",       BIOSIOFFS_SUPS_PWRFAIL_COUNTER, CONFIG_SUPS_POWERFAILCOUNT_RANGE, uint16_t);
-		CHECK_CLASS("Power failed:           %s\n", BIOSIOFFS_SUPS_PWRFAIL_TIMES, CONFIG_SUPS_PWRFAIL_TIMES, BiosTriple<uint32_t>);
+		READ_OBJECT("Power failed:           %s\n", BIOSIOFFS_SUPS_PWRFAIL_TIMES, 0, BiosTriple<uint32_t>);
 
 		uint8_t shutdownType[] {0x01, 0xA1, 0xFF};
 		for(size_t i = 0; i < sizeof(shutdownType); ++i) {

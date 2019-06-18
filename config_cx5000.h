@@ -23,9 +23,6 @@
 #define CONFIG_PWRCTRL_TEST_COUNT 0
 #define CONFIG_PWRCTRL_TEST_NUMBER "000000"
 
-/** S-UPS configuration */
-#define CONFIG_SUPS_PWRFAIL_TIMES {64513, 49902, 49968}
-
 /** CX Power Supply configuration */
 #define CONFIG_CXPWRSUPP_DISABLED 1
 
