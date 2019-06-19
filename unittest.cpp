@@ -369,7 +369,7 @@ struct TestBBAPI : fructose::test_base<TestBBAPI>
 		enable = 1;
 		fructose_assert(!bbapi.ioctl_write(BIOSIOFFS_SUPS_ENABLE, &enable, sizeof(enable)));
 		std::this_thread::sleep_for(std::chrono::milliseconds(1500));
-		CHECK_VALUE("Status:    0x%02x\n", BIOSIOFFS_SUPS_STATUS, CONFIG_SUPS_STATUS_100, uint8_t);
+		CHECK_VALUE("Status:    0x%02x\n", BIOSIOFFS_SUPS_STATUS, CONFIG_SUPS_STATUS_ON, uint8_t);
 
 		CHECK_CLASS("Revision:               %s\n", BIOSIOFFS_SUPS_REVISION, CONFIG_SUPS_REVISION, BiosPair);
 		CHECK_RANGE("Power fail:       %9d #\n",       BIOSIOFFS_SUPS_PWRFAIL_COUNTER, CONFIG_SUPS_POWERFAILCOUNT_RANGE, uint16_t);
