@@ -1,22 +1,14 @@
 // SPDX-License-Identifier: MIT
 /**
     Beckhoff BIOS API driver to access hwmon sensors for Beckhoff IPCs
-    Copyright (C) 2014 - 2018 Beckhoff Automation GmbH & Co. KG
+    Copyright (C) 2014 - 2019 Beckhoff Automation GmbH & Co. KG
     Author: Patrick Bruenn <p.bruenn@beckhoff.com>
 */
 
-#ifndef _TEST_CONFIG_H_
-#define _TEST_CONFIG_H_
+#pragma once
 
 /** test mode selection */
 #define CONFIG_INTERACTIVE 1
-
-/** device definitions */
-#define DEVICE_C6015 0xC6015
-#define DEVICE_CX2030_CX2100_0004 0x21000004
-#define DEVICE_CX2030_CX2100_0904 0x21000904
-#define DEVICE_CX5000 0x5000
-#define DEVICE_CX5130 0x5130
 
 /** reused ranges */
 #define BOOTCOUNTER_RANGE 1, 15000
@@ -95,5 +87,3 @@
 
 /** Watchdog configuration */
 #define CONFIG_WATCHDOG_OPTIONS WDIOF_SETTIMEOUT | WDIOF_MAGICCLOSE | WDIOF_KEEPALIVEPING
-
-#endif /* #ifndef _TEST_CONFIG_H_ */
