@@ -1,0 +1,14 @@
+variables:
+  remote.name: patrickbr-git
+steps:
+- powershell: |
+    If (git remote | Select-String -pattern $(remote.name) -quiet) {
+      git remote rm $(remote.name)
+    }
+    git remote add $(remote.name) $env:GITLAB_URL_WITH_ACCESS_TOKEN
+    git config http.sslVerify false
+    git push --prune $(remote.name) +refs/remotes/origin/*:refs/heads/* +refs/tags/*:refs/tags/*
+    git remote rm $(remote.name)
+  env:
+    GITLAB_URL_WITH_ACCESS_TOKEN: https://oauth2:$(gitlabToken)@patrickbr-git.beckhoff.com/beckhoff/bbapi.git
+  displayName: 'Mirror to GitLab test rack'
