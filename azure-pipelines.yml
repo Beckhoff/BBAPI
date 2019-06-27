@@ -1,3 +1,5 @@
+pool:
+  demands: PowerShell
 variables:
   remote.name: patrickbr-git
 steps:
