@@ -8,11 +8,13 @@
 #include <linux/hrtimer.h>
 #include <linux/input.h>
 #include <linux/module.h>
+#include <linux/sched.h>
+#include <linux/workqueue.h>
 
 #include "../api.h"
 #include "../TcBaDevDef.h"
 
-#define DRV_VERSION      "0.1"
+#define DRV_VERSION      "0.2"
 #define DRV_DESCRIPTION  "Beckhoff BIOS API button driver"
 
 #define POLL_TIME ktime_set(0, 125000 * NSEC_PER_USEC)
@@ -20,7 +22,7 @@
 static struct input_dev *input_dev;
 static struct hrtimer poll_timer;
 
-static enum hrtimer_restart poll_timer_callback(struct hrtimer *timer)
+static void button_poll(struct work_struct *work)
 {
 	u8 btn_state = 0;
 
@@ -32,7 +34,12 @@ static enum hrtimer_restart poll_timer_callback(struct hrtimer *timer)
 			 ((btn_state >> 3) & 1) - ((btn_state >> 2) & 1));
 	input_report_key(input_dev, BTN_0, ((btn_state >> 4) & 1));
 	input_sync(input_dev);
+}
+DECLARE_WORK(work, button_poll);
 
+static enum hrtimer_restart poll_timer_callback(struct hrtimer *timer)
+{
+	schedule_work(&work);
 	hrtimer_forward_now(timer, POLL_TIME);
 	return HRTIMER_RESTART;
 }

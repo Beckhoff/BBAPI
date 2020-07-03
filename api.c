@@ -26,7 +26,7 @@
 #include "api.h"
 #include "TcBaDevDef.h"
 
-#define DRV_VERSION "2.0"
+#define DRV_VERSION "2.2"
 #if BIOSAPIERR_OFFSET > 0
 #define DRV_DESCRIPTION "Beckhoff BIOS API Driver"
 #else
