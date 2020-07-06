@@ -7,7 +7,6 @@ stages:
   stage: build
   before_script:
     - apk add --update alpine-sdk cmake linux-headers
-    - ./tools/10_get_fructose.sh
   script:
     - sed -i "s/define CONFIG_INTERACTIVE 1/define CONFIG_INTERACTIVE 0/" test_config.h
     - sed -i.bak "s/\/\*\* select test device \*\//#include \"config_CX01-CX5020.h\"/" test_config.h
