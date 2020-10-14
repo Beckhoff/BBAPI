@@ -1,4 +1,4 @@
-TARGET = bbapi_disp
+TARGET = bbapi_display
 EXTRA_DIR = /lib/modules/$(shell uname -r)/extra/
 obj-m += $(TARGET).o
 $(TARGET)-objs := display.o

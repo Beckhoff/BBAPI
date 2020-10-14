@@ -17,9 +17,9 @@ directly to the BIOS. The upper interface of 'bbapi' is based on ioctl's
 and IndexGroups and IndexOffsets defined in the "Beckhoff BIOS-API manual".
 
 On top of 'bbapi' a second layer is implemented to provide a linux interface
-based on device files. 'bbapi_disp' and 'bbapi_wdt' implement this second
+based on device files. 'bbapi_display' and 'bbapi_wdt' implement this second
 layer. Both depend on an installed 'bbapi' module.
-'bbapi_disp' implements virtual terminal like interface to the CX2100 text display
+'bbapi_display' implements virtual terminal like interface to the CX2100 text display
 'bbapi_wdt' implements a common watchdog interface to the CX hw watchdog
 
 
@@ -29,7 +29,7 @@ layer. Both depend on an installed 'bbapi' module.
 1. cd into bbapi <src_dir>
 2. make && make install
 
-#### Install 'bbapi_disp'
+#### Install 'bbapi_display'
 
 1. make sure 'bbapi' is already installed
 2. cd into <src_dir>/display

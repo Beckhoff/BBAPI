@@ -4,7 +4,7 @@ set -e
 
 insmod ./bbapi.ko
 insmod ./button/bbapi_button.ko
-insmod ./display/bbapi_disp.ko
+insmod ./display/bbapi_display.ko
 insmod ./power/bbapi_power.ko
 insmod ./sups/bbapi_sups.ko
 insmod ./watchdog/bbapi_wdt.ko

@@ -45,7 +45,7 @@ build-x86_64-example:
     paths:
       - bbapi.ko
       - button/bbapi_button.ko
-      - display/bbapi_disp.ko
+      - display/bbapi_display.ko
       - power/bbapi_power.ko
       - sups/bbapi_sups.ko
       - watchdog/bbapi_wdt.ko
