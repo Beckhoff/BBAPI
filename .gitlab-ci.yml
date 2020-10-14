@@ -1,6 +1,7 @@
 stages:
   - build
   - test
+  - release
 
 build-debian:
   image: ${REGISTRY_HOST}/docker-registry/docker:debian-bdpg-0.2-master
@@ -13,6 +14,15 @@ build-debian:
     when: always
     paths:
       - ./debian-release
+
+publish-debian:
+  image: ${REGISTRY_HOST}/docker-registry/docker:debian-bdpg-0.2-master
+  stage: release
+  dependencies:
+    - build-debian
+  before_script:
+    - .ci/apply_general_ssh_options.sh
+  script: .ci/publish_debian_package.sh
 
 .build-example: &build-example
   image: ${REGISTRY_HOST}/beckhoff/docker-ubuntu-cached:latest
