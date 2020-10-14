@@ -1,0 +1,21 @@
+Source: bbapi-dkms
+Section: kernel
+Priority: optional
+Maintainer: Patrick Bruenn <p.bruenn@beckhoff.com>
+Build-Depends: dkms, debhelper (>=12~)
+Standards-Version: 4.1.4
+
+Package: bbapi-dkms
+Architecture: all
+Multi-Arch: foreign
+Depends: ${misc:Depends}
+Description: Beckhoff BIOS API
+ The “BIOS-API” is a piece of software which is part of the BIOS in Beckhoff
+ industrial motherboards. It offers a one-stop solution for communicating
+ with several components on the board, such as temperature and voltage sensors,
+ the S-USV microcontroller, the PWRCTRL microcontroller, the Watchdog and other
+ components (if installed). It also offers access to a small memory area in the
+ EEPROM reserved for user data. the API is integrated into the BIOS. The OS
+ which is running on the board needs to have a special Device Driver installed
+ to access the API functions. Through this driver the user software can take
+ advantage of the API functionality.

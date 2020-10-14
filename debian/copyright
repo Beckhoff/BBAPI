@@ -1,0 +1,133 @@
+Files: *
+Copyright: 2019-2020 Beckhoff Automation GmbH & Co. KG
+License: SLA4BSP
+
+License: SLA4BSP
+ Software License Agreement 
+ for Beckhoff Software Products
+ 
+ between BECKHOFF Automation GmbH & Co. KG
+ Huelshorstweg 20, 33415 Verl, Germany, 
+ phone +49 5246/963-0 / fax +49 5246/963-149
+ www.beckhoff.com
+ 
+ and LICENSEE
+ 
+ 
+ § 1		Scope of this Agreement
+ 
+ (1)	Licensor has agreed with Licensee to grant Licensee a license to use and exploit the software set out in the License Certificate ("Licensed Software") subject to the terms and conditions of this Software License Agreement (“Agreement”).
+ (2)	Licensor shall also grant Licensee access to user documentation for the Licensed Software (“Licensed Documentation”). The Licensed Software and the Licensed Documentation are jointly referred to as "Licensed Material". Any data (e.g. files, data base materials) which is provided by Licensor in connec-tion with the Licensed Software or the Licensed Documentation is also part of the Licensed Material.
+ (3)	Any updates for and modifications of the Licensed Material provided by the Licensor during the term of this Agreement will also be provided subject to the terms and conditions of this Agreement, regard-less of the fact whether or not such updates or modifications are free of charge and regardless whether or not Licensor explicitly refers to this Agreement.
+ 
+ 
+ § 2 	Grant of Rights; Restrictions
+ 
+ (1)	Licensee acknowledges that Licensor is the sole owner of all rights in and all know-how pertaining to the Licensed Material. Licensee shall forbear to attack those rights and will adequately inform third parties of Licensor’s ownership of those rights.
+ (2)	Licensor hereby grants to Licensee the non-exclusive, non-transferable right to use and exploit and the right to copy the Licensed Material without limitation in time, manner or place subject to the terms and conditions of this Agreement. With respect to the Licensed Software Licensor grants to Licensee also the non-exclusive and non-transferable rights to revise and to compile the Licensed Software as far as mandatory legal provisions prevent Licensor from the exclusion of such right; any further right to re-vise or to compile is excluded.
+ (3)	The right to use and exploit is limited to the purposes described in this Agreement, especially the specified Purpose of Use.
+ (4)	The right to copy the Licensed Software herein is limited to the installation of the Licensed Software on a single computer system which is in Licensee’s immediate possession and to fulfill the Purpose of Use. Licensee may copy the Licensed Software as far as this is required for the loading, display, running, transfer or storage of the Licensed Software on the computer system after the installation. Furthermore, Licensee is entitled to make a copy for security backup purposes if and as required by mandatory legal provisions.
+ (5)	The right to use and exploit and the right to copy the Licensed Documentation are limited to internal purposes. Licensee may make printouts and/or additional copies provided that these printouts and/or copies are solely used for internal purposes.
+ (6)	Licensee may transfer the rights granted under this Agreement to a third party provided that the Li-censed Software is incorporated in Licensee’s products as described under the Purpose of Use and Licensee’s product is sold or otherwise distributed with the Licensed Software being incorporated. For the avoidance of doubt, Licensee may not sell, transfer or otherwise distribute the Licensed Software without it being incorporated in Licensee’s products. Licensee shall ensure that all obligations under this Agreement are passed on to the third party to which Licensee’s products are sold or otherwise distributed. Licensee may not retain any Licensed Material after the transfer. 
+ (7)	More extensive rights, especially concerning the right to use and exploit the Licensed Software, are not granted to Licensee. The provisions of this Agreement shall be narrowly construed in cases of doubt. Licensor’s copyright of the Software shall not be exhausted by this Agreement.
+ (8)	The Licensed Software may contain code provided by Microsoft or other third parties. Such code is protected by Microsoft’s or other third parties intellectual property rights and – for the benefit of Mi-crosoft or other third parties – subject to the restrictions of this Agreement.
+ 
+ 
+ § 3 	Purpose of Use
+ 
+ (1)	Licensor is licensing the Licensed Software to Licensee for incorporation in Licensee’s products. The Licensed Software is designed to be incorporated in a hardware product, e.g. a manufacturing ma-chine. Software is not regarded as a product under this Agreement. Therefore, Licensee may not sell, transfer or otherwise distribute the Licensed Software if it is only combined with or incorporated in a software product. 
+ (2)	The Licensed Software is designed to be used on a single computer system identified by, among others, its central processing unit (“CPU”). Licensee shall only use the Licensed Software on one CPU. If the CPU or the other hardware components are changed Licensee may have to request new license keys from Licensor. 
+ (3)	Licensee may not use the Licensed Software on a computer system with more than one (1) CPU or on virtual machines without Licensor’s explicit written authorization. For the avoidance of doubt, virtual machines under this Agreement include all kind of virtualization techniques 
+ (4)	Licensee is responsible for providing the system environment in accordance with system requirements for the use of the Licensed Software specified by Licensor
+ (5)	Licensee may connect the Licensed Software to other software (facilitating interoperability). The Li-censed Documentation shall contain a description of the interfaces provided for this purpose. Other-wise, Licensee shall not modify, translate, or otherwise edit and transform the Licensed Software. Nei-ther shall Licensee retranslate the software into the form of source programs or other modes of presentation. Any retranslation of parts the Licensed Software for making an independently developed program interoperable with the Licensed Software shall be subject to the applicable legal provisions and of license provisions of code contained under par. 2(8).
+ (6)	Licensor provides with the Licensed Software a tool to enable Licensee to create own software and to incorporate such software with the Licensed Software in a hardware product. Licensor does not war-rant that the Licensed Software is suitable for any particular purpose. Licensee is obliged to examine the suitability of the Licensed Software and any software based on or connected with the Licensed Software. Licensee shall not incorporate the Licensed Software in any hardware product without ade-quate testing.
+ 
+ § 4 	Protection of Licensed Material
+ 
+ (1)	Notwithstanding the Grants of Rights, Licensor shall keep all rights of the Licensed Material, and that includes any copies or partial copies of any Licensed Material made by or on behalf of Licensee. The foregoing shall not affect Licensee’s property of data storage media, memory devices, and data pro-cessing devices.
+ (2)	Licensee shall leave any notices of intellectual property rights, such as copyright notices and other reservations of rights unchanged, and it shall adopt such notices without change into any copies made by Licensee of Licensed Material in whole or in part.
+ (3)	Licensee shall neither make Licensed Material available to third parties in original, nor as complete or partial copies, without Licensor’s express written consent. The same shall apply in the case of com-plete or partial sale or dissolution of Licensee’s business enterprise. Licensee’s employees or other persons shall not be considered to be third parties while they stay with Licensee in order to make use of Licensed Material as provided under this Agreement.
+ (4)	License shall not modify or distribute the Licensed Material or parts thereof in a way that the Licensed Material requires, as a condition of use, modification or distribution, that the code of the Licensed Software to be disclosed or distributed in source code or others have the right to modify the code of the Licensed Software.
+ (5)	Licensee may either use a new version of the Licensed Material delivered by Licensor or waive such use.
+ (6)	The Licensed Software is subject to a product activation process. Licensee may use the Licensed Software for an evaluation (“trial”) period of seven (7) days with respective product trial activation. Af-ter expiration of the evaluation period the Licensed Software can only be used continuously after the product activation process has been successfully completed. 
+ (7)	In order to create license keys necessary for the completion of the product activation process, Licen-sor may request certain data from Licensee. Licensee is obliged to answer Licensor’s requests in due course. Licensor may also establish a direct connection between the computer system on which the Licensed Software is installed and a system operated by or on behalf of Licensor in order to ex-change the necessary data for the product activation process.
+ (8)	In addition to the product activation process, the Licensed Software may be protected by a software protection dongle. If Licensor decides to protect the Licensed Software by requiring a dongle, such dongle shall be delivered to Licensee at no additional cost or already be incorporated in the computer system for which the Licensed Software shall be licensed.
+ (9)	Licensee may not try to disable or bypass any protection established by Licensor unless explicitly permitted by mandatory legal provisions.
+ 
+ 
+ § 5 	Delivery
+ 
+ (1)	Licensor shall deliver the Licensed Software for the exercise of the rights to use and exploit granted to Licensee herein in machine-readable form at Licensor’s sole discretion either stored on a type of data storage media in common use at the time or by making available the Licensed Software for download.
+ (2)	Licensee shall receive the Licensed Documentation as electronic document unless agreed otherwise. The Licensed Documentation can, also at Licensor’s sole discretion, be stored on the same or a dif-ferent data storage medium as the Licensed Software or it can be made available for download, 
+ (3)	If Licensed Material is made available for download Licensor shall provide Licensee with all infor-mation necessary to download the Licensed Material, e.g. URL and/or passwords.
+ (4)	If Licensed Material is delivered on a data storage medium and such medium containing Licensed Material is damaged or deleted by mistake during shipment or after its receipt by Licensee, Licensor shall deliver a replacement. Licensor may charge the delivery costs and the costs of the data storage medium to Licensee. This provision also applies accordingly with respect to damaged or defective dongles. 
+ 
+ § 6	License Fees
+ 
+ (1)	The licensee fees owed by Licensee to Licensor for the grant of rights hereunder are determined by Licensor based on the License Certificate. The license fees represent a one-time license fee.
+ (2)	Licensor will invoice the license fees to Licensee. Invoices are payable within 30 days of the date of the invoice without any discount unless explicitly agreed otherwise in writing. 
+ (3)	All amounts in this Agreement are stated excluding any applicable Value Added Taxes (VAT) and sales tax, if any. The current rate of statutory VAT and sales tax shall be invoiced and paid in addition to all fees. Licensor shall state the rate and amount of VAT separately on the invoice.
+ 
+ 
+ § 7 	Warranty
+ 
+ (1)	The parties agree that it is not possible to develop software such that it meets all the requirements of the application without error. Licensor shall make available the Licensed Documentation explaining the intended use and the conditions of usage of the Licensed Software, which shall always be kept up to date.
+ (2)	Licensor warrants Licensee that the Licensed Software provided by Licensor is substantially in ac-cordance with the Licensed Documentation. There can be no claim under this warranty in the case of minor or immaterial deviations from the agreed or assumed characteristics nor in the case of merely slight impairment of use. Descriptions given in the Licensed Documentation shall not be deemed guaranteed unless separately agreed in writing. In respect of updates and modifications, the warranty shall be limited to the new features of the update or modification compared to the previous version re-lease.
+ (3)	In case of a significant deviation from the Licensed Documentation, Licensor shall have the right and, unless this requires unreasonable expenditure and unless it is technically not possible, the duty to remedy such deviation by improvement, replacement delivery or replacement services. The remedying of a significant deviation may also take place through the delivery or installation of a new version of the Licensed Software or a workaround. If Licensor does not succeed in eliminating such significant deviations from the Licensed Documentation within a period of time of reasonable length or is unable to avoid such deviations in a manner allowing Licensee a usage of the Licensed Software as provided under this Agreement, Licensee may demand a reduction of the licensee fees or, if the Licensed Soft-ware is rendered useless for Licensee, it may cancel the license for the Licensed Software without no-tice against redemption of the licensee fees.
+ (4)	Licensee shall make verifiable documents concerning the kind and the occurrence of such deviations in the performance of the Licensed Software available to Licensor, and it shall cooperate in the locali-zation of defects.
+ (5)	This warranty shall not extend to defects caused by deviating from the conditions intended for the use of the Licensed Software and explained in the Licensed Documentation.
+ (6)	The warranty period is limited to one (1) year and shall begin on the date of delivery of the Licensed Material to Licensee. This warranty is exclusive of any warranty claims other than the ones mentioned under this § 7 and § 8.
+ 
+ 
+ § 8 	Liability of Licensor
+ 
+ (1)	Licensor shall have unlimited liability in the event of intent and gross negligence of Licensor or Licen-sor’s agents; in all other respects, liability shall be limited and/or excluded in accordance with the fol-lowing provisions. 
+ (2)	Licensor shall only be liable for slight negligence of Licensor or Licensor’s agents if an obligation which is of particular importance for realizing the objective of this Agreement is infringed upon (i.e. a material duty). In this case, liability shall be limited to the contractually relevant, foreseeable damage or loss; in all other cases, liability for slight negligence shall be excluded in its entirety. Licensee shall point out to Licensor in writing any special risks, any atypical possibilities of sustaining damages and any extraordinary amounts of damages that may be sustained. Licensor shall, however, be exempted from any liability for consequential damages, for lack of economic success, for indirect damages, and for damages resulting from claims of third parties, in particular such damages resulting from the use of the Licensed Software for the development of other software. Licensor’s liability does not in-clude any compensation for damages of a hardware product in which the Licensed Software is incor-porated or caused by such a hardware product. Furthermore, Licensor’s liability under this subpara-graph is limited to the maximum amount equal to the license fees for the Licensed Software.
+ (3)	Licensor shall not be liable beyond the bounds set forth under subparagraph (1) and (2), except for insufficient quality of the software through Licensor’s own fault or through the fault of its agents, but only if essential functions of the supplied software are affected by such insufficient quality of the software, and for any other breach or nonperformance of duties essential for the performance of this agreement through Licensor’s own fault or through the fault of its agents.
+ (4)	Licensor shall only be liable for the recovery of data if Licensee has secured the possibility of repro-ducing such data at reasonable expenditure and in accordance with the principles of proper data pro-cessing from data provided in machine-readable form.
+ (5) 	The same limitations of licensor's liability as set forth under the foregoing subparagraph (2) shall ap-ply to any culpable breach of duties under this agreement committed by ordinary agents.
+ (6) 	Licensor's liability for a breach of guarantees, under the Product Liability Act and for death, personal injury or damage to health caused by intent or negligence shall remain unaffected by the foregoing provisions.
+ 
+ 
+ § 9 	Intellectual Property Rights of Third Parties
+ 
+ (1)	Licensor warrants that it has no present knowledge of an intellectual property right or copyright of a third party which prevents the use of Licensed Material in accordance with this Agreement.
+ (2)	It is in Licensor’s sole discretion to decide if Licensor defends Licensee against claims made for an infringement of an intellectual property right or copyright caused by the Licensed Material while used as per this Agreement. Licensee shall notify Licensor without delay of the making of any such claims. If Licensor does not defend Licensee, Licensee shall be free to defend itself. Licensor shall assist Li-censee in doing so, just as Licensee is under an obligation to assist Licensor.
+ (3)	If claims under subparagraph (2) have been asserted against Licensee, or if such assertions of claims must be expected, Licensor may modify or replace the Licensed Material at its own expense as far as this is reasonable for Licensee. Each party to this Agreement may cancel the license without notice if such modification or replacement cannot be accomplished at a reasonable expenditure, or if a right of use cannot be obtained at a reasonable expenditure. This notwithstanding, the provisions made under § 8 for the limitation of Licensor’s liability shall be applicable correspondingly.
+ 
+ 
+ § 10 	Conditions of Usage
+ 
+ (1)	The License Materials delivered to Licensee have been developed for being used in specific data pro-cessing units and for the interaction with specific other software. These conditions of usage are set forth in the performance description.
+ (2)	If the License Materials are used in a manner not complying with the conditions of usage under sub-paragraph (1) Licensor shall be discharged from any and all warranty obligations under § 7, 8 and 9.
+ 
+ 
+ § 11 	Termination, Return and Deletion of License Materials
+ 
+ (1)	Licensee may cancel this Agreement as a whole or, if Licensee has acquired more than one license, in part by giving one month's notice hereof to Licensor.
+ (2)	Licensor shall not cancel this Agreement any sooner than after twelve (12) months for the purpose of a general revision of the terms and conditions of this Agreement, and it shall give Licensee three months' notice hereof. If it is not reasonable for Licensee, under the revised terms and conditions af-ter Licensor’s notice of cancellation, to continue using the Licensed Software for which Licensee has paid non-recurrent license fees, Licensee shall be reimbursed pro rata for the time Licensee could not use the Licensed Software, the basis for such pro rata reimbursement being the ordinary useful life of the Licensed Software under tax law. This Agreement is subject to cancellation without notice by either party for good cause (”wichtiger Grund”); in particular, but not limited thereto, in case of a breach of § 2, 3 and 4.
+ (3)	As soon as a notice takes effect, regardless of its time and reason, Licensee shall return to Licensor the original and all copies and partial copies of the Licensed Material. As far as the Licensed Software which is stored on data storage media is concerned, the Licensed Software shall be completely delet-ed in lieu of being returned.
+ (4)	If Licensee replaces cancelled software by a successor application offered by Licensor it may keep the canceled software for up to three months as a standby reserve. Any retention of an archival stor-age copy shall be subject to a written agreement.
+ 
+ 
+ § 12 	Statute of Limitations, Miscellaneous
+ 
+ (1)	Any claims made for a breach of § 2, 3 and 4 shall expire no later than six (6) years after their accrual, any other claims from this Agreement shall expire no later than three (3) years after their accrual, un-less shorter terms are applicable under the statute of limitations.
+ (2)	Any modification of or supplement of this Agreement shall only be valid if made in writing. This shall also apply to amendments of this written form requirement.
+ (3)	The parties agree that any disputes arising from this Agreement shall come under the exclusive juris-diction of the courts of competent jurisdiction over Verl, Germany. Licensor reserves its right, howev-er, to file suit against Licensee with the court of competent jurisdiction over Licensee’s commercial domicile.
+ (4)	This Agreement is governed by the Law of the Federal Republic of Germany except for the United Nations Convention on Contracts for the International Sales of Goods (CSIG).
+ 
+ 		
+  
+ 
+ Software Usage Agreement for Beckhoff Software Products
+ 
+ License Certificate
+ 
+ 
+ 
+ Product: 	TwinCAT V3
+ 
+ License:	Trial version license, seven (7) day runtime
+ 
+ Licensee	as registered
