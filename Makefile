@@ -4,12 +4,6 @@ obj-m += $(TARGET).o
 $(TARGET)-objs := api.o simple_cdev.o
 SUBDIRS := $(filter-out scripts/., $(wildcard */.))
 KDIR ?= /lib/modules/$(shell uname -r)/build
-ALL_MODULES += bbapi
-ALL_MODULES += button/$(TARGET)_button.ko
-ALL_MODULES += display/$(TARGET)_disp.ko
-ALL_MODULES += power/$(TARGET)_power.ko
-ALL_MODULES += sups/$(TARGET)_sups.ko
-ALL_MODULES += watchdog/$(TARGET)_wdt.ko
 
 OS!=uname -s
 SUDO_Linux=sudo
@@ -18,25 +12,13 @@ SUDO := ${SUDO_${OS}}
 ccflags-y := -DBIOSAPIERR_OFFSET=0
 ccflags-y := -DUNAME_S=\"${OS}\"
 
-all: $(ALL_MODULES)
-
-bbapi:
+all:
 	make -C $(KDIR) M=$(PWD) modules
-
-button/$(TARGET)_button.ko:
-	cd button && KDIR=$(KDIR) make
-
-display/$(TARGET)_disp.ko:
-	cd display && KDIR=$(KDIR) make
-
-power/$(TARGET)_power.ko:
-	cd power && KDIR=$(KDIR) make
-
-sups/$(TARGET)_sups.ko:
-	cd sups && KDIR=$(KDIR) make
-
-watchdog/$(TARGET)_wdt.ko:
-	cd watchdog && KDIR=$(KDIR) make
+	make -C $(KDIR) M=$(PWD)/button modules
+	make -C $(KDIR) M=$(PWD)/display modules
+	make -C $(KDIR) M=$(PWD)/power modules
+	make -C $(KDIR) M=$(PWD)/sups modules
+	make -C $(KDIR) M=$(PWD)/watchdog modules
 
 install_all: all install
 	cd button && make install
