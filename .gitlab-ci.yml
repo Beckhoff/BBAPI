@@ -2,6 +2,18 @@ stages:
   - build
   - test
 
+build-debian:
+  image: ${REGISTRY_HOST}/docker-registry/docker:debian-bdpg-0.2-master
+  stage: build
+  before_script:
+    - apt update && apt install -y dkms
+  script: bdpg build
+  artifacts:
+    expire_in: 1 week
+    when: always
+    paths:
+      - ./debian-release
+
 .build-example: &build-example
   image: ${REGISTRY_HOST}/beckhoff/docker-ubuntu-cached:latest
   stage: build
