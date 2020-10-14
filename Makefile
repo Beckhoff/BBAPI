@@ -18,14 +18,14 @@ all:
 	make -C $(KDIR) M=$(PWD)/display modules
 	make -C $(KDIR) M=$(PWD)/power modules
 	make -C $(KDIR) M=$(PWD)/sups modules
-	make -C $(KDIR) M=$(PWD)/watchdog modules
+	make -C $(KDIR) M=$(PWD)/wdt modules
 
 install_all: all install
 	cd button && make install
 	cd display && make install
 	cd power && make install
 	cd sups && make install
-	cd watchdog && make install
+	cd wdt && make install
 
 .PHONY: unload_all
 unload_all:

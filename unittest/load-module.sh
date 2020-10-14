@@ -7,6 +7,6 @@ insmod ./button/bbapi_button.ko
 insmod ./display/bbapi_display.ko
 insmod ./power/bbapi_power.ko
 insmod ./sups/bbapi_sups.ko
-insmod ./watchdog/bbapi_wdt.ko
+insmod ./wdt/bbapi_wdt.ko
 
 dmesg | grep bbapi

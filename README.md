@@ -50,7 +50,7 @@ layer. Both depend on an installed 'bbapi' module.
 #### Install 'bbapi_wdt'
 
 1. make sure 'bbapi' is already installed
-2. cd into <src_dir>/watchdog
+2. cd into <src_dir>/wdt
 3. make && make install
 
 

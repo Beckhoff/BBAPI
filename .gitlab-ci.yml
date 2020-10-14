@@ -48,7 +48,7 @@ build-x86_64-example:
       - display/bbapi_display.ko
       - power/bbapi_power.ko
       - sups/bbapi_sups.ko
-      - watchdog/bbapi_wdt.ko
+      - wdt/bbapi_wdt.ko
 
 build-i386-module:
   <<: *build-module
