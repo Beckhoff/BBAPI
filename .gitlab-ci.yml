@@ -1,9 +1,9 @@
-image: ${REGISTRY_HOST}/beckhoff/docker-ubuntu-cached:latest
 stages:
   - build
   - test
 
 .build-example: &build-example
+  image: ${REGISTRY_HOST}/beckhoff/docker-ubuntu-cached:latest
   stage: build
   before_script:
     - apk add --update alpine-sdk cmake linux-headers
