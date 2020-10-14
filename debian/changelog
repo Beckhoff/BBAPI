@@ -1,5 +1,5 @@
-bbapi-dkms (0.0.0-1) buster; urgency=medium
+bbapi-dkms (0.2.2-1) buster; urgency=medium
 
   * Initial bbapi-dkms release
 
- -- Patrick Bruenn <p.bruenn@beckhoff.com>  Wed, 14 Oct 2020 10:32:51 +0200
+ -- Patrick Bruenn <p.bruenn@beckhoff.com>  Wed, 14 Oct 2020 18:48:20 +0200
