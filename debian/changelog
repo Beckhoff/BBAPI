@@ -1,4 +1,4 @@
-bbapi-dkms (0.2.2-1) buster; urgency=medium
+bbapi (0.2.2-1) buster; urgency=medium
 
   * Initial bbapi-dkms release
 
