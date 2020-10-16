@@ -5,15 +5,13 @@ include /usr/share/dpkg/pkg-info.mk
 %:
 	dh $@ --with dkms
 
+override_dh_clean:
+	rm -f debian/bbapi-dkms.install
+	dh_clean
+
 override_dh_install:
-	dh_install Makefile usr/src/bbapi-$(DEB_VERSION_UPSTREAM)/
-	dh_install *.c usr/src/bbapi-$(DEB_VERSION_UPSTREAM)/
-	dh_install *.h usr/src/bbapi-$(DEB_VERSION_UPSTREAM)/
-	dh_install button/* usr/src/bbapi-$(DEB_VERSION_UPSTREAM)/button/
-	dh_install display/* usr/src/bbapi-$(DEB_VERSION_UPSTREAM)/display/
-	dh_install power/* usr/src/bbapi-$(DEB_VERSION_UPSTREAM)/power/
-	dh_install sups/* usr/src/bbapi-$(DEB_VERSION_UPSTREAM)/sups/
-	dh_install wdt/* usr/src/bbapi-$(DEB_VERSION_UPSTREAM)/wdt/
+	sed -e "s/DEB_VERSION_UPSTREAM/$(DEB_VERSION_UPSTREAM)/g" debian/bbapi-dkms.install.in > debian/bbapi-dkms.install
+	dh_install
 
 override_dh_dkms:
 	dh_dkms -V $(DEB_VERSION_UPSTREAM)
