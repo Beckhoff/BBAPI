@@ -86,6 +86,15 @@ struct bbapi_struct {
 	snprintf(buffer, len, "0x%04x, 0x%02x, 0x%02x [ioAddr, offset, params]", (p)->ioAddr, (p)->offset, (p)->params);
 
 
+////////////////////////////////////////////////////////////////
+// Max. mainboard type (plattform) string length  (inclusive null delimiter)
+#define BAGEN_MAX_MAINBOARD_TYPE 16
+////////////////////////////////////////////////////////////////
+// Max. power controller serial number string length (inclusive null delimiter)
+#define PWRCTRL_MAX_SERIAL_NUMBER 17
+////////////////////////////////////////////////////////////////
+// Max. power controller test number string length (inclusive null delimiter)
+#define PWRCTRL_MAX_TEST_NUMBER 7
 ///////////////////////////////////////////////////////////
 // Max. CX power supply display line length
 #define CXPWRSUPP_MAX_DISPLAY_CHARS 16 // without null delimiter
