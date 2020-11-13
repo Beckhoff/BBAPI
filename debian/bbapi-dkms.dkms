@@ -1,5 +1,5 @@
 AUTOINSTALL=yes
-MAKE[0]="make"
+MAKE[0]="make KDIR=/lib/modules/${kernelver}/build/"
 PACKAGE_NAME="bbapi"
 PACKAGE_VERSION="#MODULE_VERSION#"
 BUILT_MODULE_LOCATION[1]="button"
