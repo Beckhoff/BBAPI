@@ -6,9 +6,7 @@ stages:
 build-debian:
   image: ${REGISTRY_HOST}/docker-registry/docker:debian-bdpg-0.2-master
   stage: build
-  before_script:
-    - apt update && apt install -y dkms
-  script: bdpg build
+  script: .ci/build_debian_packages.sh
   artifacts:
     expire_in: 1 week
     when: always
