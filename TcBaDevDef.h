@@ -101,6 +101,10 @@ struct bbapi_struct {
 #define CXPWRSUPP_MAX_DISPLAY_LINE (CXPWRSUPP_MAX_DISPLAY_CHARS + 1)  // 17 => inclusive null delimiter
 
 ////////////////////////////////////////////////////////////////
+// max. length of device string (inclusive null delimiter)
+#define BADEVICE_MAX_STRING  24
+
+////////////////////////////////////////////////////////////////
 // String description
 typedef struct TStringResourceCap
 {
@@ -129,6 +133,22 @@ typedef struct TBaDevice_Version
 	};
 #endif /* #ifdef __cplusplus */
 }BADEVICE_VERSION, *PBADEVICE_VERSION;
+
+// Collective version information
+typedef struct TBaVersion
+{
+	BADEVICE_VERSION api;// BIOS (api implementation) version information
+	BADEVICE_VERSION drv;// Driver version information
+	BADEVICE_VERSION dll;// Api DLL version information
+	BADEVICE_VERSION fun;// Function DLL version information
+}BAVERSION,*PBAVERSION;
+
+////////////////////////////////////////////////////////////////
+// String parameter
+typedef struct TBaDevice_String
+{
+	char s[BADEVICE_MAX_STRING];
+}BADEVICE_STRING, *PBADEVICE_STRING;
 
 ////////////////////////////////////////////////////////////////
 // Mainboard Information structure
@@ -159,6 +179,16 @@ typedef struct  TBaDevice_MBInfo
 	};
 #endif /* #ifdef __cplusplus */
 }BADEVICE_MBINFO, *PBADEVICE_MBINFO;
+
+////////////////////////////////////////////////////////////////
+// Date structure
+typedef struct TBDevice_Date
+{
+	uint16_t day; // 0 == not used
+	uint16_t month; // 0 == not used
+	uint16_t year; // 0 == not used
+	uint16_t calWeek; // calendar week
+}BADEVICE_DATE, *PBADEVICE_DATE;
 
 ////////////////////////////////////////////////////////////////
 // Sensor types
@@ -286,6 +316,27 @@ typedef struct TSensorInfo
 	};
 #endif  /* #ifdef __cplusplus */
 }SENSORINFO, *PSENSORINFO;
+
+//*********************************************************
+// SUPS data types
+//*********************************************************
+////////////////////////////////////////////////////////////////
+// SUPS state
+typedef enum TSUps_State
+{
+	SUPS_STATE_OTHER = 0x00,
+	SUPS_STATE_OFF = 0xAF,// UPS off
+	SUPS_STATE_DCIN_FAIL = 0xBB,// DCin fail
+	SUPS_STATE_CHARGING = 0xC0,// Charging
+	SUPS_STATE_DISCHARGING = 0xD0,// Discharging
+	SUPS_STATE_BAL_ERR = 0xEE,// Balance error
+	SUPS_STATE_NOT_SUPP = 0xF0,// Not supported
+	SUPS_STATE_NO_COMM = 0xF1,// Not supported
+	SUPS_STATE_NACK = 0xF2,// NACK
+	SUPS_STATE_CHKSUM_ERR = 0xF3,// Checksum error
+	SUPS_STATE_ID_ERR = 0xF4,// ID error, communication failed
+	SUPS_STATE_CTRL_PWRF = 0xFF// µC power fail
+}SUPS_STATE,*PSUPS_STATE;
 
 ////////////////////////////////////////////////////////////////
 // SUPS or watchdog GPIO pin info
