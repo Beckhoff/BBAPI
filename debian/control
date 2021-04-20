@@ -8,7 +8,7 @@ Standards-Version: 4.1.4
 Package: bbapi-dkms
 Architecture: all
 Multi-Arch: foreign
-Depends: ${misc:Depends}
+Depends: ${misc:Depends}, linux-headers-rt-amd64
 Description: Beckhoff BIOS API
  The “BIOS-API” is a piece of software which is part of the BIOS in Beckhoff
  industrial motherboards. It offers a one-stop solution for communicating

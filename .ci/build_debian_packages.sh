@@ -1,6 +1,6 @@
 #!/bin/sh
 # SPDX-License-Identifier: MIT
-# Copyright (C) 2020 Beckhoff Automation GmbH & Co. KG
+# Copyright (C) 2020 - 2021 Beckhoff Automation GmbH & Co. KG
 
 cleanup() {
 	rm -rf "${tmp_dir}"
@@ -56,7 +56,7 @@ set -e
 set -u
 
 readonly package_dir="$(cd "$(dirname "${0}")" && pwd)/.."
-readonly kernel_version='4.19.0-13-rt-amd64'
+readonly kernel_version='4.19.0-16-rt-amd64'
 readonly bbapi_version="$(read_bbapi_version)"
 
 trap cleanup EXIT INT TERM
