@@ -15,6 +15,7 @@
     Author: Patrick Bruenn <p.bruenn@beckhoff.com>
 */
 
+#include <stdio.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
