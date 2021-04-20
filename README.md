@@ -1,5 +1,10 @@
 ## Beckhoff BIOS API
 
+### Linux Kernel 5.8 and BBAPI
+Since Linux Kernel 5.8 it is not possible to dynamically load a Kernel module which allocates executable memory. 
+Therefore the BBAPI doesn't work as a loadable Kernel module anymore. 
+If you want to use it with Kernel Version>=5.8 you need to compile your own kernel and statically compile the BBAPI into your kernel.
+
 ### General information about BBAPI
 The “BIOS-API” is a piece of software which is part of the BIOS in Beckhoff industrial motherboards. 
 It offers a one-stop solution for communicating with several components on the board, 
