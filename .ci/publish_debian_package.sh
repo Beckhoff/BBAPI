@@ -2,6 +2,13 @@
 # SPDX-License-Identifier: MIT
 # Copyright (C) 2020 - 2021 Beckhoff Automation GmbH & Co. KG
 
+bdpg_push() {
+	local _package
+	for _package in "$@"; do
+		bdpg push --distros=bullseye "${_package}"
+	done
+}
+
 set -e
 set -u
 
@@ -16,6 +23,7 @@ if test -z "${SSH_AUTH_SOCK-}"; then
 fi
 
 readonly package_dir="$(cd "$(dirname "${0}")" && pwd)/.."
-bdpg push "${package_dir}/debian-release/bbapi-dev_"*.deb
-bdpg push "${package_dir}/debian-release/bbapi-dkms_"*.deb
-bdpg push "${package_dir}/debian-release/bbapi-modules-"*.deb
+bdpg_push \
+	"${package_dir}/debian-release/bbapi-dev_"*.deb \
+	"${package_dir}/debian-release/bbapi-dkms_"*.deb \
+	"${package_dir}/debian-release/bbapi-modules-"*.deb

@@ -4,7 +4,7 @@ stages:
   - release
 
 build-debian:
-  image: ${REGISTRY_HOST}/docker-registry/docker:debian-bdpg-0.2-master
+  image: ${REGISTRY_HOST}/docker-registry/docker:debian-bdpg-1.0-master
   stage: build
   script: .ci/build_debian_packages.sh
   artifacts:
@@ -14,7 +14,7 @@ build-debian:
       - ./debian-release
 
 publish-debian:
-  image: ${REGISTRY_HOST}/docker-registry/docker:debian-bdpg-0.2-master
+  image: ${REGISTRY_HOST}/docker-registry/docker:debian-bdpg-1.0-master
   stage: release
   dependencies:
     - build-debian
