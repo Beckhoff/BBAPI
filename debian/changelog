@@ -1,3 +1,9 @@
+bbapi (0.2.6-1) bullseye; urgency=medium
+
+  * release to bullseye
+
+ -- Julian Heuking <J.Heuking@beckhoff.com>  Thu, 21 Oct 2021 13:56:16 +0200
+
 bbapi (0.2.5-1) buster; urgency=medium
 
   * Initial release of prebuild modules for 4.19.16-rt
