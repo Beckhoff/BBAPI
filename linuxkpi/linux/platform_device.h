@@ -5,6 +5,8 @@
     Author: Patrick Bruenn <p.bruenn@beckhoff.com>
 */
 
+#include <linux/device.h>
+
 #define platform_device_register(x) 0
 #define platform_device_unregister(x) 0
 struct platform_device {
