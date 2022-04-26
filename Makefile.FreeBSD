@@ -5,6 +5,7 @@ SRCS+= bus_if.h
 SRCS+= device_if.h
 SRCS+= vnode_if.h
 CFLAGS+= -DKBUILD_MODNAME='"bbapi"'
+CFLAGS+= -DLINUXKPI_PARAM_PREFIX="bbapi_"
 CFLAGS+= -DUNAME_S='"TC/BSD"'
 CFLAGS+= -DPAGE_KERNEL_EXEC=M_EXEC
 CFLAGS+= -D__KERNEL__

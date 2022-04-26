@@ -7,6 +7,7 @@
 */
 
 #include <linux/module.h>
+#include <linux/moduleparam.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/fs.h>
@@ -35,6 +36,10 @@
 
 /* Global Variables */
 static struct bbapi_object g_bbapi;
+
+static unsigned long g_bbapi_search_area = BBIOSAPI_SIGNATURE_SEARCH_AREA;
+module_param_named(search_area, g_bbapi_search_area, ulong, 0);
+MODULE_PARM_DESC(search_area, "Size in bytes of the area to search for the BBAPI signature.");
 
 #if defined(__i386__)
 static const uint64_t BBIOSAPI_SIGNATURE = 0x495041534F494242LL;	// API-String "BBIOSAPI"
@@ -196,9 +201,13 @@ static int __init bbapi_find_bios(struct bbapi_object *bbapi)
 	static const size_t STEP_SIZE = 0x10;
 
 	// Try to remap IO Memory to search the BIOS API in the memory
+	if (g_bbapi_search_area > BBIOSAPI_SIGNATURE_SEARCH_AREA) {
+		pr_warn("Search area too big\n");
+		return -EFAULT;
+	}
 	uint8_t __iomem *const start = ioremap(BBIOSAPI_SIGNATURE_PHYS_START_ADDR,
-					    BBIOSAPI_SIGNATURE_SEARCH_AREA);
-	const uint8_t __iomem *const end = start + BBIOSAPI_SIGNATURE_SEARCH_AREA;
+					       g_bbapi_search_area);
+	const uint8_t __iomem *const end = start + g_bbapi_search_area;
 	int result = -EFAULT;
 	uint8_t __iomem *pos;
 	size_t off;
