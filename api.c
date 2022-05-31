@@ -10,6 +10,7 @@
 #include <linux/moduleparam.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
+#include <linux/dmi.h>
 #include <linux/fs.h>
 #include <linux/kdev_t.h>
 #include <linux/platform_device.h>
@@ -456,12 +457,27 @@ static void __exit bbapi_exit_bios(void)
 	}
 }
 
+static const struct dmi_system_id bbapi_dmi_table[] = {
+	{
+		.ident = "Beckhoff Automation",
+		.matches = {
+			DMI_MATCH(DMI_BIOS_VENDOR, "Beckhoff Automation")
+		}
+	},
+	{ }
+};
+
 static int __init bbapi_init_module(void)
 {
 	int result;
 
 	pr_info("%s, %s\n", DRV_DESCRIPTION, DRV_VERSION);
 	mutex_init(&g_bbapi.mutex);
+
+	if (!dmi_check_system(bbapi_dmi_table)) {
+		pr_info("BIOS API not available: system has no Beckhoff BIOS\n");
+		return -ENODEV;
+	}
 
 	result = bbapi_find_bios(&g_bbapi);
 	if (result) {
