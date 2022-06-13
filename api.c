@@ -11,6 +11,7 @@
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/delay.h>
+#include <linux/dmi.h>
 #include <linux/fs.h>
 #include <linux/kdev_t.h>
 #include <linux/platform_device.h>
@@ -28,7 +29,7 @@
 #include "api.h"
 #include "TcBaDevDef.h"
 
-#define DRV_VERSION "0.2.7"
+#define DRV_VERSION "0.2.8"
 #if BIOSAPIERR_OFFSET > 0
 #define DRV_DESCRIPTION "Beckhoff BIOS API Driver"
 #else
@@ -483,12 +484,29 @@ static void __exit bbapi_exit_bios(void)
 	}
 }
 
+static const struct dmi_system_id bbapi_unsupported_list[] = {
+	{
+		.ident = "Hyper-V",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "Microsoft Corporation"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "Virtual Machine"),
+			DMI_MATCH(DMI_BOARD_NAME, "Virtual Machine"),
+		},
+	},
+	{ }
+};
+
 static int __init bbapi_init_module(void)
 {
 	int result;
 
 	pr_info("%s, %s\n", DRV_DESCRIPTION, DRV_VERSION);
 	mutex_init(&g_bbapi.mutex);
+
+	if (dmi_check_system(bbapi_unsupported_list)) {
+		pr_info("BIOS API not supported on this System!\n");
+		return -ENODEV;
+	}
 
 	result = bbapi_find_bios(&g_bbapi);
 	if (result) {
