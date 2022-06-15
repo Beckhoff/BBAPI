@@ -10,6 +10,7 @@
 #include <linux/moduleparam.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
+#include <linux/delay.h>
 #include <linux/fs.h>
 #include <linux/kdev_t.h>
 #include <linux/platform_device.h>
@@ -27,7 +28,7 @@
 #include "api.h"
 #include "TcBaDevDef.h"
 
-#define DRV_VERSION "0.2.5"
+#define DRV_VERSION "0.2.7"
 #if BIOSAPIERR_OFFSET > 0
 #define DRV_DESCRIPTION "Beckhoff BIOS API Driver"
 #else
@@ -36,6 +37,10 @@
 
 /* Global Variables */
 static struct bbapi_object g_bbapi;
+
+static unsigned long g_bbapi_busy_retry = 10;
+module_param_named(busy_retry, g_bbapi_busy_retry, ulong, 0);
+MODULE_PARM_DESC(busy_retry, "Number of attemps to retry BBAPI calls, failed with BIOSAPI_BUSY.");
 
 static unsigned long g_bbapi_search_area = BBIOSAPI_SIGNATURE_SEARCH_AREA;
 module_param_named(search_area, g_bbapi_search_area, ulong, 0);
@@ -98,6 +103,28 @@ static unsigned int bbapi_call(void __kernel * const in,
 }
 #endif
 
+static unsigned int bbapi_call_retry(void __kernel * const in,
+			       void __kernel * const out,
+			       PFN_BBIOSAPI_CALL entry,
+			       const struct bbapi_struct *const cmd,
+			       unsigned int *bytes_written)
+{
+	ulong retries = g_bbapi_busy_retry;
+	for (;;) {
+		const unsigned int status = bbapi_call(in, out, entry, cmd, bytes_written);
+		if (BIOSAPI_BUSY == (status | BIOSAPIERR_OFFSET)) {
+			if (retries--) {
+				pr_warn("BBAPI busy, waiting and retrying...\n");
+				msleep(100);
+				continue;
+			} else {
+				pr_err("BBAPI was busy for too long, giving up.\n");
+			}
+		}
+		return status;
+	}
+}
+
 unsigned int bbapi_rw(uint32_t group, uint32_t offset,
 			     void __kernel * const in, uint32_t size_in,
 			     void __kernel * const out, const uint32_t size_out, uint32_t *bytes_written)
@@ -116,7 +143,7 @@ unsigned int bbapi_rw(uint32_t group, uint32_t offset,
 		return BIOSAPI_SRVNOTSUPP;
 
 	mutex_lock(&g_bbapi.mutex);
-	result = bbapi_call(in, out, g_bbapi.entry, &cmd, bytes_written);
+	result = bbapi_call_retry(in, out, g_bbapi.entry, &cmd, bytes_written);
 	mutex_unlock(&g_bbapi.mutex);
 	if (result) {
 		pr_debug("%s(0x%x:0x%x) failed with: 0x%x\n", __func__,
@@ -260,7 +287,7 @@ static int bbapi_ioctl_mutexed(struct bbapi_object *const bbapi,
 		return -EFAULT;
 	}
 	// Call the BIOS API
-	ret = bbapi_call(bbapi->in, bbapi->out, bbapi->entry, cmd, &written);
+	ret = bbapi_call_retry(bbapi->in, bbapi->out, bbapi->entry, cmd, &written);
 	if (ret) {
 		pr_debug("%s(0x%x:0x%x) failed with: 0x%x\n", __func__,
 		         cmd->nIndexGroup, cmd->nIndexOffset, ret);
