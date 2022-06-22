@@ -405,6 +405,18 @@ typedef struct Bapi_GpioInfoEx
 	#define BIOSIOFFS_SYSTEM_SENSOR_MIN						0x00000001	// Return info of first sensor IO:Sensor index, W:0, R:SIZEOF(SENSORINFO)
 //	#define BIOSIOFFS_SYSTEM_SENSOR_MAX						0x000000FF	// Return info of max. sensor, W:0, R:56
 
+#define BIOSIGRP_SERVICES		0x00003000	// 0x00003000..0x00003FFF := Device services
+	#define BIOSIOFFS_SERVICES_GPIOREADIN0					0x00000000	// Reads GPIO0 input, W:0, R:1
+	#define BIOSIOFFS_SERVICES_GPIOREADIN1					0x00000001	// Reads GPIO1 input, W:0, R:1
+	#define BIOSIOFFS_SERVICES_GPIOREADOUT0					0x00000002	// Reads GPIO0 output, W:0, R:1
+	#define BIOSIOFFS_SERVICES_GPIOREADOUT1					0x00000003	// Reads GPIO1 output, W:0, R:1
+	#define BIOSIOFFS_SERVICES_GPIOREADMASK0				0x00000004	// Reads GPIO0 mask, W:0, R:1
+	#define BIOSIOFFS_SERVICES_GPIOREADMASK1				0x00000005	// Reads GPIO1 mask, W:0, R:1
+	#define BIOSIOFFS_SERVICES_GPIOWRITEOUT0				0x00000006	// Writes GPIO0 output, W:1, R:0
+	#define BIOSIOFFS_SERVICES_GPIOWRITEOUT1				0x00000007	// Writes GPIO1 output, W:1, R:0
+	#define BIOSIOFFS_SERVICES_GPIOWRITEMASK0				0x00000008	// Writes GPIO0 mask, W:1, R:0
+	#define BIOSIOFFS_SERVICES_GPIOWRITEMASK1				0x00000009	// Writes GPIO1 mask, W:1, R:0
+
 #define BIOSIGRP_PWRCTRL	0x00004000	// Power controller functions
 	#define BIOSIOFFS_PWRCTRL_BOOTLDR_REV					0x00000000	// Bootloader revision, W:0, R:3 ([xx].[yy]-[zz])
 	#define BIOSIOFFS_PWRCTRL_FIRMWARE_REV					0x00000001	// Firmware revision, W:0, R:3 ([xx].[yy]-[zz])
