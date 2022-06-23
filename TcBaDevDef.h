@@ -458,6 +458,12 @@ typedef struct Bapi_GpioInfoEx
 	#define BIOSIOFFS_WATCHDOG_GPIO_PIN						0x00000007	// Get IO Addr for direct retrigger, W:0, R:4 
 	#define BIOSIOFFS_WATCHDOG_GPIO_PIN_EX					0x00000008	// Get IO Addr for direct retrigger, W:0, R:24
 
+#define BIOSIGRP_UEEPRO 0x00007000 // 0x00007000..0x00007FFF := User EEPROM functions
+	#define BIOSIOFFS_UEEPROM_READ       0x00000000 // Reads EEPROM data, W:0, R:128 (MAX_SIZE_OF_UEEPROM_DATA)
+	#define BIOSIOFFS_UEEPROM_WRITE      0x00000001 // Writes EEPROM data, W:128 (MAX_SIZE_OF_UEEPROM_DATA), R:0
+	#define BIOSIOFFS_UEEPROM_READ_BYTE  0x00000002 // Reads EEPROM byte, W:1 (byte offset), R:1 (read data)
+	#define BIOSIOFFS_UEEPROM_WRITE_BYTE 0x00000003 // Writes EEPROM byte, W:2 ( Byte[0] := byte offset, Byte[1] := value), R:0
+
 #define BIOSIGRP_LED			0x00008000	// TwinCAT and user LED functions
 	#define BIOSIOFFS_LED_SET_TC								0x00000000	// Sets TwinCAT LED, W:1, R:0 (write value 0=off, 1=red, 2=blue, 3=green)
 	#define BIOSIOFFS_LED_SET_USER							0x00000001	// Sets user LED, W:1, R:0 (write value 0=off, 1=red, 2=blue, 3=green)
