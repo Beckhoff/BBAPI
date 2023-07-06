@@ -466,14 +466,13 @@ static struct EXTOS_FUNCTION_ENTRY extOsOps[] = {
 	{"\0\0\0\0\0\0\0\0", {NULL}},
 };
 
-static int __init bbapi_init_bios(void)
+static void __init bbapi_init_bios(void)
 {
 	const unsigned int bios_status =
 	    bbapi_write(0, 0xFE, &extOsOps, sizeof(extOsOps));
 	if (bios_status) {
 		pr_warn("Initializing BIOS failed with: 0x%x\n", bios_status);
 	}
-	return 0;
 }
 
 static void __exit bbapi_exit_bios(void)
@@ -537,10 +536,12 @@ static int __init bbapi_init_module(void)
 		goto rollback_sups;
 	}
 
+	bbapi_init_bios();
+
 	if (bbapi_supports_display()) {
 		update_display();
 	}
-	return bbapi_init_bios();
+	return 0;
 
 rollback_sups:
 	if (bbapi_supports_sups()) {
