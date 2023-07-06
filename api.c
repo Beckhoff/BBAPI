@@ -503,20 +503,20 @@ static int __init bbapi_init_module(void)
 	mutex_init(&g_bbapi.mutex);
 
 	if (dmi_check_system(bbapi_unsupported_list)) {
-		pr_info("BIOS API not supported on this System!\n");
+		pr_err("BIOS API not supported on this System!\n");
 		return -ENODEV;
 	}
 
 	result = bbapi_find_bios(&g_bbapi);
 	if (result) {
-		pr_info("BIOS API not available on this System\n");
+		pr_err("BIOS API not available on this System\n");
 		return result;
 	}
 
 	if (bbapi_supports_power()) {
 		result = platform_device_register(&bbapi_power);
 		if (result) {
-			pr_info("register %s failed\n", bbapi_power.name);
+			pr_err("register %s failed\n", bbapi_power.name);
 			goto rollback_memory;
 		}
 	}
@@ -524,7 +524,7 @@ static int __init bbapi_init_module(void)
 	if (bbapi_supports_sups()) {
 		result = platform_device_register(&bbapi_sups);
 		if (result) {
-			pr_info("register %s failed\n", bbapi_sups.name);
+			pr_err("register %s failed\n", bbapi_sups.name);
 			goto rollback_power;
 		}
 	}
@@ -533,6 +533,7 @@ static int __init bbapi_init_module(void)
 	    simple_cdev_init(&g_bbapi.dev, "chardev", KBUILD_MODNAME,
 			     &file_ops);
 	if (result) {
+		pr_err("register bbapi chardev failed\n");
 		goto rollback_sups;
 	}
 
