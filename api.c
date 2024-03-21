@@ -155,6 +155,20 @@ int bbapi_board_is(const char *const boardname)
 
 EXPORT_SYMBOL(bbapi_board_is);
 
+#include <linux/kprobes.h>
+static struct kprobe kp = {
+	.symbol_name = "kallsyms_lookup_name"
+};
+
+typedef unsigned long (*kallsyms_lookup_name_t)(const char *name);
+kallsyms_lookup_name_t fcn_kallsyms_lookup_name;
+
+typedef void *(*fcn_vmalloc_node_range_t)(unsigned long size, unsigned long align,
+		unsigned long start, unsigned long end, gfp_t gfp_mask,
+		pgprot_t prot, unsigned long vm_flags, int node,
+		const void *caller);
+fcn_vmalloc_node_range_t fcn_vmalloc_node_range;
+
 /**
  * bbapi_copy_bios() - Copy BIOS from SPI flash into RAM
  * @bbapi: pointer to a not initialized bbapi_object
@@ -178,7 +192,13 @@ static int __init bbapi_copy_bios(struct bbapi_object *bbapi,
 {
 	const uint32_t offset = ioread32(pos + 8);
 	const size_t size = offset + 4096;
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
+	bbapi->memory = fcn_vmalloc_node_range(size, 1, VMALLOC_START, VMALLOC_END,
+			GFP_KERNEL, PAGE_KERNEL_EXEC, 0, NUMA_NO_NODE, __builtin_return_address(0));
+#else
 	bbapi->memory = __vmalloc(size, GFP_KERNEL, PAGE_KERNEL_EXEC);
+#endif
 	if (bbapi->memory == NULL) {
 		pr_info("__vmalloc for Beckhoff BIOS API failed\n");
 		return -ENOMEM;
@@ -462,6 +482,12 @@ static int __init bbapi_init_module(void)
 
 	pr_info("%s, %s\n", DRV_DESCRIPTION, DRV_VERSION);
 	mutex_init(&g_bbapi.mutex);
+
+	register_kprobe(&kp);
+	fcn_kallsyms_lookup_name = (kallsyms_lookup_name_t)kp.addr;
+	unregister_kprobe(&kp);
+
+	fcn_vmalloc_node_range = (fcn_vmalloc_node_range_t)fcn_kallsyms_lookup_name("__vmalloc_node_range");
 
 	result = bbapi_find_bios(&g_bbapi);
 	if (result) {
