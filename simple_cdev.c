@@ -7,6 +7,7 @@
 
 #include <linux/fs.h>
 #include <linux/module.h>
+#include <linux/version.h>
 #include "simple_cdev.h"
 
 int simple_cdev_init(struct simple_cdev *dev, const char *classname,
@@ -25,7 +26,12 @@ int simple_cdev_init(struct simple_cdev *dev, const char *classname,
 		goto rollback_region;
 	}
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(6,4,0))
 	if ((dev->class = class_create(THIS_MODULE, classname)) == NULL) {
+#else
+	(void)classname;
+	if ((dev->class = class_create(devicename)) == NULL) {
+#endif
 		pr_warn("class_create() failed!\n");
 		goto rollback_cdev;
 	}
