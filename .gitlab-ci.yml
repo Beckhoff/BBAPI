@@ -1,3 +1,15 @@
+variables:
+  TEST_RUNNER_CONTAINER: ${REGISTRY_HOST}/beckhoff/test_stage/test_runner:v4.104
+
+test-on-device:
+  image: ${TEST_RUNNER_CONTAINER}
+  stage: build
+  script:
+    - .ci/prepare_test_stage.sh
+    - .ci/test-on-device.sh
+  tags:
+    - bbapi
+
 .build-example: &build-example
   image: ${REGISTRY_HOST}/beckhoff/docker-ubuntu-cached:latest
   stage: build

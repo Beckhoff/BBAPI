@@ -1,0 +1,14 @@
+#!/bin/sh
+# SPDX-License-Identifier: MIT
+# Copyright (C) Beckhoff Automation GmbH & Co. KG
+
+set -e
+set -u
+
+readonly test_device="${1?Missing <test-device>}"
+readonly ssh_cmd="ssh Administrator@${test_device}"
+
+${ssh_cmd} /bin/sh -$- <<- EOF
+	# Basic trace message for debugging.
+	uname -a
+EOF
