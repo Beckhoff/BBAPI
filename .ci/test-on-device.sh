@@ -40,7 +40,10 @@ export DEBIAN_MKROOTFS_PIPELINE_REPOS=""
 export DEBIAN_MKROOTFS_SUITE=bookworm
 default_packages="\
 bhfinfo,\
+build-essential,\
 ca-certificates,\
+curl,\
+linux-headers-rt-amd64,\
 linux-image-rt-amd64,\
 ssh,\
 sudo,\
@@ -68,6 +71,10 @@ mkrootfs
 		search beckhoff.com
 		nameserver $(rackctl-config get "${rackctl_device}" rackcontroller/ip)
 	EOF
+
+	# We need noninteractive sudo for modules install and to access /dev/bbapi
+	printf 'ALL\tALL = (ALL) NOPASSWD: ALL\n' >> "${rootfs}/etc/sudoers"
+
 	rackctl-netboot \
 		--workdir="${tmpdir}" \
 		"${rackctl_device}" local &

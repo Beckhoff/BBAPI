@@ -11,4 +11,19 @@ readonly ssh_cmd="ssh Administrator@${test_device}"
 ${ssh_cmd} /bin/sh -$- <<- EOF
 	# Basic trace message for debugging.
 	uname -a
+
+	# Suppress sudo warning messages about our hostname.
+	printf '127.0.0.1\t%s\n' "\$(hostname)" | sudo tee -a /etc/hosts
+
+	# We could copy this from the test runner, but this looks even easier.
+	curl --url "https://git.beckhoff.dev/api/v4/projects/${CI_PROJECT_ID}/repository/archive?sha=${CI_COMMIT_SHA}" | tar --extract --gunzip
+
+	# Now, build and install our bbapi module on the test device.
+	cd "${CI_PROJECT_NAME}-${CI_COMMIT_SHA}-${CI_COMMIT_SHA}"
+	make
+	make install
+
+	# Basic test if the driver was loaded.
+	sudo dmesg | grep --ignore-case bbapi
+	ls -lh /dev/bbapi
 EOF
