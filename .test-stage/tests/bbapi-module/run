@@ -26,4 +26,12 @@ ${ssh_cmd} /bin/sh -$- <<- EOF
 	# Basic test if the driver was loaded.
 	sudo dmesg | grep --ignore-case bbapi
 	ls -lh /dev/bbapi
+
+	# With BBAPI available, we should now be able to run our example. At
+	# least a minimal subset of the test cases.
+	sed -i "s/define CONFIG_INTERACTIVE 1/define CONFIG_INTERACTIVE 0/" test_config.h
+	sed -i "s/\/\*\* select test device \*\//#include \"config_c6015.h\"/" test_config.h
+	sed -i "s/#define UNITTEST_DO_COMPARE true/#define UNITTEST_DO_COMPARE false/" unittest.cpp
+	make binaries
+	sudo ./build/unittest.bin
 EOF

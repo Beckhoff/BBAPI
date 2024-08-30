@@ -42,6 +42,7 @@ default_packages="\
 bhfinfo,\
 build-essential,\
 ca-certificates,\
+cmake,\
 curl,\
 linux-headers-rt-amd64,\
 linux-image-rt-amd64,\
