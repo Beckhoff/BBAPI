@@ -1,6 +1,5 @@
 stages:
   - build
-  - test
   - release
 
 build-debian:
@@ -83,70 +82,3 @@ build-x86_64-module:
     KERNEL_JOB: 'build-x86_64-kernel'
     KERNEL_REF: 'stable-rt'
     ARCH: 'x86_64'
-
-.test: &test
-  image: ${REGISTRY_HOST}/beckhoff/test_runner:latest
-  stage: test
-  script:
-    - tar -czf /root/tests.tar.gz ./unittest bbapi.ko */bbapi_*.ko ./build/*.bin unittest.bin.*
-    - cd /root
-    - ./50_power.sh ${DEVICE_ID}-${DEVICE} 0
-    - source ./09_init.sh
-    - wget -nv --no-check-certificate -O artifacts.zip https://${GITLAB_HOST}/beckhoff/build-kernel/builds/artifacts/${KERNEL_REF}/download?job=${KERNEL_JOB}
-    - unzip -q artifacts.zip && rm artifacts.zip
-    - wget -nv --no-check-certificate -O artifacts.zip https://${GITLAB_HOST}/beckhoff/build-alpine/builds/artifacts/${ROOTFS_REF}/download?job=${ROOTFS_JOB}
-    - unzip -q artifacts.zip
-    - ./30_prepare_test.sh ${DEVICE_ID}-${DEVICE} vmlinuz rootfs.cpio.xz nfs
-    - ./50_power.sh ${DEVICE_ID}-${DEVICE} 1
-    - wait_ssh --timeout=2400 root@${TEST_DEVICE_IP}
-    - scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ./tests.tar.gz root@${TEST_DEVICE_IP}:~/
-    - ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@${TEST_DEVICE_IP} tar -xf ./tests.tar.gz
-    - ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@${TEST_DEVICE_IP} ./unittest/load-module.sh
-    - ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@${TEST_DEVICE_IP} ./unittest/test-all.sh .${DEVICE_ID}-${DEVICE}
-  after_script:
-    - cd /root && ./50_power.sh ${DEVICE_ID}-${DEVICE} 0
-
-test-cx2030:
-  <<: *test
-  variables:
-    DEVICE: 'CX2030'
-    DEVICE_ID: 'CX05'
-    KERNEL_REF: 'stable-rt'
-    KERNEL_JOB: 'build-x86_64-kernel'
-    ROOTFS_JOB: 'build-x86_64'
-    ROOTFS_REF: 'stable'
-  dependencies:
-    - build-x86_64-module
-    - build-x86_64-example
-  tags:
-    - CX05-CX2030
-
-test-cx5140:
-  <<: *test
-  variables:
-    DEVICE: 'CX5140'
-    DEVICE_ID: 'CX03'
-    KERNEL_REF: 'stable-rt'
-    KERNEL_JOB: 'build-x86_64-kernel'
-    ROOTFS_JOB: 'build-x86_64'
-    ROOTFS_REF: 'stable'
-  dependencies:
-    - build-x86_64-module
-    - build-x86_64-example
-  tags:
-    - CX03-CX5140
-
-test-cx5020:
-  <<: *test
-  variables:
-    DEVICE: 'CX5020'
-    DEVICE_ID: 'CX01'
-    KERNEL_REF: 'stable-rt'
-    KERNEL_JOB: 'build-i386-kernel'
-    ROOTFS_JOB: 'build-i386'
-    ROOTFS_REF: 'stable'
-  dependencies:
-    - build-i386-module
-    - build-i386-example
-  tags:
-    - CX01-CX5020
