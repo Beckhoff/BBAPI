@@ -175,12 +175,13 @@ protected:
 
 struct TestBBAPI : fructose::test_base<TestBBAPI>
 {
+#define UNITTEST_DO_COMPARE true
 #define CHECK_VALUE(MSG, INDEX_OFFSET, EXPECTATION, TYPE) \
-	test_range<TYPE>(#INDEX_OFFSET, INDEX_OFFSET, EXPECTATION, EXPECTATION, MSG)
+	test_range<TYPE>(#INDEX_OFFSET, INDEX_OFFSET, EXPECTATION, EXPECTATION, MSG, UNITTEST_DO_COMPARE)
 #define CHECK_CLASS(MSG, INDEX_OFFSET, EXPECTATION, TYPE) \
-	test_object<TYPE>(#INDEX_OFFSET, INDEX_OFFSET, EXPECTATION, MSG)
+	test_object<TYPE>(#INDEX_OFFSET, INDEX_OFFSET, EXPECTATION, MSG, UNITTEST_DO_COMPARE)
 #define CHECK_RANGE(MSG, INDEX_OFFSET, RANGE, TYPE) \
-	test_range<TYPE>(#INDEX_OFFSET, INDEX_OFFSET, RANGE, MSG)
+	test_range<TYPE>(#INDEX_OFFSET, INDEX_OFFSET, RANGE, MSG, UNITTEST_DO_COMPARE)
 #define READ_OBJECT(MSG, INDEX_OFFSET, TYPE) \
 	test_object<TYPE>(#INDEX_OFFSET, INDEX_OFFSET, 0, MSG, false)
 
@@ -411,7 +412,7 @@ private:
 	BiosApi bbapi;
 
 	template<typename T>
-	void test_object(const std::string& nIndexOffset, const unsigned long offset, const T expectedValue, const std::string& msg, const bool doCompare = true)
+	void test_object(const std::string& nIndexOffset, const unsigned long offset, const T expectedValue, const std::string& msg, const bool doCompare)
 	{
 		uint32_t bytesReturned;
 		char text[256];
@@ -425,13 +426,15 @@ private:
 	}
 
 	template<typename T>
-	void test_range(const std::string& nIndexOffset, const unsigned long offset, const T lower, const T upper, const std::string& msg)
+	void test_range(const std::string& nIndexOffset, const unsigned long offset, const T lower, const T upper, const std::string& msg, const bool doCompare)
 	{
 		uint32_t bytesReturned;
 		T value {0};
 		fructose_loop_assert(nIndexOffset, -1 != bbapi.ioctl_read(offset, &value, sizeof(value), &bytesReturned));
-		fructose_loop2_assert(nIndexOffset, lower, value, lower <= value);
-		fructose_loop2_assert(nIndexOffset, upper, value, upper >= value);
+		if (doCompare) {
+			fructose_loop2_assert(nIndexOffset, lower, value, lower <= value);
+			fructose_loop2_assert(nIndexOffset, upper, value, upper >= value);
+		}
 		pr_info(msg.c_str(), value);
 	}
 };
