@@ -5,7 +5,7 @@
     Author: Patrick Bruenn <p.bruenn@beckhoff.com>
 */
 
-#ifdef TEST_DEVICE
+#ifndef TEST_DEVICE
 #define TEST_DEVICE 0xC6015
 
 /** general configuration */
