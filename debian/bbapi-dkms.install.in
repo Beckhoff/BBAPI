@@ -1,8 +1,0 @@
-Makefile usr/src/bbapi-DEB_VERSION_UPSTREAM/
-*.c usr/src/bbapi-DEB_VERSION_UPSTREAM/
-*.h usr/src/bbapi-DEB_VERSION_UPSTREAM/
-button/* usr/src/bbapi-DEB_VERSION_UPSTREAM/button/
-display/* usr/src/bbapi-DEB_VERSION_UPSTREAM/display/
-power/* usr/src/bbapi-DEB_VERSION_UPSTREAM/power/
-sups/* usr/src/bbapi-DEB_VERSION_UPSTREAM/sups/
-wdt/* usr/src/bbapi-DEB_VERSION_UPSTREAM/wdt/

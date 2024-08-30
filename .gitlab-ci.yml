@@ -1,26 +1,3 @@
-stages:
-  - build
-  - release
-
-build-debian:
-  image: ${REGISTRY_HOST}/docker-registry/docker:debian-bdpg-1.0-master
-  stage: build
-  script: .ci/build_debian_packages.sh
-  artifacts:
-    expire_in: 1 week
-    when: always
-    paths:
-      - ./debian-release
-
-publish-debian:
-  image: ${REGISTRY_HOST}/docker-registry/docker:debian-bdpg-1.0-master
-  stage: release
-  dependencies:
-    - build-debian
-  before_script:
-    - .ci/apply_general_ssh_options.sh
-  script: .ci/publish_debian_package.sh
-
 .build-example: &build-example
   image: ${REGISTRY_HOST}/beckhoff/docker-ubuntu-cached:latest
   stage: build
