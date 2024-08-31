@@ -200,6 +200,7 @@ static int bbapi_power_init(struct bbapi_cx2100_info *pbi,
 {
 #define CXPWRSUPP_TYPE_CX2100_0914 914u
 #define CXPWRSUPP_TYPE_CX2100_0904 904u
+#define CXPWRSUPP_TYPE_CX2100_0014 14u
 #define CXPWRSUPP_TYPE_CX2100_0004 4u
 	uint32_t type;
 
@@ -209,6 +210,8 @@ static int bbapi_power_init(struct bbapi_cx2100_info *pbi,
 			return init_cx2100_09x4(pbi, &cx2100_0914_desc, parent);
 		case CXPWRSUPP_TYPE_CX2100_0904:
 			return init_cx2100_09x4(pbi, &cx2100_0904_desc, parent);
+		case CXPWRSUPP_TYPE_CX2100_0014:
+			return -ENODEV;
 		case CXPWRSUPP_TYPE_CX2100_0004:
 			return -ENODEV;
 		default:
