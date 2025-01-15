@@ -12,6 +12,9 @@ SUDO := ${SUDO_${OS}}
 ccflags-y := -DBIOSAPIERR_OFFSET=0
 ccflags-y := -DUNAME_S=\"${OS}\"
 
+# compile test for vmalloc workaround check for Linux >= 5.8
+always-y += compile_test.o
+
 all:
 	make -C $(KDIR) M=$(PWD) modules
 	make -C $(KDIR) M=$(PWD)/button modules

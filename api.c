@@ -192,10 +192,8 @@ static struct kprobe kp = {
 typedef unsigned long (*kallsyms_lookup_name_t)(const char *name);
 kallsyms_lookup_name_t fcn_kallsyms_lookup_name;
 
-typedef void *(*fcn_vmalloc_node_range_t)(unsigned long size, unsigned long align,
-		unsigned long start, unsigned long end, gfp_t gfp_mask,
-		pgprot_t prot, unsigned long vm_flags, int node,
-		const void *caller);
+#include "api_internals.h"
+
 fcn_vmalloc_node_range_t fcn_vmalloc_node_range;
 #endif
 
